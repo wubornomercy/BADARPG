@@ -270,6 +270,24 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       player.applyHitReactions(performance.now());
     }
   });
+  // Player death → auto-respawn at arena center with full HP/mana and a
+  // 1.5 s i-frame window so the player isn't insta-killed by the same
+  // pack that just downed them. Until a proper death/respawn UI ships,
+  // this keeps the play loop unblocked instead of stranding the player
+  // in `alive=false` (which makes every skill cast return CASTER_DEAD).
+  combat.events.on(CombatEventType.ON_KILL, (ev) => {
+    if (ev.target !== (player as unknown as CombatEntity)) return;
+    const now = performance.now();
+    player.alive = true;
+    player.hp   = player.hpMax;
+    player.mana = player.maxMana;
+    player.x = ARENA_CENTER_X;
+    player.y = ARENA_CENTER_Y;
+    player.dodgeUntil    = now + 1500; // grants isInvulnerable for the i-frame window
+    player.hitFlashUntil = now + 200;
+    player.castingUntil  = 0;
+    castDiag.lastResult = 'RESPAWNED';
+  });
   // Per-hit VFX on enemies — pipeline owns math, listener owns visuals.
   combat.events.on(CombatEventType.ON_HIT, (ev) => {
     if (ev.source !== (player as unknown as CombatEntity)) return;
