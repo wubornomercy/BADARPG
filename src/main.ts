@@ -373,6 +373,48 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
   const PICKUP_RADIUS_PX = 40;
 
+  /** Diagnostic state for "why are skills not firing?" troubleshooting. */
+  const castDiag = {
+    attempts:            0,
+    lastSlot:             -1,
+    lastSkillId:          '' as string | undefined,
+    lastResult:          '' as string,
+    lastReason:           undefined as string | undefined,
+    framesSinceAttempt:   9999,
+  };
+  // Expose for F12 console inspection. Press F12 in the browser, paste:
+  //   window.__bad.castDiag       — last skill input attempt + reason
+  //   window.__bad.skills         — SkillManager
+  //   window.__bad.player         — Player runtime state
+  //   window.__bad.sim            — fps / projectile / enemy counts
+  (window as any).__bad = { castDiag, get skills() { return skills; }, get player() { return player; }, sim };
+
+  // Always-visible diagnostic banner — top-left HTML overlay. Reports
+  // live FPS + the most recent skill input result. Cheap to render, big
+  // enough to spot at a glance. Helps confirm "is the game ticking?" +
+  // "did pressing Q reach the skill executor?" without opening F12.
+  const diagBanner = (() => {
+    const el = document.createElement('div');
+    el.id = 'castDiagBanner';
+    Object.assign(el.style, {
+      position:      'fixed',
+      top:           '12px',
+      left:          '12px',
+      padding:       '6px 10px',
+      background:    'rgba(7,9,13,0.78)',
+      border:        '1px solid #3A4048',
+      color:         '#BFC5CE',
+      fontFamily:    'monospace',
+      fontSize:      '12px',
+      lineHeight:    '1.5',
+      zIndex:        '8000',
+      pointerEvents: 'none',
+      whiteSpace:    'pre',
+    });
+    document.body.appendChild(el);
+    return el;
+  })();
+
   // ---------------------------------------------------------------------
   // Monster ecosystem — registries, spawner, director, AI tick.
   // The director owns pacing + composition; main.ts only provides the
@@ -669,9 +711,9 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
     function castSlot(slot: number) {
       const id = player.equippedSkills[slot];
-      if (!id) return;
+      if (!id) { castDiag.lastReason = 'NO_SKILL_IN_SLOT'; castDiag.lastSlot = slot; return; }
       const def = skills.get(id);
-      if (!def) return;
+      if (!def) { castDiag.lastReason = 'UNKNOWN_SKILL'; castDiag.lastSlot = slot; return; }
       // Cast position: ground target = cursor, everything else = caster.
       const isGroundTarget = def.targetingType === SkillTargetingType.GROUND_TARGET;
       const ctx: SkillContext = {
@@ -682,6 +724,11 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
         runtimeTags:  [],
       };
       const r = skills.cast(player, id, ctx, now);
+      castDiag.attempts++;
+      castDiag.lastSlot = slot;
+      castDiag.lastSkillId = id;
+      castDiag.lastResult = r.ok ? 'OK' : (r.reason ?? 'FAIL');
+      castDiag.lastReason = r.reason;
       if (!r.ok && r.reason) skillDebug.logCastFailure(id, r.reason);
     }
 
@@ -690,6 +737,13 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     if (isActionHeld('skill2'))  castSlot(1);
     if (isActionHeld('skill3'))  castSlot(2);
     if (isActionHeld('skill4'))  castSlot(3);
+
+    // Diag HUD — top-left tiny text. Renders only when a cast was attempted
+    // in the last 1.5 seconds, so it's invisible during normal play.
+    castDiag.framesSinceAttempt++;
+    if (isActionHeld('skill1') || isActionHeld('skill2') || isActionHeld('skill3') || isActionHeld('skill4') || isActionHeld('primary')) {
+      castDiag.framesSinceAttempt = 0;
+    }
 
     // ----- Monster director (pacing + composition) -----
     monsterDirector.update({
@@ -884,6 +938,15 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     if (statDebug.isVisible() && now - lastStatDebugRenderAt > 200) {
       statDebug.render();
       lastStatDebugRenderAt = now;
+    }
+    // Always-on diagnostic banner — refresh once every ~100 ms.
+    if ((sim.frameMs && (sim as any)._lastDiagAt !== undefined ? (now - (sim as any)._lastDiagAt) : 999) > 100) {
+      (sim as any)._lastDiagAt = now;
+      const recent = castDiag.framesSinceAttempt < 90; // ~1.5 s @ 60 fps
+      diagBanner.textContent =
+        `FPS  ${sim.fps.toFixed(0).padStart(3)}\n` +
+        `Mana ${Math.floor(player.mana).toString().padStart(3)} / ${Math.floor(player.maxMana)}\n` +
+        `Skill ${recent ? `slot ${castDiag.lastSlot} → ${castDiag.lastSkillId} → ${castDiag.lastResult}` : '(no input in last 1.5s)'}`;
     }
     // CombatDebugPanel + SkillDebugPanel render reactively from their
     // event listeners; just keep references alive so their keydown
