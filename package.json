@@ -1,0 +1,20 @@
+{
+  "name": "bad-arpg",
+  "version": "0.0.1",
+  "private": true,
+  "description": "BAD ARPG — Dark Steel Pixel Loot ARPG (Phase 2 combat sandbox runtime)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 5174",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "pixi.js": "^8.5.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
