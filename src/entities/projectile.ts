@@ -1,9 +1,7 @@
 /**
- * Player projectile — primary attack. Step 2 will add enemy / corruption variants.
- * Visual language per Phase 2 spec:
- *  - brighter core
- *  - tighter silhouette
- *  - cleaner trails (4 trail rectangles, decreasing alpha)
+ * Player projectile — Combat Feel V2.
+ * Bigger core, stronger contrast pixel trail, longer history for sense
+ * of speed.
  */
 import { Container, Graphics } from 'pixi.js';
 import { COLOR, TUNE } from '../tokens.js';
@@ -21,7 +19,10 @@ export class Projectile {
   alive = true;
   ownerIsPlayer: boolean;
 
-  // Trail history (last 4 positions)
+  // direction unit vector (for ricochet / FX hooks)
+  dirX: number;
+  dirY: number;
+
   private trailHistory: { x: number, y: number }[] = [];
 
   constructor(x: number, y: number, vx: number, vy: number, spawnAt: number, ownerIsPlayer = true) {
@@ -29,6 +30,10 @@ export class Projectile {
     this.vx = vx; this.vy = vy;
     this.spawnAt = spawnAt;
     this.ownerIsPlayer = ownerIsPlayer;
+
+    const mag = Math.hypot(vx, vy) || 1;
+    this.dirX = vx / mag;
+    this.dirY = vy / mag;
 
     this.container = new Container();
     this.container.label = 'proj';
@@ -46,33 +51,35 @@ export class Projectile {
     g.clear();
     const core = this.ownerIsPlayer ? COLOR.projPlayer : COLOR.projEnemy;
     const halo = this.ownerIsPlayer ? COLOR.projPlayerTrail : COLOR.projEnemyTrail;
-    // chunky pixel diamond — bright core + outer halo
-    g.rect(-1, -3, 2, 6).fill(core);
-    g.rect(-3, -1, 6, 2).fill(core);
-    g.rect(-1, -4, 2, 1).fill(halo);
-    g.rect(-1, 3, 2, 1).fill(halo);
-    g.rect(-4, -1, 1, 2).fill(halo);
-    g.rect(3, -1, 1, 2).fill(halo);
+    // chunkier pixel diamond — bigger core for weight
+    g.rect(-1, -4, 2, 8).fill(core);
+    g.rect(-4, -1, 8, 2).fill(core);
+    // halo cross
+    g.rect(-1, -5, 2, 1).fill(halo);
+    g.rect(-1, 4, 2, 1).fill(halo);
+    g.rect(-5, -1, 1, 2).fill(halo);
+    g.rect(4, -1, 1, 2).fill(halo);
+    // hot center pixel
+    g.rect(-1, -1, 2, 2).fill(0xFFFFFF);
   }
 
   update(dtMs: number, now: number) {
     if (!this.alive) return;
     const dt = dtMs / 1000;
 
-    // record current pos to trail (max 4 segments)
+    // longer trail history for speed sense
     this.trailHistory.unshift({ x: this.x, y: this.y });
-    if (this.trailHistory.length > 4) this.trailHistory.pop();
+    if (this.trailHistory.length > 6) this.trailHistory.pop();
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
-    // lifespan
     if (now - this.spawnAt > TUNE.PROJ_LIFE) {
       this.alive = false;
       return;
     }
 
-    // draw trail (hard pixel rectangles, descending alpha — no smooth gradient)
+    // Stronger contrast pixel trail
     const t = this.trail;
     t.clear();
     const halo = this.ownerIsPlayer ? COLOR.projPlayerTrail : COLOR.projEnemyTrail;
@@ -80,8 +87,9 @@ export class Projectile {
       const p = this.trailHistory[i];
       const dx = p.x - this.x;
       const dy = p.y - this.y;
-      const alpha = 0.7 - i * 0.16;
-      const size = 4 - i;
+      const alpha = 0.85 - i * 0.13;
+      const size = 5 - i;
+      if (size <= 0) continue;
       t.rect(dx - size / 2, dy - size / 2, size, size).fill({ color: halo, alpha });
     }
 

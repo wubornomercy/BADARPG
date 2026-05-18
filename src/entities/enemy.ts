@@ -1,9 +1,10 @@
 /**
- * Enemy entity — placeholder wraith. Moves toward player; takes hits; dies.
- * Phase 2 V1: single enemy type. More types added in subsequent commits.
+ * Enemy entity — Combat Feel V2
+ * Knockback velocity field, longer stagger, death squash scale on the
+ * frame of death.
  */
 import { Container, Graphics } from 'pixi.js';
-import { COLOR, TUNE, TIME } from '../tokens.js';
+import { COLOR, TUNE } from '../tokens.js';
 
 export class Enemy {
   container: Container;
@@ -21,6 +22,15 @@ export class Enemy {
   contactReadyAt = 0;
   staggerUntil = 0;
 
+  // Knockback impulse (separate from AI velocity, decays per-frame)
+  knockVx = 0;
+  knockVy = 0;
+
+  // Death squash flag — main loop reads this to play burst
+  diedThisFrame = false;
+  lastDamageDir = { x: 0, y: 0 };
+  lastWasCrit = false;
+
   constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
@@ -29,16 +39,14 @@ export class Enemy {
     this.container.label = 'enemy';
 
     this.shadow = new Graphics()
-      .ellipse(0, 14, 16, 4)
-      .fill({ color: 0x000000, alpha: 0.5 });
+      .ellipse(0, 14, 14, 4)
+      .fill({ color: 0x000000, alpha: 0.55 });
     this.container.addChild(this.shadow);
 
-    // Body — chunky wraith silhouette
     this.body = new Graphics();
     this.drawBody(0);
     this.container.addChild(this.body);
 
-    // Eyes — 2 red dots that always read as "threat"
     this.eyes = new Graphics();
     this.eyes.rect(-4, -8, 2, 2).fill(0xB2383F);
     this.eyes.rect(2, -8, 2, 2).fill(0xB2383F);
@@ -50,14 +58,12 @@ export class Enemy {
     g.clear();
     const base = COLOR.enemy;
     const lit = COLOR.enemyHit;
-    // Wraith shape — chunky pixel polygon
-    g.rect(-6, -12, 12, 4).fill(base);    // head
-    g.rect(-8, -8, 16, 14).fill(base);    // torso
-    g.rect(-10, -2, 4, 8).fill(base);     // arm L
-    g.rect(6, -2, 4, 8).fill(base);       // arm R
-    g.rect(-6, 6, 4, 8).fill(base);       // tail L
-    g.rect(2, 6, 4, 8).fill(base);        // tail R
-    // Threat aura (low saturation banded ring)
+    g.rect(-6, -12, 12, 4).fill(base);
+    g.rect(-8, -8, 16, 14).fill(base);
+    g.rect(-10, -2, 4, 8).fill(base);
+    g.rect(6, -2, 4, 8).fill(base);
+    g.rect(-6, 6, 4, 8).fill(base);
+    g.rect(2, 6, 4, 8).fill(base);
     g.rect(-9, -13, 18, 1).fill({ color: 0xB2383F, alpha: 0.20 });
     g.rect(-9, 14, 18, 1).fill({ color: 0xB2383F, alpha: 0.20 });
     if (hitAlpha > 0) {
@@ -69,49 +75,68 @@ export class Enemy {
     if (!this.alive) return;
     const dt = dtMs / 1000;
 
-    // Movement: simple seek toward player
+    // Knockback decays exponentially each frame
+    const decay = Math.min(1, TUNE.ENEMY_KNOCKBACK_DECAY * dt);
+    this.knockVx -= this.knockVx * decay;
+    this.knockVy -= this.knockVy * decay;
+
+    // AI movement: seek toward player (suppressed during stagger)
     const dx = target.x - this.x;
     const dy = target.y - this.y;
     const dist = Math.hypot(dx, dy);
 
     const staggered = now < this.staggerUntil;
-    const speed = staggered ? TUNE.ENEMY_SPEED * 0.25 : TUNE.ENEMY_SPEED;
+    const speed = staggered ? TUNE.ENEMY_SPEED * 0.12 : TUNE.ENEMY_SPEED;
     if (dist > 1) {
       this.vx = (dx / dist) * speed;
       this.vy = (dy / dist) * speed;
     } else {
       this.vx = this.vy = 0;
     }
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
 
-    // Render
+    // Combine AI + knockback velocity
+    this.x += (this.vx + this.knockVx) * dt;
+    this.y += (this.vy + this.knockVy) * dt;
+
     this.container.x = Math.round(this.x);
     this.container.y = Math.round(this.y);
 
-    // Hit flash decay
     if (now < this.hitFlashUntil) {
-      const t = (this.hitFlashUntil - now) / 120;
+      const t = Math.min(1, (this.hitFlashUntil - now) / 140);
       this.drawBody(t);
     } else {
       this.drawBody(0);
     }
   }
 
-  takeDamage(amount: number, now: number) {
-    if (!this.alive) return;
+  /**
+   * Apply damage with optional crit + knockback direction.
+   * Returns true if this hit killed the enemy.
+   */
+  takeDamage(
+    amount: number,
+    now: number,
+    dirX: number,
+    dirY: number,
+    isCrit: boolean,
+  ): boolean {
+    if (!this.alive) return false;
     this.hp -= amount;
-    this.hitFlashUntil = now + 120;
-    this.staggerUntil = now + 80;
+    this.hitFlashUntil = now + (isCrit ? 220 : 140);
+    this.staggerUntil = now + (isCrit ? TUNE.ENEMY_STAGGER_CRIT : TUNE.ENEMY_STAGGER_NORMAL);
+    const kb = isCrit ? TUNE.ENEMY_KNOCKBACK_CRIT : TUNE.ENEMY_KNOCKBACK;
+    this.knockVx += dirX * kb;
+    this.knockVy += dirY * kb;
+    this.lastDamageDir = { x: dirX, y: dirY };
+    this.lastWasCrit = isCrit;
     if (this.hp <= 0) {
       this.alive = false;
+      this.diedThisFrame = true;
+      return true;
     }
+    return false;
   }
 
-  canContact(now: number): boolean {
-    return now >= this.contactReadyAt;
-  }
-  applyContactCooldown(now: number) {
-    this.contactReadyAt = now + TUNE.ENEMY_CONTACT_CD;
-  }
+  canContact(now: number): boolean { return now >= this.contactReadyAt; }
+  applyContactCooldown(now: number) { this.contactReadyAt = now + TUNE.ENEMY_CONTACT_CD; }
 }

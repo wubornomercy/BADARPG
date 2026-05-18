@@ -81,41 +81,68 @@ export const COLOR = {
 // TIMING (milliseconds unless noted)
 // =========================================================================
 export const TIME = {
-  HOVER_DELAY:   80,
-  MOTION_HOVER:  120,
-  MOTION_PRESS:  80,
-  DODGE_DURATION: 220,        // dodge i-frame window
-  DODGE_COOLDOWN: 700,
-  HIT_STOP:       50,         // hit-stop pause on enemy hit
-  DAMAGE_LIFESPAN: 450,
+  HOVER_DELAY:    80,
+  MOTION_HOVER:   120,
+  MOTION_PRESS:   80,
+  DODGE_DURATION: 140,        // dodge i-frame window — shorter / harder
+  DODGE_COOLDOWN: 800,
+  HIT_STOP_NORMAL: 60,        // hit-stop pause on enemy hit
+  HIT_STOP_CRIT:   120,       // dramatic stop on crit
+  HIT_STOP_DEATH:  90,        // confirmation pause on kill
+  HIT_STOP_HURT:   120,       // when player is hit, the world stops briefly
+  DAMAGE_LIFESPAN: 480,
   LOOT_FADEIN:    120,
   LOOT_FADEOUT:   180,
+  FOOTSTEP_INTERVAL: 150,
+  IMPACT_FRAME:   90,
+  DEATH_BURST:    420,
 } as const;
 
 // =========================================================================
-// COMBAT TUNING
+// COMBAT TUNING — Combat Feel Foundation V2 (grounded ARPG, no float)
 // =========================================================================
 export const TUNE = {
-  // Player
-  PLAYER_MAX_SPEED:    360,   // px/s
-  PLAYER_ACCEL:        1800,  // px/s^2 (≈ 0.2s to max — responsive)
-  PLAYER_DECEL:        2400,  // px/s^2 (snappy stop)
+  // Player movement — snap controls, no slide
+  PLAYER_MAX_SPEED:    320,   // px/s (slightly slower than V1, feels weightier)
+  PLAYER_ACCEL:        7200,  // px/s^2 — ~45ms to max (instant ARPG feel)
+  PLAYER_DECEL:        9600,  // px/s^2 — ~33ms to zero (snappy stop)
   PLAYER_HP:           100,
   PLAYER_RADIUS:       14,
-  DODGE_SPEED_MULT:    3.0,   // burst velocity multiplier
+  // Dodge — short, hard, no slide tail
+  DODGE_SPEED_MULT:    4.5,   // burst velocity multiplier
+  // Recoil — micro kickback when shooting (adds "weight" to fire)
+  RECOIL_SPEED:        140,   // px/s impulse backward
   // Attack
-  PROJ_SPEED:          720,   // px/s
-  PROJ_LIFE:           1200,  // ms
+  PROJ_SPEED:          820,   // px/s — faster, more decisive
+  PROJ_LIFE:           1100,  // ms
   PROJ_DAMAGE:         24,
   PROJ_RADIUS:         5,
-  ATTACK_CD:           220,   // ms between shots
+  ATTACK_CD:           240,   // ms between shots
+  // Crit — punch through the floor when it lands
+  CRIT_CHANCE:         0.20,
+  CRIT_MULT:           2.5,
   // Enemy
   ENEMY_SPEED:         140,
   ENEMY_HP:            48,
   ENEMY_RADIUS:        14,
-  ENEMY_DAMAGE:        12,    // contact damage
+  ENEMY_DAMAGE:        12,
   ENEMY_CONTACT_CD:    600,
+  ENEMY_KNOCKBACK:     220,   // px/s burst when hit
+  ENEMY_KNOCKBACK_CRIT:380,
+  ENEMY_STAGGER_NORMAL: 160,  // ms
+  ENEMY_STAGGER_CRIT:   280,
+  ENEMY_KNOCKBACK_DECAY: 12,  // higher = decays faster
+  // Death feedback
+  DEATH_PARTICLE_COUNT:      16,
+  DEATH_PARTICLE_COUNT_CRIT: 22,
+  // Screen shake (max pixel offset)
+  SHAKE_HIT:    2,
+  SHAKE_CRIT:   7,
+  SHAKE_DEATH:  3,
+  SHAKE_HURT:   6,
   // Spawn
-  ENEMY_SPAWN_INTERVAL: 1800, // ms
+  ENEMY_SPAWN_INTERVAL: 1800,
   ENEMY_INITIAL_COUNT:  6,
+  // Foot dust
+  FOOTSTEP_VELOCITY_THRESHOLD: 80, // require moving >=80 px/s to spawn dust
 } as const;
