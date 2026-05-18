@@ -33,6 +33,12 @@ import {
   type SkillContext,
   type ProjectileEntity,
 } from './systems/skills/index.js';
+import {
+  ItemManager, AffixManager, LootGenerator, EquipmentManager,
+  ItemDebugPanel,
+  STARTER_BASES, STARTER_AFFIXES,
+  ItemRarity,
+} from './systems/items/index.js';
 import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
 import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange, getReturnScene } from './scene.js';
 import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
@@ -323,6 +329,25 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   skillDebug.attach(skills);
 
   // ---------------------------------------------------------------------
+  // Itemization core — registries + generator + equipment + debug panel.
+  // Loot now produces rolled ItemDefinition objects (rarity / implicits /
+  // affixes) instead of opaque rarity-only drops.
+  // ---------------------------------------------------------------------
+  const itemRegistry = new ItemManager();
+  itemRegistry.registerAll(STARTER_BASES);
+  const affixRegistry = new AffixManager();
+  affixRegistry.registerAll(STARTER_AFFIXES);
+  const lootGen = new LootGenerator(itemRegistry, affixRegistry);
+  const equipment = new EquipmentManager(itemRegistry, affixRegistry, player.statManager);
+
+  // F11 toggle — item / loot debug overlay.
+  const itemDebug = new ItemDebugPanel();
+  itemDebug.attach(lootGen, itemRegistry, affixRegistry);
+
+  /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
+  const PICKUP_RADIUS_PX = 40;
+
+  // ---------------------------------------------------------------------
   // HUD bridge — wire player state to HTML HUD overlay
   // ---------------------------------------------------------------------
   const $hudHp        = document.getElementById('hudHp')!;
@@ -464,6 +489,25 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     } else {
       // Slow decay when out of corruption
       corruptionMeter = Math.max(0, corruptionMeter - 0.04);
+    }
+
+    // ----- Pickup input (F by default) -----
+    if (wasActionPressed('pickup')) {
+      let nearestIdx = -1;
+      let nearestSq = PICKUP_RADIUS_PX * PICKUP_RADIUS_PX;
+      for (let i = 0; i < lootDrops.length; i++) {
+        const d = lootDrops[i];
+        if (!d.alive || !d.item) continue;
+        const dx = d.x - player.x, dy = d.y - player.y;
+        const ds = dx * dx + dy * dy;
+        if (ds < nearestSq) { nearestSq = ds; nearestIdx = i; }
+      }
+      if (nearestIdx >= 0) {
+        const d = lootDrops[nearestIdx];
+        if (d.item && player.pushInventory(d.item)) {
+          d.alive = false; // sweep handles container.destroy()
+        }
+      }
     }
 
     // ----- Movement input (rebindable 'move' action — default LMB held) -----
@@ -666,6 +710,8 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     // handlers stay registered for the app lifetime.
     void combatDebug;
     void skillDebug;
+    void itemDebug;
+    void equipment;
 
     endFrameInput();
   });
@@ -830,9 +876,19 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   }
 
   function dropLoot(x: number, y: number, now: number) {
-    const r = Math.random();
-    const rarity = r < 0.65 ? 'normal' : r < 0.92 ? 'magic' : 'rare';
-    const drop = new LootDrop(x, y, rarity, now);
+    // Item level = monster level. V1 has no level scaling on enemies yet,
+    // so floor at 1 — once enemy.level lands this becomes
+    // ItemLevelCalculator.fromMonsterLevel(enemy.level).
+    const item = lootGen.generate({ itemLevel: 1, position: { x, y } });
+    if (!item) return;
+    const base = itemRegistry.get(item.baseTypeId);
+    const baseName = base?.name ?? '未知物品';
+    const rarityLower =
+      item.rarity === ItemRarity.RARE  ? 'rare'  :
+      item.rarity === ItemRarity.MAGIC ? 'magic' :
+                                          'normal';
+    const drop = new LootDrop(x, y, rarityLower, now, baseName);
+    drop.item = item;
     lootDrops.push(drop);
     layerLoot.addChild(drop.container);
     sim.lootDrops++;

@@ -4,6 +4,7 @@
  */
 import { Container, Graphics, Text } from 'pixi.js';
 import { COLOR } from '../tokens.js';
+import type { ItemDefinition } from '../systems/items/types/ItemDefinition.js';
 
 type Rarity = 'normal' | 'magic' | 'rare';
 // Loot beam DISABLED per user feedback ("光柱做的太丑了，先禁用了之后重做").
@@ -27,13 +28,18 @@ export class LootDrop {
   x: number;
   y: number;
   rarity: Rarity;
+  /** Rolled item bound to this drop; set externally by LootGenerator wiring. */
+  item: ItemDefinition | null = null;
+  /** Display name override; if set, overrides the SAMPLE_NAMES filler. */
+  displayName: string | null = null;
 
   private beam: Graphics | null = null;
 
-  constructor(x: number, y: number, rarity: Rarity, now: number) {
+  constructor(x: number, y: number, rarity: Rarity, now: number, displayName?: string) {
     this.x = x; this.y = y;
     this.rarity = rarity;
     this.spawnAt = now;
+    this.displayName = displayName ?? null;
 
     this.container = new Container();
     this.container.label = 'loot';
@@ -59,7 +65,7 @@ export class LootDrop {
       .rect(-12, -3, 24, 1).fill(0x2A2E35);
     this.container.addChild(ped);
 
-    const name = pick(SAMPLE_NAMES[rarity]);
+    const name = displayName ?? pick(SAMPLE_NAMES[rarity]);
 
     // Label — sits just above the pedestal/beam, banner with rarity border
     const labelY = beamH > 0 ? -beamH - 6 : -14;

@@ -9,6 +9,8 @@ import { wasActionPressed, mouse } from '../input.js';
 import { StatManager } from '../systems/stats/core/StatManager.js';
 import { StatType } from '../systems/stats/types/StatType.js';
 import { PLAYER_LEVEL_1_BASE } from '../systems/stats/baseline.js';
+import type { ItemDefinition } from '../systems/items/types/ItemDefinition.js';
+import type { EquippedSet } from '../systems/items/core/EquipmentManager.js';
 
 /** Minimum distance before player considers the move target "reached". */
 const MOVE_STOP_DIST = 6;
@@ -37,6 +39,13 @@ export class Player {
   alive: boolean = true;
   /** Movement-speed baseline in stat units; maps to TUNE.PLAYER_MAX_SPEED 1:1. */
   private readonly moveSpeedBase: number;
+
+  // ---- Item-system driven ----
+  /** Linear inventory list. Capped at INVENTORY_CAP per spec. */
+  static readonly INVENTORY_CAP = 40;
+  inventory: ItemDefinition[] = [];
+  /** Slot → equipped item. EquipmentManager mutates this map. */
+  equippedItems: EquippedSet = {};
 
   // ---- Skill-system driven ----
   /** Skill slot bindings. Slot index → registered skill id; null = empty slot. */
@@ -258,6 +267,18 @@ export class Player {
   getCritChance(): number { return this.statManager.getFinalStat(StatType.CRIT_CHANCE) / 100; }
   /** Final crit multiplier as a multiplier (e.g. 1.5 = 150%). */
   getCritMultiplier(): number { return this.statManager.getFinalStat(StatType.CRIT_MULTIPLIER) / 100; }
+
+  /** Returns true if the item was added; false when the inventory is full. */
+  pushInventory(item: ItemDefinition): boolean {
+    if (this.inventory.length >= Player.INVENTORY_CAP) return false;
+    this.inventory.push(item);
+    return true;
+  }
+  /** Removes the item at `index` and returns it (null if out of range). */
+  popInventory(index: number): ItemDefinition | null {
+    if (index < 0 || index >= this.inventory.length) return null;
+    return this.inventory.splice(index, 1)[0];
+  }
 
   /** Apply micro recoil opposite to the shot direction (combat feel). */
   applyRecoil(dirX: number, dirY: number) {

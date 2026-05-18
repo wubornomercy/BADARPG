@@ -12,6 +12,7 @@ export type ActionId =
   | 'move'        // LMB by default
   | 'primary'     // RMB by default
   | 'dodge'       // Space
+  | 'pickup'      // F
   | 'skill1'      // Q
   | 'skill2'      // W
   | 'skill3'      // E
@@ -35,6 +36,7 @@ const DEFAULTS: Record<ActionId, { label: string; key: string }> = {
   move:           { label: '移动',          key: 'LMB' },
   primary:        { label: '主攻击',         key: 'RMB' },
   dodge:          { label: '翻滚',          key: 'Space' },
+  pickup:         { label: '拾取',          key: 'KeyF' },
   skill1:         { label: '技能 1',        key: 'KeyQ' },
   skill2:         { label: '技能 2',        key: 'KeyW' },
   skill3:         { label: '技能 3',        key: 'KeyE' },
