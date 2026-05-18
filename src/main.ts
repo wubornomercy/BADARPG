@@ -39,6 +39,16 @@ import {
   STARTER_BASES, STARTER_AFFIXES,
   ItemRarity,
 } from './systems/items/index.js';
+import {
+  MonsterManager, MonsterSpawner, MonsterDirector, MonsterProjectileManager,
+  EliteManager, AggroManager,
+  MonsterDebugPanel,
+  STARTER_MONSTERS, ELITE_VOLATILE,
+  MeleeChaseAI, RangedKiteAI, ChargerAI, SuicideAI, SummonerAI,
+  computeXPReward, computeLootMultiplier,
+  type MonsterRuntime, type MonsterFactory, type AIContext,
+} from './systems/monsters/index.js';
+import { MonsterArchetype } from './systems/monsters/types/MonsterArchetype.js';
 import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
 import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange, getReturnScene } from './scene.js';
 import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
@@ -150,32 +160,9 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   const enemies: Enemy[] = [];
   const lootDrops: LootDrop[] = [];
 
-  // Spawn-tracking state. MUST be declared BEFORE the seed loop below,
-  // because the loop calls spawnEnemyAtArenaEdge() which reads
-  // `nextEnemyId` — `let` bindings hit a TDZ ReferenceError if accessed
-  // before their declaration line.
-  let nextSpawnAt = 0;
-  let nextEnemyId = 0;
-
-  // Seed enemies around player
-  for (let i = 0; i < TUNE.ENEMY_INITIAL_COUNT; i++) {
-    spawnEnemyAtArenaEdge();
-  }
-
-  function spawnEnemyAtArenaEdge() {
-    if (!canSpawnEnemy()) return;
-    // Spawn at the rim of the arena ring (not at world edge)
-    const angle = Math.random() * Math.PI * 2;
-    const r = ARENA_HALF - 40 + Math.random() * 80;
-    const x = ARENA_CENTER_X + Math.cos(angle) * r;
-    const y = ARENA_CENTER_Y + Math.sin(angle) * r;
-    const e = new Enemy(x, y);
-    e.id = 'enemy_' + (++nextEnemyId);
-    e.container.zIndex = Math.round(e.y);
-    enemies.push(e);
-    layerActors.addChild(e.container);
-    sim.enemyCount++;
-  }
+  // Initial seed of monsters happens AFTER the MonsterDirector is wired up
+  // (see "Monster ecosystem" block below). The director also owns ongoing
+  // pacing — no inline top-up loop needed.
 
   // ---------------------------------------------------------------------
   // Debug HUD (Pixi overlay, top-right)
@@ -346,6 +333,116 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
   /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
   const PICKUP_RADIUS_PX = 40;
+
+  // ---------------------------------------------------------------------
+  // Monster ecosystem — registries, spawner, director, AI tick.
+  // The director owns pacing + composition; main.ts only provides the
+  // entity factory (Pixi-bound Enemy) + the world-state callbacks for
+  // the AI context.
+  // ---------------------------------------------------------------------
+  const monsterMgr = new MonsterManager();
+  monsterMgr.registerDefinitions(STARTER_MONSTERS);
+  monsterMgr.registerAIs([
+    new MeleeChaseAI(), new RangedKiteAI(), new ChargerAI(),
+    new SuicideAI(),    new SummonerAI(),
+  ]);
+  const eliteMgr = new EliteManager();
+  const monsterFactory: MonsterFactory = (def, level, pos, opts) => {
+    const m = new Enemy(pos.x, pos.y, def, level);
+    if (opts.summonerId) m.summonerId = opts.summonerId;
+    // Elite visual hint (e.g. TITANIC 1.25 sprite scale) applies after
+    // the modifier — EliteManager.applyTo runs in MonsterSpawner.
+    if (opts.eliteModifierId) {
+      const def = eliteMgr.get(opts.eliteModifierId);
+      if (def?.renderHints?.scale) m.baseVisualScale = def.renderHints.scale;
+    }
+    m.container.zIndex = Math.round(m.y);
+    enemies.push(m);
+    layerActors.addChild(m.container);
+    sim.enemyCount++;
+    return m;
+  };
+  const monsterSpawner = new MonsterSpawner(monsterMgr, eliteMgr, monsterFactory);
+  const monsterDirector = new MonsterDirector(monsterSpawner, {
+    dispatchIntervalSec: 4,
+  });
+  const monsterProjectiles = new MonsterProjectileManager();
+  monsterProjectiles.setOnSpawn((p) => {
+    const g = new Graphics();
+    g.rect(-3, -1, 6, 2).fill(0xC86B6B);
+    g.rect(-1, -3, 2, 6).fill(0xC86B6B);
+    g.rect(-1, -1, 2, 2).fill(0xF4E2C0);
+    g.x = Math.round(p.x); g.y = Math.round(p.y);
+    layerProjectiles.addChild(g);
+    p.renderHandle = g;
+  });
+  monsterProjectiles.setOnDeath((p) => {
+    const g = p.renderHandle as Graphics | null;
+    if (g) { g.destroy(); p.renderHandle = null; }
+  });
+
+  // Initial spawn — one wave at startup so the arena isn't empty.
+  monsterDirector.dispatchOne({ now: 0, player: { x: player.x, y: player.y }, activeMonsters: enemies });
+
+  // Aggro on damage taken — set on the monster when it's the target.
+  combat.events.on(CombatEventType.ON_DAMAGE_TAKEN, (ev) => {
+    if (ev.target === (player as unknown as CombatEntity)) return;
+    const m = ev.target as unknown as Enemy;
+    if (typeof (m as any).aggroUntil === 'number') {
+      AggroManager.acquire(m as unknown as MonsterRuntime, performance.now());
+    }
+  });
+
+  // XP + volatile death + loot multiplier — all on ON_KILL when the
+  // killed target is a monster owned by the live `enemies` array.
+  combat.events.on(CombatEventType.ON_KILL, (ev) => {
+    const m = ev.target as unknown as Enemy;
+    if (typeof (m as any).definition === 'undefined') return; // not a monster
+    const isElite = m.eliteModifierIds.length > 0;
+    const xp = computeXPReward(m.definition, m.level, isElite);
+    const levels = player.gainXP(xp);
+    if (levels > 0) {
+      // Refill HP / mana on level-up — small QoL touch.
+      player.hp = player.hpMax;
+      player.mana = player.maxMana;
+    }
+    // Volatile elite — fire an AOE blast through the pipeline.
+    if (m.eliteModifierIds.includes(ELITE_VOLATILE.id)) {
+      const def = eliteMgr.get(ELITE_VOLATILE.id)!.onDeathExplosion!;
+      const radiusPx = def.radius * 32;
+      const dxp = player.x - m.x, dyp = player.y - m.y;
+      if (dxp * dxp + dyp * dyp <= radiusPx * radiusPx && player.alive && !player.isInvulnerable(performance.now())) {
+        combat.resolve(m, player, {
+          sourceEntityId: m.id,
+          targetEntityId: player.id,
+          sourceTags:     [...def.tags],
+          baseDamage:     def.baseDamage,
+          damageType:     def.damageType,
+          canCrit:        false,
+          canBeBlocked:   false,
+          canBeDodged:    false,
+        });
+      }
+    }
+    // Loot multiplier: bonus drops on top of the single base drop.
+    const mult = computeLootMultiplier(m.definition, m.level, isElite);
+    const extraGuaranteed = Math.floor(mult) - 1;
+    for (let i = 0; i < extraGuaranteed; i++) {
+      dropLoot(m.x + (Math.random() - 0.5) * 24, m.y + (Math.random() - 0.5) * 24, performance.now());
+    }
+    if (Math.random() < (mult - Math.floor(mult))) {
+      dropLoot(m.x + (Math.random() - 0.5) * 24, m.y + (Math.random() - 0.5) * 24, performance.now());
+    }
+    // Clean up elite modifiers from the dying monster's StatManager.
+    if (isElite) eliteMgr.removeFrom(m as unknown as MonsterRuntime);
+  });
+
+  // F12 — monster debug overlay.
+  const monsterDebug = new MonsterDebugPanel();
+  monsterDebug.attach(monsterDirector, () => enemies as unknown as readonly MonsterRuntime[]);
+
+  // Per-frame state mutated by closures below.
+  let nextSpawnAt = 0; void nextSpawnAt; // legacy compat for the removed inline spawner
 
   // ---------------------------------------------------------------------
   // HUD bridge — wire player state to HTML HUD overlay
@@ -555,16 +652,56 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     if (isActionHeld('skill3'))  castSlot(2);
     if (isActionHeld('skill4'))  castSlot(3);
 
-    // ----- Enemy spawner (top up to 8 active) -----
-    if (now >= nextSpawnAt && enemies.filter(e => e.alive).length < 8) {
-      spawnEnemyAtArenaEdge();
-      nextSpawnAt = now + TUNE.ENEMY_SPAWN_INTERVAL;
-    }
+    // ----- Monster director (pacing + composition) -----
+    monsterDirector.update({
+      now, player: { x: player.x, y: player.y }, activeMonsters: enemies as unknown as readonly MonsterRuntime[],
+    });
 
-    // ----- Enemies -----
+    // ----- Monster AI tick + entity update -----
+    const aiCtx: AIContext = {
+      now, dtSec: dt / 1000,
+      player: {
+        id: player.id, x: player.x, y: player.y,
+        statManager: player.statManager, alive: player.alive,
+        isInvulnerable: (n: number) => player.isInvulnerable(n),
+      },
+      damage: combat,
+      spawnProjectile: (owner, origin, dir, cfg) => {
+        monsterProjectiles.spawn({
+          owner, origin, dir,
+          speed: cfg.speed,
+          damage: cfg.damage,
+          damageType: cfg.damageType,
+          tags: cfg.tags,
+          radius: cfg.radius,
+          maxDistance: cfg.maxDistance,
+          now,
+        });
+      },
+      spawnSummon: (defId, pos, ownerId) => {
+        return monsterSpawner.spawn({
+          definitionId: defId,
+          position:     pos,
+          summonerId:   ownerId,
+          eliteChance:  0,
+        });
+      },
+      livingSummonsOf: (ownerId) => enemies.filter((m) => m.alive && m.summonerId === ownerId).length,
+      enemiesInRadius: (cx, cy, r) => {
+        const out: CombatEntity[] = [];
+        for (const e of enemies) {
+          if (!e.alive) continue;
+          const dx = e.x - cx, dy = e.y - cy;
+          if (dx * dx + dy * dy <= r * r) out.push(e);
+        }
+        return out;
+      },
+    };
     for (const e of enemies) {
       if (!e.alive) continue;
-      e.update(dt, now, { x: player.x, y: player.y });
+      const ai = monsterMgr.aiFor(e.definition);
+      if (ai) ai.tick(e as unknown as MonsterRuntime, aiCtx);
+      e.update(dt, now);
     }
 
     // ----- Entity separation (no-overlap physics) -----
@@ -610,10 +747,14 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
         const overlap = EE_MIN - dist;
         const nx = dx / dist;
         const ny = dy / dist;
-        a.x -= nx * overlap * 0.5;
-        a.y -= ny * overlap * 0.5;
-        b.x += nx * overlap * 0.5;
-        b.y += ny * overlap * 0.5;
+        // Per-role separation strength (spec patch 3): SWARM=0.35 lets
+        // swarms partially overlap; non-SWARM=0.80 keeps them apart.
+        const strength = Math.min(a.separationStrength, b.separationStrength);
+        const halfPush = overlap * strength * 0.5;
+        a.x -= nx * halfPush;
+        a.y -= ny * halfPush;
+        b.x += nx * halfPush;
+        b.y += ny * halfPush;
       }
     }
     // Clamp post-separation positions back into the world.
@@ -712,6 +853,22 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     void skillDebug;
     void itemDebug;
     void equipment;
+    void monsterDebug;
+
+    // ----- Monster projectile tick + render sync -----
+    monsterProjectiles.update({
+      dtSec: dt / 1000,
+      now,
+      pipeline: combat,
+      player,
+      worldBounds: { minX: -40, minY: -40, maxX: WORLD_W + 40, maxY: WORLD_H + 40 },
+      isPlayerInvulnerable: (n) => player.isInvulnerable(n),
+    });
+    for (const p of monsterProjectiles.all()) {
+      const g = p.renderHandle as Graphics | null;
+      if (!g) continue;
+      g.x = Math.round(p.x); g.y = Math.round(p.y);
+    }
 
     endFrameInput();
   });

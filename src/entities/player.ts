@@ -47,6 +47,14 @@ export class Player {
   /** Slot → equipped item. EquipmentManager mutates this map. */
   equippedItems: EquippedSet = {};
 
+  // ---- Progression ----
+  /** Current player level. Increments via gainXP() when xp >= xpRequired. */
+  level: number = 1;
+  /** Banked XP toward the next level. */
+  xp: number = 0;
+  /** XP required for the next level. Recomputed on each level-up via spec formula 40 * level^1.35. */
+  xpRequired: number = 40;
+
   // ---- Skill-system driven ----
   /** Skill slot bindings. Slot index → registered skill id; null = empty slot. */
   equippedSkills: (string | null)[] = [null, null, null, null, null];
@@ -278,6 +286,44 @@ export class Player {
   popInventory(index: number): ItemDefinition | null {
     if (index < 0 || index >= this.inventory.length) return null;
     return this.inventory.splice(index, 1)[0];
+  }
+
+  /**
+   * Award `amount` XP and process any level-ups. Per spec each level grants
+   * +2 to each primary attribute via StatManager modifiers (sourceId
+   * `level_up_<level>` for traceability).
+   *
+   * Returns the number of levels gained this call.
+   */
+  gainXP(amount: number): number {
+    if (amount <= 0) return 0;
+    this.xp += amount;
+    let levels = 0;
+    while (this.xp >= this.xpRequired) {
+      this.xp -= this.xpRequired;
+      this.level++;
+      levels++;
+      this.applyLevelUpStats(this.level);
+      this.xpRequired = Math.floor(40 * Math.pow(this.level, 1.35));
+    }
+    return levels;
+  }
+
+  private applyLevelUpStats(newLevel: number): void {
+    const sourceId = `level_up_${newLevel}`;
+    const primary: StatType[] = [
+      StatType.STRENGTH, StatType.DEXTERITY, StatType.INTELLIGENCE, StatType.VITALITY,
+    ];
+    for (const stat of primary) {
+      this.statManager.modifiers.add({
+        id: '',
+        stat,
+        modifierType: 'FLAT' as any,
+        value: 2,
+        sourceType: 'PASSIVE' as any,
+        sourceId,
+      });
+    }
   }
 
   /** Apply micro recoil opposite to the shot direction (combat feel). */
