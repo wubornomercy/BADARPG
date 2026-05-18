@@ -58,25 +58,25 @@
   const LOOT_MAX = 8;
   const LOOT_FADE_OUT = 180;
   const LOOT_TABLE = [
-    // weight, rarity class, label
+    // weight, rarity class, label (display text — Chinese)
     [60, 'loot-normal',    [
-      'Cracked Shortbow', 'Splintered Buckler', 'Rusted Dagger',
-      'Tattered Cloak',   'Faded Charm',         'Worn Boots',
+      '锈裂短弓', '裂痕圆盾', '锈蚀匕首',
+      '残破斗篷', '褪色护符', '磨损战靴',
     ]],
     [22, 'loot-magic',     [
-      "Cunning Cap of Vigor", "Stalker's Bracers of Haste",
-      "Mage's Sigil of the Mind", "Sworn Belt of Endurance",
+      '精巧·活力之冠', '潜行者·疾速护腕',
+      '法师·心智印记', '誓约·耐力之带',
     ]],
     [12, 'loot-rare',      [
-      "Reaver's Gauntlet",     "Hexbound Crest",
-      "Coldsteel Aegis",       "Witch-Pact Talisman",
+      '掠夺者之锁手', '咒缚之徽',
+      '冷钢之盾',     '巫约护符',
     ]],
     [5,  'loot-legendary', [
-      "Stormcaller's Talon",   "Heart of the Forgotten Reaver",
-      "Crown of the Hollow King", "Worldsplitter",
+      '召雷者之爪',   '遗忘掠夺者之心',
+      '空王之冠',     '裂世者',
     ]],
     [1,  'loot-heaven',    [
-      "Untouched Ember", "Last Vow of Light", "The Final Star",
+      '不灭之烬', '光的最后誓言', '最末之星',
     ]],
   ];
   // Compute cumulative weights once

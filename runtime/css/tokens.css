@@ -62,9 +62,14 @@
   --clr-sem-arcane:     #3A6FA8;
   --clr-sem-heal:       #5E8C5A;
 
-  /* ---------- Typography ---------- */
-  --font-display: 'Cinzel', 'Times New Roman', serif;
-  --font-ui:      'Inter', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  /* ---------- Typography ----------
+     Stacks include CJK fallbacks so Latin chars render in
+     Cinzel / Inter while CJK chars render in Noto Serif/Sans SC. */
+  --font-display: 'Cinzel', 'Noto Serif SC', 'Source Han Serif SC',
+                  'Times New Roman', serif;
+  --font-ui:      'Inter', 'Noto Sans SC', 'PingFang SC',
+                  'Microsoft YaHei', 'IBM Plex Sans', 'Segoe UI',
+                  sans-serif;
 
   --type-logo:    96px;
   --type-btn:     18px;

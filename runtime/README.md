@@ -9,6 +9,28 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | HUD V1 | `hud.html` | ✅ Locked |
 | Tooltip V1 | `tooltip.html` | ✅ Locked |
 
+## Localization (本地化)
+
+All in-game display strings are **Simplified Chinese (zh-CN)**:
+- Button labels, status text, area names, orb readouts, XP labels
+- Loot label item names (HUD)
+- Tooltip: item names, types, affixes, descriptions, tags, flavor, status
+- Section labels, page titles, comparison labels
+
+**Boundary:**
+- Display strings → Chinese
+- `BAD ARPG` logo → kept as English brand mark (Chinese gaming convention)
+- Code (file names, class names, JS variables, CSS tokens, data attributes) → English
+- Code comments / README / commit messages → English
+
+**Font stack** (see `css/tokens.css`):
+- Display: `Cinzel, Noto Serif SC, Source Han Serif SC, …, serif`
+- UI:      `Inter, Noto Sans SC, PingFang SC, Microsoft YaHei, …, sans-serif`
+
+Browser uses the first available font per glyph — Latin chars render in Cinzel/Inter, CJK chars fall back to Noto Sans/Serif SC (loaded from Google Fonts CDN).
+
+> Translations in this Phase 1 prototype are working placeholders. Final game-content localization (item naming tone, flavor copy, term consistency) will be issued by the Game Director (ChatGPT) when content production phase begins.
+
 ## What this is
 A 1920×1080 fixed-layout scene that locks the **UI design system foundation** for the rest of the project:
 - Information hierarchy

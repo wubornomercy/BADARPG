@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>BAD ARPG — Tooltip System V1 (Runtime Blueprint)</title>
+  <title>BAD ARPG — 物品提示系统 V1 (Runtime Blueprint)</title>
   <meta name="viewport" content="width=1920, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/layout.css" />
@@ -21,130 +21,130 @@
 
       <!-- Title strip -->
       <div class="tt-page-title">
-        <span>Tooltip System V1</span>
-        <span class="tt-page-title-sub">Loot Evaluation Foundation · 1920 × 1080</span>
+        <span>物品提示系统 V1</span>
+        <span class="tt-page-title-sub">战利品评估基础 · 1920 × 1080</span>
         <span>BAD ARPG</span>
       </div>
 
       <!-- ============================================================
-           ROW 1 — Rarity showcase (Normal · Magic · Rare · Legendary)
+           ROW 1 — 稀有度展示（普通 · 魔法 · 稀有 · 传奇）
            ============================================================ -->
 
-      <!-- Normal -->
+      <!-- 普通 Normal -->
       <div style="position:absolute; left:63px; top:84px; width:420px;">
-        <div class="tt-section-label">Rarity · Normal</div>
+        <div class="tt-section-label">稀有度 · 普通</div>
         <div class="tooltip tooltip-normal" data-item="cracked-shortbow">
           <div class="tt-header">
-            <div class="tt-name">Cracked Shortbow</div>
-            <div class="tt-type">Hunter Bow · Normal</div>
+            <div class="tt-name">锈裂短弓</div>
+            <div class="tt-type">猎人弓 · 普通</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-core">
-            <span class="tt-core-label">Damage</span><span class="tt-core-val">12 – 24</span>
-            <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.30 /s</span>
-            <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">5.0 %</span>
+            <span class="tt-core-label">伤害</span><span class="tt-core-val">12 – 24</span>
+            <span class="tt-core-label">攻击速度</span><span class="tt-core-val">1.30 /秒</span>
+            <span class="tt-core-label">暴击率</span><span class="tt-core-val">5.0 %</span>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-affixes">
-            <div class="tt-affix-t3 has-own-sign" style="opacity:0.6">No affixes</div>
+            <div class="tt-affix-t3 has-own-sign" style="opacity:0.6">无词缀</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-utility">
-            <div class="tt-req">Requires <strong>Lv 1</strong></div>
+            <div class="tt-req">需求 <strong>等级 1</strong></div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-bottom">
             <div class="tt-meta">
               <span class="tt-value">8</span>
-              <span class="tt-corruption">Uncorrupted</span>
+              <span class="tt-corruption">未腐化</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Magic -->
+      <!-- 魔法 Magic -->
       <div style="position:absolute; left:521px; top:84px; width:420px;">
-        <div class="tt-section-label">Rarity · Magic</div>
+        <div class="tt-section-label">稀有度 · 魔法</div>
         <div class="tooltip tooltip-magic" data-item="cunning-cap">
           <div class="tt-header">
-            <div class="tt-name">Cunning Cap of Vigor</div>
-            <div class="tt-type">Leather Hood · Magic</div>
+            <div class="tt-name">精巧·活力之冠</div>
+            <div class="tt-type">皮革兜帽 · 魔法</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-core">
-            <span class="tt-core-label">Armor</span><span class="tt-core-val">24</span>
+            <span class="tt-core-label">护甲</span><span class="tt-core-val">24</span>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-affixes">
-            <div class="tt-affix-t2">14% Crit Chance</div>
-            <div class="tt-affix-t2">8% Cast Speed</div>
+            <div class="tt-affix-t2">14% 暴击率</div>
+            <div class="tt-affix-t2">8% 施法速度</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-utility">
-            <div class="tt-req">Requires <strong>Lv 6</strong></div>
+            <div class="tt-req">需求 <strong>等级 6</strong></div>
             <div class="tt-tags">
-              <span class="tt-tag tt-tag-crit">crit</span>
+              <span class="tt-tag tt-tag-crit">暴击</span>
             </div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-bottom">
             <div class="tt-meta">
               <span class="tt-value">42</span>
-              <span class="tt-corruption">Uncorrupted</span>
+              <span class="tt-corruption">未腐化</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Rare -->
+      <!-- 稀有 Rare -->
       <div style="position:absolute; left:979px; top:84px; width:420px;">
-        <div class="tt-section-label">Rarity · Rare</div>
+        <div class="tt-section-label">稀有度 · 稀有</div>
         <div class="tooltip tooltip-rare" data-item="reavers-gauntlet">
           <div class="tt-header">
-            <div class="tt-name">Reaver's Gauntlet</div>
-            <div class="tt-type">Steel Gauntlet · Rare</div>
+            <div class="tt-name">掠夺者之锁手</div>
+            <div class="tt-type">钢铁锁手 · 稀有</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-core">
-            <span class="tt-core-label">Armor</span><span class="tt-core-val">86</span>
+            <span class="tt-core-label">护甲</span><span class="tt-core-val">86</span>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-affixes">
-            <div class="tt-affix-t2">18% Attack Speed</div>
-            <div class="tt-affix-t2">14% Crit Damage</div>
-            <div class="tt-affix-t3">24 Life</div>
-            <div class="tt-affix-t3">16% Fire Resistance</div>
+            <div class="tt-affix-t2">18% 攻击速度</div>
+            <div class="tt-affix-t2">14% 暴击伤害</div>
+            <div class="tt-affix-t3">24 生命</div>
+            <div class="tt-affix-t3">16% 火焰抗性</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-utility">
-            <div class="tt-req">Requires <strong>Lv 8 · Str 18</strong></div>
+            <div class="tt-req">需求 <strong>等级 8 · 力量 18</strong></div>
             <div class="tt-tags">
-              <span class="tt-tag tt-tag-crit">crit</span>
+              <span class="tt-tag tt-tag-crit">暴击</span>
             </div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-bottom">
             <div class="tt-meta">
               <span class="tt-value">180</span>
-              <span class="tt-corruption">Uncorrupted</span>
+              <span class="tt-corruption">未腐化</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Legendary -->
+      <!-- 传奇 Legendary -->
       <div style="position:absolute; left:1437px; top:84px; width:420px;">
-        <div class="tt-section-label">Rarity · Legendary</div>
+        <div class="tt-section-label">稀有度 · 传奇</div>
         <div class="tooltip tooltip-legendary" data-item="stormcaller">
           <div class="tt-header">
-            <div class="tt-name">Stormcaller's Talon</div>
-            <div class="tt-type">Hunter Bow · Legendary</div>
+            <div class="tt-name">召雷者之爪</div>
+            <div class="tt-type">猎人弓 · 传奇</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-core">
-            <span class="tt-core-label">Damage</span><span class="tt-core-val">68 – 142</span>
-            <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.42 /s</span>
-            <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">7.2 %</span>
+            <span class="tt-core-label">伤害</span><span class="tt-core-val">68 – 142</span>
+            <span class="tt-core-label">攻击速度</span><span class="tt-core-val">1.42 /秒</span>
+            <span class="tt-core-label">暴击率</span><span class="tt-core-val">7.2 %</span>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-affixes">
@@ -152,51 +152,51 @@
               <span class="tt-affix-t1-marker"></span>
               <div>
                 <div>
-                  <span class="tt-affix-t1-name">Ricochet Chain</span>
-                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                  <span class="tt-affix-t1-name">弹射连锁</span>
+                  <span class="tt-affix-t1-tag">流派核心</span>
                 </div>
-                <div class="tt-affix-t1-desc">Projectiles ricochet up to 4 times to nearby enemies.</div>
+                <div class="tt-affix-t1-desc">投射物可向附近敌人弹射多达 4 次。</div>
               </div>
             </div>
-            <div class="tt-affix-t2">28% Projectile Damage</div>
-            <div class="tt-affix-t2">16% Crit Chance</div>
-            <div class="tt-affix-t3">38 Life</div>
+            <div class="tt-affix-t2">28% 投射物伤害</div>
+            <div class="tt-affix-t2">16% 暴击率</div>
+            <div class="tt-affix-t3">38 生命</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-utility">
-            <div class="tt-req">Requires <strong>Lv 14 · Dex 28</strong></div>
+            <div class="tt-req">需求 <strong>等级 14 · 敏捷 28</strong></div>
             <div class="tt-tags">
-              <span class="tt-tag tt-tag-ricochet">ricochet</span>
-              <span class="tt-tag tt-tag-crit">crit</span>
-              <span class="tt-tag tt-tag-projectile">projectile</span>
+              <span class="tt-tag tt-tag-ricochet">弹射</span>
+              <span class="tt-tag tt-tag-crit">暴击</span>
+              <span class="tt-tag tt-tag-projectile">投射物</span>
             </div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-bottom">
-            <div class="tt-flavor">"The bow that calls down the sky."</div>
+            <div class="tt-flavor">「召唤天空降下之弓。」</div>
             <div class="tt-meta">
               <span class="tt-value">1450</span>
-              <span class="tt-corruption">Uncorrupted</span>
+              <span class="tt-corruption">未腐化</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- ============================================================
-           ROW 2 — Heaven (left) + Comparison runtime (right)
+           ROW 2 — 神圣（左）+ 装备比较（右）
            ============================================================ -->
 
-      <!-- Heaven -->
+      <!-- 神圣 Heaven -->
       <div style="position:absolute; left:283px; top:560px; width:420px;">
-        <div class="tt-section-label">Rarity · Heaven · Mythic Tier</div>
+        <div class="tt-section-label">稀有度 · 神圣 · 神话级</div>
         <div class="tooltip tooltip-heaven" data-item="venomspike-loop">
           <div class="tt-header">
-            <div class="tt-name">Venomspike Loop</div>
-            <div class="tt-type">Mythic Ring · Heaven</div>
+            <div class="tt-name">蛇毒之环</div>
+            <div class="tt-type">神话戒指 · 神圣</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-core">
-            <span class="tt-core-label">Item Level</span><span class="tt-core-val">30</span>
+            <span class="tt-core-label">物品等级</span><span class="tt-core-val">30</span>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-affixes">
@@ -204,62 +204,62 @@
               <span class="tt-affix-t1-marker"></span>
               <div>
                 <div>
-                  <span class="tt-affix-t1-name">Venom Bloom</span>
-                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                  <span class="tt-affix-t1-name">蛇毒绽放</span>
+                  <span class="tt-affix-t1-tag">流派核心</span>
                 </div>
-                <div class="tt-affix-t1-desc">Critical hits spread Poison to all enemies within 6m.</div>
+                <div class="tt-affix-t1-desc">暴击会向 6 米内所有敌人散布毒素。</div>
               </div>
             </div>
             <div class="tt-affix-t1">
               <span class="tt-affix-t1-marker"></span>
               <div>
                 <div>
-                  <span class="tt-affix-t1-name">Corpsewake Trigger</span>
-                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                  <span class="tt-affix-t1-name">尸蚀触发</span>
+                  <span class="tt-affix-t1-tag">流派核心</span>
                 </div>
-                <div class="tt-affix-t1-desc">Killing a Poisoned enemy triggers your last cast skill at 60% power.</div>
+                <div class="tt-affix-t1-desc">击杀中毒敌人时，以 60% 强度触发你最近使用的技能。</div>
               </div>
             </div>
-            <div class="tt-affix-t2">28% Crit Chance</div>
-            <div class="tt-affix-t2">24% Poison Damage</div>
+            <div class="tt-affix-t2">28% 暴击率</div>
+            <div class="tt-affix-t2">24% 毒素伤害</div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-utility">
-            <div class="tt-req">Requires <strong>Lv 30</strong></div>
+            <div class="tt-req">需求 <strong>等级 30</strong></div>
             <div class="tt-tags">
-              <span class="tt-tag tt-tag-poison">poison</span>
-              <span class="tt-tag tt-tag-crit">crit</span>
-              <span class="tt-tag tt-tag-trigger">trigger</span>
-              <span class="tt-tag tt-tag-corruption">corruption</span>
+              <span class="tt-tag tt-tag-poison">毒素</span>
+              <span class="tt-tag tt-tag-crit">暴击</span>
+              <span class="tt-tag tt-tag-trigger">触发</span>
+              <span class="tt-tag tt-tag-corruption">腐化</span>
             </div>
           </div>
           <div class="tt-divider"></div>
           <div class="tt-bottom">
-            <div class="tt-flavor">"The serpent's circle. Where she walks, the soil drinks."</div>
+            <div class="tt-flavor">「巨蛇的环。她走过之处，土地饮尽。」</div>
             <div class="tt-meta">
               <span class="tt-value">9999</span>
-              <span class="tt-corruption is-corrupted">Corrupted +3</span>
+              <span class="tt-corruption is-corrupted">腐化 +3</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Comparison block: Equipped → New -->
+      <!-- Comparison block: 当前 → 新装备 -->
       <div style="position:absolute; left:741px; top:560px;">
-        <div class="tt-section-label">Comparison Runtime · Equipped → New</div>
+        <div class="tt-section-label">装备比较 · 当前 → 新装备</div>
         <div class="comparison">
           <div class="comparison-side">
-            <div class="comparison-label equipped">Equipped</div>
+            <div class="comparison-label equipped">当前装备</div>
             <div class="tooltip tooltip-legendary" data-item="stormcaller-eq">
               <div class="tt-header">
-                <div class="tt-name">Stormcaller's Talon</div>
-                <div class="tt-type">Hunter Bow · Legendary</div>
+                <div class="tt-name">召雷者之爪</div>
+                <div class="tt-type">猎人弓 · 传奇</div>
               </div>
               <div class="tt-divider"></div>
               <div class="tt-core">
-                <span class="tt-core-label">Damage</span><span class="tt-core-val">68 – 142</span>
-                <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.42 /s</span>
-                <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">7.2 %</span>
+                <span class="tt-core-label">伤害</span><span class="tt-core-val">68 – 142</span>
+                <span class="tt-core-label">攻击速度</span><span class="tt-core-val">1.42 /秒</span>
+                <span class="tt-core-label">暴击率</span><span class="tt-core-val">7.2 %</span>
               </div>
               <div class="tt-divider"></div>
               <div class="tt-affixes">
@@ -267,23 +267,23 @@
                   <span class="tt-affix-t1-marker"></span>
                   <div>
                     <div>
-                      <span class="tt-affix-t1-name">Ricochet Chain</span>
-                      <span class="tt-affix-t1-tag">Build Enabling</span>
+                      <span class="tt-affix-t1-name">弹射连锁</span>
+                      <span class="tt-affix-t1-tag">流派核心</span>
                     </div>
-                    <div class="tt-affix-t1-desc">Projectiles ricochet up to 4 times to nearby enemies.</div>
+                    <div class="tt-affix-t1-desc">投射物可向附近敌人弹射多达 4 次。</div>
                   </div>
                 </div>
-                <div class="tt-affix-t2">28% Projectile Damage</div>
-                <div class="tt-affix-t2">16% Crit Chance</div>
-                <div class="tt-affix-t3">38 Life</div>
+                <div class="tt-affix-t2">28% 投射物伤害</div>
+                <div class="tt-affix-t2">16% 暴击率</div>
+                <div class="tt-affix-t3">38 生命</div>
               </div>
               <div class="tt-divider"></div>
               <div class="tt-utility">
-                <div class="tt-req">Requires <strong>Lv 14 · Dex 28</strong></div>
+                <div class="tt-req">需求 <strong>等级 14 · 敏捷 28</strong></div>
                 <div class="tt-tags">
-                  <span class="tt-tag tt-tag-ricochet">ricochet</span>
-                  <span class="tt-tag tt-tag-crit">crit</span>
-                  <span class="tt-tag tt-tag-projectile">projectile</span>
+                  <span class="tt-tag tt-tag-ricochet">弹射</span>
+                  <span class="tt-tag tt-tag-crit">暴击</span>
+                  <span class="tt-tag tt-tag-projectile">投射物</span>
                 </div>
               </div>
             </div>
@@ -292,23 +292,23 @@
           <div class="comparison-arrow">→</div>
 
           <div class="comparison-side">
-            <div class="comparison-label new">New · Drop</div>
+            <div class="comparison-label new">新装备 · 掉落</div>
             <div class="tooltip tooltip-legendary" data-item="ricochet-apostle">
               <div class="tt-header">
-                <div class="tt-name">Ricochet Apostle Bow</div>
-                <div class="tt-type">Hunter Bow · Legendary</div>
+                <div class="tt-name">弹射使徒之弓</div>
+                <div class="tt-type">猎人弓 · 传奇</div>
               </div>
               <div class="tt-divider"></div>
               <div class="tt-core">
-                <span class="tt-core-label">Damage</span>
+                <span class="tt-core-label">伤害</span>
                 <span class="tt-core-val">62 – 138
                   <span class="tt-cmp-delta tt-cmp-down">−6</span>
                 </span>
-                <span class="tt-core-label">Attack Speed</span>
-                <span class="tt-core-val">1.48 /s
+                <span class="tt-core-label">攻击速度</span>
+                <span class="tt-core-val">1.48 /秒
                   <span class="tt-cmp-delta tt-cmp-up">+0.06</span>
                 </span>
-                <span class="tt-core-label">Crit Chance</span>
+                <span class="tt-core-label">暴击率</span>
                 <span class="tt-core-val">6.8 %
                   <span class="tt-cmp-delta tt-cmp-down">−0.4</span>
                 </span>
@@ -319,31 +319,31 @@
                   <span class="tt-affix-t1-marker"></span>
                   <div>
                     <div>
-                      <span class="tt-affix-t1-name">Apostle's Volley</span>
-                      <span class="tt-affix-t1-tag">Build Enabling · Changed</span>
+                      <span class="tt-affix-t1-name">使徒齐射</span>
+                      <span class="tt-affix-t1-tag">流派核心 · 已变更</span>
                     </div>
-                    <div class="tt-affix-t1-desc">Each ricochet has a 25% chance to split into 2 projectiles.</div>
+                    <div class="tt-affix-t1-desc">每次弹射有 25% 几率分裂为 2 个投射物。</div>
                   </div>
                 </div>
-                <div class="tt-affix-t2 tt-cmp-down">24% Projectile Damage
+                <div class="tt-affix-t2 tt-cmp-down">24% 投射物伤害
                   <span class="tt-cmp-delta tt-cmp-down">−4%</span>
                 </div>
-                <div class="tt-affix-t2 tt-cmp-up">22% Attack Speed
+                <div class="tt-affix-t2 tt-cmp-up">22% 攻击速度
                   <span class="tt-cmp-delta tt-cmp-up">+10%</span>
                 </div>
-                <div class="tt-affix-t2">8% Movement Speed
-                  <span class="tt-cmp-delta tt-cmp-up">NEW</span>
+                <div class="tt-affix-t2">8% 移动速度
+                  <span class="tt-cmp-delta tt-cmp-up">新增</span>
                 </div>
-                <div class="tt-affix-t3 tt-cmp-down">28 Life
+                <div class="tt-affix-t3 tt-cmp-down">28 生命
                   <span class="tt-cmp-delta tt-cmp-down">−10</span>
                 </div>
               </div>
               <div class="tt-divider"></div>
               <div class="tt-utility">
-                <div class="tt-req">Requires <strong>Lv 14 · Dex 30</strong></div>
+                <div class="tt-req">需求 <strong>等级 14 · 敏捷 30</strong></div>
                 <div class="tt-tags">
-                  <span class="tt-tag tt-tag-ricochet">ricochet</span>
-                  <span class="tt-tag tt-tag-projectile">projectile</span>
+                  <span class="tt-tag tt-tag-ricochet">弹射</span>
+                  <span class="tt-tag tt-tag-projectile">投射物</span>
                 </div>
               </div>
             </div>
