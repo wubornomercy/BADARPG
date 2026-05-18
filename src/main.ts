@@ -387,6 +387,82 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   const itemDebug = new ItemDebugPanel();
   itemDebug.attach(lootGen, itemRegistry, affixRegistry);
 
+  // ---------------------------------------------------------------------
+  // Skill bar HUD — wire each slot to its actual skill (glyph + cooldown).
+  // The overlay element uses the existing `.slot-cd-overlay` style; we
+  // drive it with a conic-gradient sweep that fills as the cooldown
+  // elapses (classic ARPG pie-wipe).
+  // ---------------------------------------------------------------------
+  const SLOT_BIND_TO_SKILL: Record<string, string | undefined> = {
+    primary: SKILL_CORRUPT_BOLT.id,
+    skill1:  SKILL_CORRUPT_BOLT.id,
+    skill2:  SKILL_VENOM_NOVA.id,
+    skill3:  SKILL_SHADOW_DASH.id,
+    skill4:  SKILL_CORRUPTION_FIELD.id,
+  };
+  document.querySelectorAll<HTMLElement>('.hud-skill-bar .slot').forEach((slotEl) => {
+    const bind = slotEl.dataset.keybind;
+    if (!bind) return;
+    const skillId = SLOT_BIND_TO_SKILL[bind];
+    if (skillId) {
+      const def = skills.get(skillId);
+      if (def) {
+        const glyphEl = slotEl.querySelector<HTMLElement>('.slot-glyph');
+        if (glyphEl) glyphEl.textContent = def.icon;
+      }
+    }
+    if (!slotEl.querySelector('.slot-cd-overlay')) {
+      const ov = document.createElement('div');
+      ov.className = 'slot-cd-overlay';
+      slotEl.appendChild(ov);
+    }
+  });
+
+  /** Per-frame cooldown render. Conic-gradient pie sweep — classic ARPG. */
+  function updateSkillSlotHUD(nowMs: number): void {
+    document.querySelectorAll<HTMLElement>('.hud-skill-bar .slot').forEach((slotEl) => {
+      const bind = slotEl.dataset.keybind;
+      if (!bind) return;
+      const ov = slotEl.querySelector<HTMLElement>('.slot-cd-overlay');
+      if (!ov) return;
+      // Dodge slot has its own cooldown source on the Player.
+      if (bind === 'dodge') {
+        const remaining = Math.max(0, player.dodgeReadyAt - nowMs);
+        const total = TIME.DODGE_COOLDOWN;
+        if (remaining > 0) {
+          const sweepDeg = (1 - remaining / total) * 360;
+          slotEl.classList.add('is-cooling-down');
+          ov.style.background = `conic-gradient(transparent 0deg ${sweepDeg}deg, rgba(10,12,16,0.78) ${sweepDeg}deg 360deg)`;
+          ov.textContent = remaining >= 1000 ? Math.ceil(remaining / 1000).toString() : (remaining / 1000).toFixed(1);
+        } else {
+          slotEl.classList.remove('is-cooling-down');
+          ov.textContent = '';
+        }
+        return;
+      }
+      const skillId = SLOT_BIND_TO_SKILL[bind];
+      if (!skillId) return;
+      const def = skills.get(skillId);
+      if (!def) return;
+      const totalMs = def.cooldown * 1000;
+      if (totalMs <= 0) {
+        slotEl.classList.remove('is-cooling-down');
+        ov.textContent = '';
+        return;
+      }
+      const remaining = skills.cooldowns.remaining(skillId, nowMs);
+      if (remaining > 0) {
+        const sweepDeg = (1 - remaining / totalMs) * 360;
+        slotEl.classList.add('is-cooling-down');
+        ov.style.background = `conic-gradient(transparent 0deg ${sweepDeg}deg, rgba(10,12,16,0.78) ${sweepDeg}deg 360deg)`;
+        ov.textContent = remaining >= 1000 ? Math.ceil(remaining / 1000).toString() : (remaining / 1000).toFixed(1);
+      } else {
+        slotEl.classList.remove('is-cooling-down');
+        ov.textContent = '';
+      }
+    });
+  }
+
   /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
   const PICKUP_RADIUS_PX = 40;
 
@@ -906,6 +982,7 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
     // HUD updates
     updateHtmlHud();
+    updateSkillSlotHUD(now);
     hud.update();
 
     // Throttle the stat debug panel to ~5 Hz so DOM writes stay cheap.
