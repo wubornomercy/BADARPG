@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && node scripts/postbuild.js",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 5174",
     "check": "tsc --noEmit"
   },
