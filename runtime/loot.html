@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — 战利品展示 V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/loot.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- World scene -->
+      <div class="loot-world-bg"></div>
+      <div class="loot-horizon"></div>
+      <div class="loot-ground-tex"></div>
+
+      <!-- Combat actors (combat-visibility demo) -->
+      <div class="combat-actors">
+        <!-- Player at world-center -->
+        <div class="actor actor-player" style="left: 960px; top: 580px;"></div>
+
+        <!-- Enemy 1 (left flank) -->
+        <div class="actor actor-enemy" style="left: 480px; top: 620px;"></div>
+        <!-- Enemy 2 (right flank) -->
+        <div class="actor actor-enemy" style="left: 1380px; top: 600px;"></div>
+        <!-- Enemy 3 (back) -->
+        <div class="actor actor-enemy" style="left: 760px; top: 660px;"></div>
+
+        <!-- Active projectile demonstrating danger zone -->
+        <div class="actor actor-projectile" style="left: 540px; top: 640px;"></div>
+      </div>
+
+      <!-- Loot drop stage — JS spawns children here -->
+      <div class="loot-stage" id="lootStage"></div>
+
+      <!-- Title -->
+      <div class="loot-title">战利品展示 V1 · LOOT PRESENTATION</div>
+
+      <!-- Density counter -->
+      <div class="loot-counter">
+        <span class="loot-counter-label">活跃</span>
+        <span><span class="loot-counter-value" id="lootActiveCount">0</span> / 8</span>
+      </div>
+
+      <!-- Instructions -->
+      <div class="loot-instructions">
+        <kbd>1</kbd>普通  <kbd>2</kbd>魔法  <kbd>3</kbd>稀有  <kbd>4</kbd>传奇  <kbd>5</kbd>神圣
+        &nbsp;·&nbsp; <kbd>B</kbd>流派核心掉落  <kbd>R</kbd>随机  <kbd>C</kbd>清空  <kbd>Click</kbd>地面任意点
+      </div>
+
+      <!-- Rarity legend -->
+      <div class="loot-legend">
+        <div class="loot-legend-item normal">    <span class="loot-legend-swatch"></span>普通 </div>
+        <div class="loot-legend-item magic">     <span class="loot-legend-swatch"></span>魔法 </div>
+        <div class="loot-legend-item rare">      <span class="loot-legend-swatch"></span>稀有 </div>
+        <div class="loot-legend-item legendary"> <span class="loot-legend-swatch"></span>传奇 </div>
+        <div class="loot-legend-item heaven">    <span class="loot-legend-swatch"></span>神圣 </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="js/loot.js"></script>
+</body>
+</html>

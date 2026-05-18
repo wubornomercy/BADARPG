@@ -1,0 +1,555 @@
+/* =============================================================
+   BAD ARPG — Loot Presentation V1 (PIXEL DARK STEEL)
+   World-space loot drops. No CSS blur. Banded only. Hard step shadows.
+   ============================================================= */
+
+/* =============================================================
+   WORLD SCENE (background — sky / fog / ground / horizon)
+   ============================================================= */
+.loot-world-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    /* sky band (top) */
+    linear-gradient(180deg,
+      #0A0C10 0%,    #0A0C10 14%,
+      #0E1014 14%,   #0E1014 28%,
+      #11141A 28%,   #11141A 42%,
+      #141820 42%,   #141820 52%,
+      /* ground band (lower half) */
+      #181C24 52%,   #181C24 60%,
+      #15181F 60%,   #15181F 70%,
+      #13161C 70%,   #13161C 82%,
+      #0F1218 82%,   #0F1218 100%);
+}
+
+/* Distant forest silhouette — pixel band */
+.loot-horizon {
+  position: absolute;
+  left: 0; right: 0;
+  top: 540px;
+  height: 32px;
+  background:
+    /* repeating chunky pixel "tree tip" pattern */
+    repeating-linear-gradient(
+      90deg,
+      #16181D 0px, #16181D 16px,
+      transparent 16px, transparent 32px),
+    linear-gradient(180deg, #16181D 0%, #1A1D22 80%, #1F2329 100%);
+  opacity: 0.7;
+}
+.loot-horizon::after {
+  /* hard 2-pixel ground hairline */
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: #2A2E35;
+  opacity: 0.55;
+}
+
+/* Subtle ground texture — banded horizontal stripes */
+.loot-ground-tex {
+  position: absolute;
+  left: 0; right: 0;
+  top: 572px; bottom: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 60px,
+      rgba(40,44,52,0.18) 60px, rgba(40,44,52,0.18) 62px,
+      transparent 62px, transparent 96px);
+  pointer-events: none;
+}
+
+/* =============================================================
+   COMBAT ACTORS — pixel silhouettes for combat-visibility demo
+   ============================================================= */
+.actor {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Player — pixel humanoid silhouette */
+.actor-player {
+  width: 28px; height: 48px;
+  background: var(--clr-actor-player);
+  /* pixel head + body shape using box-shadow */
+  box-shadow:
+    /* head highlight */
+    0 -2px 0 var(--clr-actor-player),
+    /* shadow on ground */
+    0 52px 0 -8px rgba(0,0,0,0.5);
+  /* clip into a rough armored silhouette */
+  clip-path: polygon(
+    35% 0%, 65% 0%, 70% 14%, 75% 14%, 75% 28%,
+    100% 32%, 95% 60%, 85% 60%, 90% 92%, 70% 100%,
+    30% 100%, 10% 92%, 15% 60%, 5% 60%, 0% 32%,
+    25% 28%, 25% 14%, 30% 14%);
+}
+.actor-player::after {
+  /* sword silhouette to the right */
+  content: "";
+  position: absolute;
+  right: -10px; top: 8px;
+  width: 4px; height: 36px;
+  background: var(--clr-actor-player);
+}
+
+/* Enemy silhouette — wraith-ish */
+.actor-enemy {
+  width: 24px; height: 40px;
+  background: var(--clr-actor-enemy);
+  clip-path: polygon(
+    50% 0%, 70% 10%, 80% 30%, 100% 50%, 85% 75%,
+    90% 100%, 70% 90%, 50% 100%, 30% 90%, 10% 100%,
+    15% 75%, 0% 50%, 20% 30%, 30% 10%);
+  box-shadow:
+    /* faint red threat aura — banded, hard */
+    0 0 0 2px rgba(178,56,63,0.10),
+    0 0 0 4px rgba(178,56,63,0.05),
+    /* ground shadow */
+    0 42px 0 -6px rgba(0,0,0,0.5);
+}
+.actor-enemy::before {
+  /* glowing eyes - 2 pixel dots */
+  content: "";
+  position: absolute;
+  left: 6px; top: 8px;
+  width: 3px; height: 3px;
+  background: #B2383F;
+  box-shadow: 9px 0 0 #B2383F;
+}
+
+/* Projectile in flight — pixel orb with motion-line trail */
+.actor-projectile {
+  width: 8px; height: 8px;
+  background: var(--clr-actor-projectile);
+  /* pixel trail with hard step shadows */
+  box-shadow:
+    -10px 0 0 -1px rgba(225,168,74,0.7),
+    -20px 0 0 -2px rgba(225,168,74,0.5),
+    -30px 0 0 -3px rgba(225,168,74,0.3);
+  animation: projectile-fly 1.6s linear infinite;
+}
+
+@keyframes projectile-fly {
+  0%   { transform: translate(0, 0); opacity: 1; }
+  100% { transform: translate(180px, -20px); opacity: 0; }
+}
+
+/* =============================================================
+   LOOT DROP — container
+   ============================================================= */
+.loot-drop {
+  position: absolute;
+  /* container is anchored at the GROUND position; children layer up */
+  transform: translateX(-50%);
+  will-change: transform;
+}
+
+/* Spawn animation: subtle pulse-in on the whole drop */
+.loot-drop.is-spawning {
+  animation: loot-spawn 500ms steps(6, end);
+}
+@keyframes loot-spawn {
+  0%   { transform: translateX(-50%) translateY(-12px); opacity: 0; }
+  20%  { opacity: 1; }
+  60%  { transform: translateX(-50%) translateY(2px); }
+  100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* Fade-out when density limit reached (oldest first) */
+.loot-drop.is-fading {
+  animation: loot-fade-out 180ms steps(4, end) forwards;
+}
+@keyframes loot-fade-out {
+  to { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+
+/* =============================================================
+   HEAVEN AURA — atmospheric dim around heaven drops
+   Banded radial darkening + pixel flare. NO blur.
+   ============================================================= */
+.loot-aura {
+  position: absolute;
+  width:  var(--loot-heaven-aura-size);
+  height: var(--loot-heaven-aura-size);
+  left: 50%; bottom: -64px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  /* Banded radial — inner brightness, middle darkening ring, outer fade */
+  background: radial-gradient(circle,
+    rgba(244,242,232,0.10) 0%,   rgba(244,242,232,0.10) 8%,
+    rgba(244,242,232,0.04) 8%,   rgba(244,242,232,0.04) 18%,
+    transparent 18%,             transparent 28%,
+    rgba(0,0,0,0.18) 28%,        rgba(0,0,0,0.18) 42%,
+    rgba(0,0,0,0.10) 42%,        rgba(0,0,0,0.10) 60%,
+    transparent 60%,             transparent 100%);
+  animation: heaven-aura-pulse var(--loot-pulse-heaven) steps(8, end) infinite;
+}
+
+@keyframes heaven-aura-pulse {
+  0%, 100% { opacity: 0.85; transform: translateX(-50%) scale(1); }
+  50%      { opacity: 1.00; transform: translateX(-50%) scale(1.05); }
+}
+
+/* Heaven corruption-repel ring — expanding pulse */
+.loot-aura::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 24px; height: 24px;
+  margin-left: -12px; margin-top: -12px;
+  border: 2px solid var(--clr-loot-heaven);
+  border-radius: 50%;
+  opacity: 0;
+  animation: heaven-repel 3.6s steps(8, end) infinite;
+}
+@keyframes heaven-repel {
+  0%   { width: 24px; height: 24px; margin-left: -12px; margin-top: -12px; opacity: 0.65; }
+  100% { width: 360px; height: 360px; margin-left: -180px; margin-top: -180px; opacity: 0; }
+}
+
+/* =============================================================
+   LOOT BEAM — vertical pixel signal column
+   Banded segments. Low-frequency opacity pulse. NO smooth gradient.
+   ============================================================= */
+.loot-beam {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;   /* sits on top of pedestal */
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 2;
+  /* Pixel banded vertical stripe — 6 alternating bright/dim segments */
+  background:
+    linear-gradient(180deg,
+      transparent 0%,          transparent 6%,
+      currentColor 6%,         currentColor 16%,
+      transparent 16%,         transparent 24%,
+      currentColor 24%,        currentColor 38%,
+      transparent 38%,         transparent 46%,
+      currentColor 46%,        currentColor 64%,
+      transparent 64%,         transparent 72%,
+      currentColor 72%,        currentColor 92%,
+      transparent 92%,         transparent 100%);
+  opacity: 0;        /* overridden per rarity */
+}
+
+/* Rarity-specific beam dimensions + color */
+.loot-drop.is-rarity-magic .loot-beam {
+  width:  var(--loot-beam-w-magic);
+  height: var(--loot-beam-h-magic);
+  color:  var(--clr-loot-magic);
+  opacity: 0.45;
+  animation: beam-pulse-soft var(--loot-pulse-rare) steps(6, end) infinite;
+}
+.loot-drop.is-rarity-rare .loot-beam {
+  width:  var(--loot-beam-w-rare);
+  height: var(--loot-beam-h-rare);
+  color:  var(--clr-loot-rare);
+  opacity: 0.70;
+  animation: beam-pulse-med var(--loot-pulse-rare) steps(8, end) infinite;
+}
+.loot-drop.is-rarity-legendary .loot-beam {
+  width:  var(--loot-beam-w-legendary);
+  height: var(--loot-beam-h-legendary);
+  color:  var(--clr-loot-legendary);
+  opacity: 0.82;
+  animation: beam-pulse-strong var(--loot-pulse-legend) steps(8, end) infinite;
+}
+.loot-drop.is-rarity-heaven .loot-beam {
+  width:  var(--loot-beam-w-heaven);
+  height: var(--loot-beam-h-heaven);
+  color:  var(--clr-loot-heaven);
+  opacity: 0.90;
+  animation: beam-pulse-strong var(--loot-pulse-heaven) steps(8, end) infinite;
+}
+
+@keyframes beam-pulse-soft {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.55; }
+}
+@keyframes beam-pulse-med {
+  0%, 100% { opacity: 0.60; }
+  50%      { opacity: 0.85; }
+}
+@keyframes beam-pulse-strong {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1.00; }
+}
+
+/* =============================================================
+   GROUND ITEM — pedestal + icon
+   ============================================================= */
+.loot-pedestal {
+  position: absolute;
+  left: 50%; bottom: 4px;
+  transform: translateX(-50%);
+  width:  var(--loot-pedestal-w);
+  height: var(--loot-pedestal-h);
+  background: #0A0C10;
+  border-top: 2px solid #2A2E35;
+  z-index: 3;
+  /* hard pixel ground shadow */
+  box-shadow:
+    0 0 0 1px #16181D,
+    0 2px 0 0 rgba(0,0,0,0.55);
+}
+
+.loot-icon {
+  position: absolute;
+  left: 50%; bottom: 16px;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: var(--loot-icon-size);
+  line-height: 1;
+  color: currentColor;
+  text-shadow:
+    0 2px 0 rgba(0,0,0,0.85),
+    2px 0 0 rgba(0,0,0,0.55);
+  z-index: 4;
+  user-select: none;
+}
+
+/* Rarity-tinted icon color */
+.loot-drop.is-rarity-normal    { color: var(--clr-loot-normal); }
+.loot-drop.is-rarity-magic     { color: var(--clr-loot-magic);  }
+.loot-drop.is-rarity-rare      { color: var(--clr-loot-rare);   }
+.loot-drop.is-rarity-legendary { color: var(--clr-loot-legendary); }
+.loot-drop.is-rarity-heaven    { color: var(--clr-loot-heaven); }
+
+/* =============================================================
+   LABEL — rarity name banner above the item
+   Inherits HUD_SYSTEM_V1 loot label visual language.
+   ============================================================= */
+.loot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 56px;     /* above the icon */
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  animation: loot-label-appear var(--loot-label-fadein) steps(4, end);
+}
+
+.loot-label-name {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: currentColor;
+  padding: 3px 8px;
+  background: rgba(8,10,14,0.78);
+  border: 2px solid currentColor;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.85);
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.05);
+}
+.loot-drop.is-rarity-normal    .loot-label-name { border-color: rgba(140,145,152,0.55); }
+.loot-drop.is-rarity-magic     .loot-label-name { border-color: rgba(90,127,207,0.55); }
+.loot-drop.is-rarity-rare      .loot-label-name { border-color: rgba(210,177,90,0.55); }
+.loot-drop.is-rarity-legendary .loot-label-name { border-color: rgba(225,168,74,0.75); }
+.loot-drop.is-rarity-heaven    .loot-label-name {
+  border-color: rgba(244,242,232,0.85);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.loot-label-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  background: rgba(8,10,14,0.78);
+  border: 1px solid currentColor;
+  opacity: 0.85;
+}
+
+@keyframes loot-label-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* =============================================================
+   BUILD ENABLING MARKER — gold ◆ above the label
+   ============================================================= */
+.loot-be-marker {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--clr-tier-1);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.85);
+  margin-bottom: 2px;
+  animation: be-marker-pulse 2200ms steps(6, end) infinite;
+}
+@keyframes be-marker-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1.00; }
+}
+
+/* =============================================================
+   DROP FX — pixel dust burst on spawn (0.25-0.8s)
+   ============================================================= */
+.loot-spawn-fx {
+  position: absolute;
+  left: 50%; bottom: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 6;
+  width: 0; height: 0;
+}
+.loot-dust-particle {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: currentColor;
+  animation: dust-burst 500ms steps(6, end) forwards;
+  will-change: transform, opacity;
+}
+@keyframes dust-burst {
+  0%   { transform: translate(0,0) scale(1);   opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.4); opacity: 0; }
+}
+
+/* =============================================================
+   AMBIENT ASH PARTICLES — drift up around legendary/heaven
+   ============================================================= */
+.loot-ash {
+  position: absolute;
+  left: 50%; bottom: 14px;
+  transform: translateX(-50%);
+  width: var(--loot-beam-w-legendary);
+  height: var(--loot-beam-h-legendary);
+  pointer-events: none;
+  z-index: 2;
+  overflow: visible;
+}
+.loot-drop.is-rarity-heaven .loot-ash {
+  width:  var(--loot-beam-w-heaven);
+  height: var(--loot-beam-h-heaven);
+}
+.loot-ash-particle {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: currentColor;
+  opacity: 0;
+  animation: ash-rise 3.6s steps(8, end) infinite;
+}
+@keyframes ash-rise {
+  0%   { transform: translate(0, 0);          opacity: 0;    }
+  10%  { opacity: 0.85; }
+  100% { transform: translate(var(--dx), -120px); opacity: 0;}
+}
+
+/* =============================================================
+   PAGE UI — title / legend / counter / instructions
+   ============================================================= */
+.loot-title {
+  position: absolute;
+  top: 24px; left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 18px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-hud-text);
+  background: rgba(7,9,13,0.6);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+
+.loot-counter {
+  position: absolute;
+  top: 24px; right: 80px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 14px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--clr-hud-text);
+  background: rgba(7,9,13,0.6);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.loot-counter-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--clr-hud-text-dim);
+  text-transform: uppercase;
+}
+.loot-counter-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--clr-loot-rare);
+}
+
+.loot-instructions {
+  position: absolute;
+  bottom: 24px; left: 80px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--clr-hud-text-dim);
+}
+.loot-instructions kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--clr-btn-bg);
+  border: 1px solid var(--clr-hud-frame-rim);
+  color: var(--clr-hud-text);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 2px;
+}
+
+/* Legend strip — rarity reference at bottom-right */
+.loot-legend {
+  position: absolute;
+  bottom: 24px; right: 80px;
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 14px;
+  padding: 8px 14px;
+  background: rgba(7,9,13,0.6);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.loot-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.loot-legend-swatch {
+  width: 12px; height: 12px;
+  background: currentColor;
+  border: 1px solid rgba(0,0,0,0.5);
+}
+.loot-legend-item.normal    { color: var(--clr-loot-normal); }
+.loot-legend-item.magic     { color: var(--clr-loot-magic); }
+.loot-legend-item.rare      { color: var(--clr-loot-rare); }
+.loot-legend-item.legendary { color: var(--clr-loot-legendary); }
+.loot-legend-item.heaven    { color: var(--clr-loot-heaven); }

@@ -279,4 +279,48 @@
   /* ---------- Motion ---------- */
   --inv-fade-in:    160ms;       /* per spec */
   --inv-fade-out:   120ms;
+
+  /* =============================================================
+     LOOT V1 tokens (Phase 1 LOOT_PRESENTATION_V1)
+     Source: LOOT PRESENTATION FOUNDATION V1 spec.
+     Pixel Dark Steel — no blur, banded only, hard step shadows.
+     ============================================================= */
+
+  /* ---------- Beam dimensions per rarity ---------- */
+  --loot-beam-w-normal:    0px;
+  --loot-beam-w-magic:     8px;
+  --loot-beam-w-rare:      10px;
+  --loot-beam-w-legendary: 14px;
+  --loot-beam-w-heaven:    18px;
+
+  --loot-beam-h-normal:    0px;
+  --loot-beam-h-magic:     56px;
+  --loot-beam-h-rare:      96px;
+  --loot-beam-h-legendary: 144px;
+  --loot-beam-h-heaven:    200px;
+
+  /* ---------- Ground item dimensions ---------- */
+  --loot-pedestal-w:   36px;
+  --loot-pedestal-h:   6px;
+  --loot-icon-size:    30px;
+
+  /* ---------- Heaven aura (atmospheric dim) ---------- */
+  --loot-heaven-aura-size: 480px;
+
+  /* ---------- Motion ---------- */
+  --loot-spawn-min:     250ms;
+  --loot-spawn-max:     800ms;
+  --loot-pulse-rare:    2400ms;
+  --loot-pulse-legend:  2000ms;
+  --loot-pulse-heaven:  1800ms;
+  --loot-label-fadein:  120ms;
+  --loot-label-fadeout: 180ms;
+
+  /* ---------- Density limit ---------- */
+  --loot-max-active: 8;
+
+  /* ---------- Combat actor placeholders ---------- */
+  --clr-actor-player:    #BFC5CE;
+  --clr-actor-enemy:     #5A2A2E;
+  --clr-actor-projectile:#E1A84A;
 }

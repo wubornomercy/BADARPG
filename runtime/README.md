@@ -9,6 +9,7 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | HUD V1 | `hud.html` | ✅ Locked |
 | Tooltip V1 | `tooltip.html` | ✅ Locked |
 | Inventory V1 | `inventory.html` | ✅ Locked |
+| Loot Presentation V1 | `loot.html` | ✅ Locked |
 
 ## Visual Style — PIXEL DARK STEEL
 
@@ -128,6 +129,17 @@ Then visit http://localhost:8080
 | Click × | Logs `[CLOSE] would close inventory panel` |
 | `G` | Toggle 12-col / safe-area grid overlay |
 
+### Loot Presentation (`loot.html`)
+| Key / Action | Effect |
+|---|---|
+| `1` / `2` / `3` / `4` / `5` | Spawn one drop at random ground position with rarity 普通/魔法/稀有/传奇/神圣 |
+| `B` | Spawn random build-enabling drop (Legendary or Heaven) |
+| `R` | Spawn random rarity |
+| `C` | Clear all drops |
+| Click anywhere on the ground area | Spawn weighted-random drop at click position |
+| (auto) | Slow atmospheric spawn cycle every 2.5–4.5s (weighted: 45% normal, 29% magic, 16% rare, 8% legendary, 2% heaven) |
+| `G` | Toggle 12-col / safe-area grid overlay |
+
 ## Directory map
 ```
 runtime/
@@ -135,6 +147,7 @@ runtime/
 ├── hud.html                # HUD prototype — combat UI foundation
 ├── tooltip.html            # Tooltip prototype — loot evaluation foundation
 ├── inventory.html          # Inventory prototype — loot management foundation
+├── loot.html               # Loot Presentation — dopamine / rarity hierarchy / world-space drops
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
 │   ├── layout.css          # viewport + canvas + dev grid (shared)
@@ -142,12 +155,14 @@ runtime/
 │   ├── components.css      # menu: logo / buttons / version
 │   ├── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
 │   ├── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
-│   └── inventory.css       # Inventory: panel / equipment / grid / slot / preview / currency
+│   ├── inventory.css       # Inventory: panel / equipment / grid / slot / preview / currency
+│   └── loot.css            # Loot: world-bg / actors / drop / beam / aura / dust / ash / legend
 ├── js/
 │   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
 │   ├── hud.js              # HUD: fit + damage/loot spawners + debug toggles
 │   ├── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
-│   └── inventory.js        # Inventory: 35-item data + render + hover/select/filter/drag
+│   ├── inventory.js        # Inventory: 35-item data + render + hover/select/filter/drag
+│   └── loot.js             # Loot: item pool + spawn cycle + density mgr + manual triggers
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
 └── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
@@ -243,6 +258,27 @@ runtime/
 | Bottom currency: Gold / Corruption Shards / Craft Materials | ✅ 金币 / 腐化碎片 / 工艺材料 with delta gain indicators |
 | All pixel discipline (no blur, no rounded corners, hard step shadows, banded bg) | ✅ |
 | Inventory open animation 160ms fade | ✅ via `--inv-fade-in` token (used in JS for show/hide) |
+
+## Loot Presentation V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| 5 elements per drop: ground item / label / beam / drop FX / ambient FX | ✅ all 5 |
+| Normal: no beam, label only | ✅ `--loot-beam-h-normal: 0px` |
+| Magic: very faint pixel shimmer beam (subtle) | ✅ 8×56 beam @ 35-55% opacity, slow pulse |
+| Rare: short beam + low-frequency pulse | ✅ 10×96 banded beam, 2.4s pulse |
+| Legendary: visible segmented beam + pixel ash | ✅ 14×144 banded beam + ash rise particles |
+| Heaven: atmosphere-changing (ambient dim + white-gold flare + corruption repel + low-freq aura) | ✅ 18×200 beam + banded radial dim ring + expanding corruption-repel ring (3.6s) |
+| Rarity colors inherit HUD/Tooltip tokens (Normal/Magic/Rare/Legendary/Heaven) | ✅ same `--clr-loot-*` |
+| Build-enabling: ◆ marker + subtle gold edge + special pixel pulse | ✅ ◆ in label header + gold-tinted border + tag pill |
+| Drop FX 0.25–0.8s pixel dust burst | ✅ 4–12 dust particles burst in 500ms `steps(6, end)` |
+| Density limit 8 simultaneous, oldest fades | ✅ JS array shift + 180ms fade-out |
+| Label fade in 120 / out 180ms | ✅ token-driven |
+| Combat actors visible without obstruction (loot ≠ UI overlay) | ✅ player + 3 enemies + projectile remain readable through drops |
+| World-space anchoring (not floating UI) | ✅ each drop anchored at ground X/Y with pedestal shadow |
+| Pixel discipline (no blur, banded only, hard step shadows) | ✅ `image-rendering: pixelated`, banded beams, hard text shadows |
+| Required tags demonstrated: poison / crit / ricochet / trigger / corruption | ✅ in build-enabling drops + ambient pool |
+| No rainbow / no MMO fireworks / no mobile explosion | ✅ low-saturation, restrained excitement |
 
 ## What is intentionally NOT here
 
