@@ -8,6 +8,7 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | Main Menu V1 | `index.html` | ✅ Locked |
 | HUD V1 | `hud.html` | ✅ Locked |
 | Tooltip V1 | `tooltip.html` | ✅ Locked |
+| Inventory V1 | `inventory.html` | ✅ Locked |
 
 ## Visual Style — PIXEL DARK STEEL
 
@@ -116,23 +117,37 @@ Then visit http://localhost:8080
 | Click a showcase tooltip | Logs `[COMPARE] would replace NEW pane …` (stub — needs inventory data model) |
 | `G` | Toggle 12-col / safe-area grid overlay |
 
+### Inventory (`inventory.html`)
+| Key / Action | Effect |
+|---|---|
+| Hover any slot with an item | Right preview panel updates instantly + after 80ms floating tooltip appears |
+| Click a slot | Selects it (4px gold pixel edge) + locks preview panel |
+| Mouse-down + drag on item | Drag ghost follows cursor (drop logic stubbed) |
+| Click filter tab | Dims non-matching slots to 18% opacity (no DOM mutation) |
+| Click 装备 / 分解 / 丢弃 in preview | Logs the intent to console (no real mutation) |
+| Click × | Logs `[CLOSE] would close inventory panel` |
+| `G` | Toggle 12-col / safe-area grid overlay |
+
 ## Directory map
 ```
 runtime/
 ├── index.html              # Main Menu — layer structure + content
 ├── hud.html                # HUD prototype — combat UI foundation
 ├── tooltip.html            # Tooltip prototype — loot evaluation foundation
+├── inventory.html          # Inventory prototype — loot management foundation
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
 │   ├── layout.css          # viewport + canvas + dev grid (shared)
 │   ├── scene.css           # menu: sky/moon/castle/fog/forest/campfire
 │   ├── components.css      # menu: logo / buttons / version
 │   ├── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
-│   └── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
+│   ├── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
+│   └── inventory.css       # Inventory: panel / equipment / grid / slot / preview / currency
 ├── js/
 │   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
 │   ├── hud.js              # HUD: fit + damage/loot spawners + debug toggles
-│   └── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
+│   ├── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
+│   └── inventory.js        # Inventory: 35-item data + render + hover/select/filter/drag
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
 └── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
@@ -202,6 +217,32 @@ runtime/
 | Typography Inter only, no fantasy body font | ✅ |
 | No glow, no oversized title, no parchment, no MMO scroll | ✅ |
 | All hex from `tokens.css` (no literal hex in tooltip.css/html) | ✅ |
+
+## Inventory V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| Panel 1240 × 720, centered, `#111418` @ 92%, dark metallic pixel border | ✅ (tokens + chunky 2px border + 4 rivets + 8px hard drop shadow) |
+| 4 zones: LEFT equipment · CENTER grid · RIGHT tooltip/comparison · BOTTOM currency | ✅ |
+| Grid 10 × 6 = 60 slots, 64×64, gap 6px | ✅ |
+| 8 equipment slots: Weapon / Helmet / Chest / Gloves / Boots / Amulet / Ring 1 / Ring 2 | ✅ (2×4 layout) |
+| Empty equipment slot visible (Ring 2) — dashed border + type label | ✅ "戒指2" |
+| 35 test items spanning all 5 rarities (Normal/Magic/Rare/Legendary/Heaven) | ✅ |
+| Build Enabling items: poison / crit / ricochet / trigger / corruption tags | ✅ 6 legendary + 3 heaven items |
+| Slot rarity colour edges (chunky pixel border) | ✅ normal gray / magic blue / rare gold / legendary orange-gold / heaven cream |
+| Empty slot low contrast, occupied slot slight brightness lift | ✅ |
+| Hover +6% brightness, 120ms | ✅ |
+| Selected — subtle 4px gold pixel edge | ✅ `outline` not blur |
+| Build Enabling ◆ marker in slot corner | ✅ small gold ◆ in top-right of legendary/heaven slots |
+| Filter tabs: All / Weapons / Armor / Accessories / Materials | ✅ 全部 / 武器 / 护甲 / 饰品 / 材料 (filtering dims to 18%) |
+| Tooltip integration: inherits TOOLTIP_SYSTEM_V1 fully | ✅ floating tooltip built from item data uses `.tooltip-{rarity}`, tier-1 affixes, tags, comparison |
+| Hover 80ms delay, fade-in 120ms, auto-offset | ✅ |
+| Right preview panel updates on hover (instant) + locks on click | ✅ |
+| Comparison vs currently-equipped item of same slot | ✅ delta tags green/red/new |
+| 3 action buttons: 装备 / 分解 / 丢弃 | ✅ pixel chunky buttons with hard bevel |
+| Bottom currency: Gold / Corruption Shards / Craft Materials | ✅ 金币 / 腐化碎片 / 工艺材料 with delta gain indicators |
+| All pixel discipline (no blur, no rounded corners, hard step shadows, banded bg) | ✅ |
+| Inventory open animation 160ms fade | ✅ via `--inv-fade-in` token (used in JS for show/hide) |
 
 ## What is intentionally NOT here
 

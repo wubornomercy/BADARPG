@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — 背包系统 V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/tooltip.css" />
+  <link rel="stylesheet" href="css/inventory.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- Dimmed game-world background -->
+      <div class="inv-page-bg"></div>
+
+      <!-- ============== INVENTORY PANEL ============== -->
+      <div class="inv-panel">
+
+        <!-- corner rivets handled by ::before/::after + these two spans -->
+        <span class="inv-panel-rivet-tr"></span>
+        <span class="inv-panel-rivet-bl"></span>
+
+        <!-- HEADER -->
+        <div class="inv-header">
+          <div class="inv-title">背包</div>
+
+          <div class="inv-filters" id="invFilters">
+            <button class="inv-filter-tab is-active" data-filter="all">全部</button>
+            <button class="inv-filter-tab" data-filter="weapon">武器</button>
+            <button class="inv-filter-tab" data-filter="armor">护甲</button>
+            <button class="inv-filter-tab" data-filter="accessory">饰品</button>
+            <button class="inv-filter-tab" data-filter="material">材料</button>
+          </div>
+
+          <button class="inv-close" id="invClose" aria-label="关闭">×</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="inv-body">
+
+          <!-- LEFT: Equipment column -->
+          <div class="inv-equipment-col">
+            <div class="inv-col-label">
+              装备
+              <span class="inv-col-label-count" id="equipCount">0 / 8</span>
+            </div>
+            <div class="inv-equipment-grid" id="invEquipment">
+              <!-- 8 equipment slots injected by JS -->
+            </div>
+            <div class="inv-body-silhouette" aria-hidden="true"></div>
+          </div>
+
+          <!-- CENTER: Inventory grid -->
+          <div class="inv-grid-col">
+            <div class="inv-col-label">
+              物品
+              <span class="inv-col-label-count" id="gridCount">0 / 60</span>
+            </div>
+            <div class="inv-grid" id="invGrid">
+              <!-- 60 slots injected by JS -->
+            </div>
+          </div>
+
+          <!-- RIGHT: Item preview + comparison + actions -->
+          <div class="inv-preview-col">
+            <div class="inv-col-label">
+              物品详情
+              <span class="inv-col-label-count" id="previewState">无选中</span>
+            </div>
+            <div class="inv-preview" id="invPreview">
+              <div class="inv-preview-empty">悬停或选中任意物品<br>即可查看详情</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BOTTOM: Currency bar -->
+        <div class="inv-bottom">
+          <div class="inv-currency">
+            <div class="inv-currency-icon gold">金</div>
+            <div class="inv-currency-info">
+              <span class="inv-currency-label">金币</span>
+              <span class="inv-currency-value">12,840</span>
+            </div>
+            <span class="inv-currency-delta">+184</span>
+          </div>
+          <div class="inv-currency">
+            <div class="inv-currency-icon corruption">蚀</div>
+            <div class="inv-currency-info">
+              <span class="inv-currency-label">腐化碎片</span>
+              <span class="inv-currency-value">47</span>
+            </div>
+            <span class="inv-currency-delta">+3</span>
+          </div>
+          <div class="inv-currency">
+            <div class="inv-currency-icon material">材</div>
+            <div class="inv-currency-info">
+              <span class="inv-currency-label">工艺材料</span>
+              <span class="inv-currency-value">218</span>
+            </div>
+            <span class="inv-currency-delta">+12</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating tooltip (TOOLTIP_SYSTEM_V1 integration) -->
+      <div id="floatingTooltip" class="tt-floating"></div>
+
+      <!-- Drag ghost (only visible during simulated drag) -->
+      <div id="dragGhost" class="inv-drag-ghost" style="display:none;"></div>
+
+    </div>
+  </div>
+  <script src="js/inventory.js"></script>
+</body>
+</html>

@@ -225,4 +225,58 @@
   --clr-tag-corruption-bg: rgba(142,90,178,0.10);
   --clr-tag-projectile:    #A7ADB7;
   --clr-tag-projectile-bg: rgba(167,173,183,0.08);
+
+  /* =============================================================
+     INVENTORY V1 tokens (Phase 1 INVENTORY_SYSTEM_V1)
+     Source: INVENTORY SYSTEM FOUNDATION V1 spec.
+     ============================================================= */
+
+  /* ---------- Panel dimensions ---------- */
+  --inv-panel-w:        1240px;
+  --inv-panel-h:        720px;
+  --inv-panel-pad:      20px;
+  --inv-panel-radius:   0;       /* sharp pixel — no rounded panel */
+
+  --inv-header-h:       40px;
+  --inv-bottom-h:       64px;
+  --inv-section-gap:    16px;
+  --inv-body-gap:       12px;
+
+  /* ---------- Grid + slots ---------- */
+  --inv-grid-cols:      10;
+  --inv-grid-rows:      6;
+  --inv-slot-size:      64px;
+  --inv-slot-gap:       6px;
+  --inv-grid-w:         694px;   /* 10*64 + 9*6 */
+  --inv-grid-h:         414px;   /* 6*64 + 5*6 */
+
+  /* ---------- Equipment column ---------- */
+  --inv-equip-cols:     2;
+  --inv-equip-rows:     4;
+  --inv-equip-w:        154px;   /* allows 2 slots + gap + a little padding */
+
+  /* ---------- Right preview column ---------- */
+  --inv-preview-w:      320px;
+
+  /* ---------- Surfaces ---------- */
+  --clr-inv-panel-bg:        rgba(17, 20, 24, 0.92);   /* #111418 @92% */
+  --clr-inv-panel-border:    #2E343C;
+  --clr-inv-panel-bevel-hi:  rgba(255,255,255,0.05);
+  --clr-inv-panel-bevel-lo:  rgba(0,0,0,0.60);
+  --clr-inv-page-bg:         #050609;
+
+  --clr-inv-slot-empty:      #0D1014;
+  --clr-inv-slot-empty-bd:   #1F2329;
+  --clr-inv-slot-occupied:   #161A20;
+  --clr-inv-slot-occupied-bd:#2A2F37;
+  --clr-inv-slot-selected:   #E1A84A;      /* selection 4px pixel edge */
+  --clr-inv-slot-be-edge:    rgba(225,168,74,0.55);  /* build-enabling edge */
+
+  --clr-inv-header-bg:       rgba(7, 9, 13, 0.65);
+  --clr-inv-filter-active:   #BFC5CE;
+  --clr-inv-filter-idle:     #5E646D;
+
+  /* ---------- Motion ---------- */
+  --inv-fade-in:    160ms;       /* per spec */
+  --inv-fade-out:   120ms;
 }
