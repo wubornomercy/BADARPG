@@ -11,6 +11,9 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | Inventory V1 | `inventory.html` | ✅ Locked |
 | Loot Presentation V1 | `loot.html` | ✅ Locked |
 | Character Panel V1 | `character.html` | ✅ Locked |
+| Skill Panel V1 | `skill.html` | ✅ Locked |
+
+**Phase 1 UI/HUD Foundation — Complete.** All 7 runtime blueprints locked, all designed under the Pixel Dark Steel discipline (Project Plan V10 §7), all token-driven from `css/tokens.css`. Ready to feed into Phase 2 (PixiJS + TypeScript runtime port + Aseprite asset pipeline).
 
 ## Visual Style — PIXEL DARK STEEL
 
@@ -150,6 +153,16 @@ Then visit http://localhost:8080
 | Click × | Logs `[CLOSE] would close character panel` |
 | `G` | Toggle 12-col / safe-area grid overlay |
 
+### Skill Panel (`skill.html`)
+| Key / Action | Effect |
+|---|---|
+| Click any skill in left list | Selects it (3px gold outline) — center detail + right synergy + bottom stats rebuild |
+| Click 毒蚀弹射 / 暴击触发 / 腐化弓手 in header | Swap active build — ◆ affinity markers update, synergy bullets rebuild, first build skill auto-selected |
+| `1` / `2` / `3` | Keyboard shortcut to switch builds |
+| Hover any skill / support / tag | 80ms delay floating tooltip |
+| Click × | Logs `[CLOSE] would close skill panel` |
+| `G` | Toggle 12-col / safe-area grid overlay |
+
 ## Directory map
 ```
 runtime/
@@ -159,6 +172,7 @@ runtime/
 ├── inventory.html          # Inventory prototype — loot management foundation
 ├── loot.html               # Loot Presentation — dopamine / rarity hierarchy / world-space drops
 ├── character.html          # Character Panel — build identity / offense·defense / corruption state
+├── skill.html              # Skill Panel — build interaction map / 7 skills / 3 build affiliations
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
 │   ├── layout.css          # viewport + canvas + dev grid (shared)
@@ -168,14 +182,16 @@ runtime/
 │   ├── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
 │   ├── inventory.css       # Inventory: panel / equipment / grid / slot / preview / currency
 │   ├── loot.css            # Loot: world-bg / actors / drop / beam / aura / dust / ash / legend
-│   └── character.css       # Character: panel / portrait / stats / chips / build / corruption / derived
+│   ├── character.css       # Character: panel / portrait / stats / chips / build / corruption / derived
+│   └── skill.css           # Skill: panel / list / item / detail / synergy / supports / corruption / bottom
 ├── js/
 │   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
 │   ├── hud.js              # HUD: fit + damage/loot spawners + debug toggles
 │   ├── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
 │   ├── inventory.js        # Inventory: 35-item data + render + hover/select/filter/drag
 │   ├── loot.js             # Loot: item pool + spawn cycle + density mgr + manual triggers
-│   └── character.js        # Character: 3-build data + render + build switcher + stat tooltips
+│   ├── character.js        # Character: 3-build data + render + build switcher + stat tooltips
+│   └── skill.js            # Skill: 7-skill + 3-build affiliation + render + select + build switch
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
 └── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
@@ -313,6 +329,27 @@ runtime/
 | Hover transitions 120ms steps(4) | ✅ |
 | Pixel discipline (no blur, banded fills, hard step shadows, no glow) | ✅ |
 | Typography Zpix / Pixelify Sans, no fantasy paragraph font | ✅ |
+
+## Skill Panel V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| Panel 1360 × 760, centered, `#111418` @ 92%, dark metallic pixel border | ✅ (chunky 2px + 4 rivets + 8px hard drop shadow) |
+| 4 zones: LEFT list · CENTER detail · RIGHT synergy · BOTTOM tags + stats | ✅ |
+| LEFT — 6-8 core skills, each with pixel icon + name + tag summary + cd/mana | ✅ 7 skills, 72h items, 56px pixel icons |
+| Skill selection — gold pixel edge | ✅ 3px gold outline |
+| Build affinity marker per skill (◆) when skill is in active build | ✅ gold ◆ on right of skill row |
+| CENTER — skill fantasy, damage type, scaling, runtime interaction, corruption interaction | ✅ 80px large icon + name+EN + tags + 2×2 stats grid + fantasy block (gold edge) + trigger block (purple edge) |
+| Required test skills: VENOM BURST / RICOCHET SHOT / CORPSEWAKE TRIGGER / CORRUPTION ARROW / PHANTOM VOLLEY | ✅ all 5 + VOID HUNT + CHAIN STORM |
+| RIGHT — Build Interaction (per-build bullets) + Compatible Supports + Corruption Mutation | ✅ build-specific bullets rebuild per skill+build pair |
+| Required builds: VENOM RICOCHET / CRIT TRIGGER / CORRUPTION HUNTER | ✅ all 3, each with 3 affiliated skills + per-skill synergy text |
+| Tag chips: poison / crit / ricochet / trigger / corruption / projectile | ✅ same chip language as Character Panel |
+| BOTTOM — runtime stats (DPS / Cooldown / Mana / Projectile / Trigger Rate) | ✅ 5 stats, key ones gold |
+| Tooltip integration — all skills / supports / tags / mechanics hoverable | ✅ 80ms delay, 120ms fade, auto-offset |
+| Skill click → "subtle highlight only" (no bounce / no MMO swoosh) | ✅ outline-only, no scale animation |
+| Open animation 160ms fade | ✅ via `--skill-open-fade` token |
+| 2-3 sec readability of build identity + synergy + scaling direction | ✅ build affiliation visible in list, synergy bullets in right column, key stats gold in bottom |
+| Pixel discipline (no blur, banded fills, hard step shadows) | ✅ |
 
 ## What is intentionally NOT here
 

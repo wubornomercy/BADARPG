@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — 技能面板 V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/tooltip.css" />
+  <link rel="stylesheet" href="css/skill.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- Dimmed game world bg -->
+      <div class="skill-page-bg"></div>
+
+      <!-- ============== SKILL PANEL ============== -->
+      <div class="skill-panel">
+        <span class="skill-rivet-tr"></span>
+        <span class="skill-rivet-bl"></span>
+
+        <!-- HEADER -->
+        <div class="skill-header">
+          <div class="skill-title">技能</div>
+          <div class="skill-build-switcher" id="skillSwitcher">
+            <button class="skill-build-btn is-active" data-build="venom">毒蚀弹射</button>
+            <button class="skill-build-btn"           data-build="crit">暴击触发</button>
+            <button class="skill-build-btn"           data-build="corruption">腐化弓手</button>
+          </div>
+          <button class="skill-close" id="skillClose" aria-label="关闭">×</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="skill-body">
+
+          <!-- LEFT: Skill list -->
+          <div class="skill-list-col">
+            <div class="skill-section-label">
+              技能列表
+              <span style="margin-left:auto; color: var(--clr-hud-text); font-size:11px;" id="skillCount">7 项</span>
+            </div>
+            <div class="skill-list" id="skillList">
+              <!-- 7 items injected by JS -->
+            </div>
+          </div>
+
+          <!-- CENTER: Selected skill detail -->
+          <div class="skill-detail-col" id="skillDetail">
+            <!-- injected by JS -->
+          </div>
+
+          <!-- RIGHT: Synergy / Supports / Corruption -->
+          <div class="skill-synergy-col">
+
+            <div class="skill-syn-section">
+              <div class="skill-section-label">流派交互</div>
+              <div class="skill-syn-build-name" id="skillSynBuildName">毒蚀弹射</div>
+              <div id="skillSynBullets"></div>
+            </div>
+
+            <div class="skill-syn-section">
+              <div class="skill-section-label">兼容辅助</div>
+              <div class="skill-supports" id="skillSupports"></div>
+            </div>
+
+            <div class="skill-syn-section">
+              <div class="skill-section-label">腐化突变</div>
+              <div class="skill-corruption" id="skillCorruption"></div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- BOTTOM: Tags + Stats -->
+        <div class="skill-bottom">
+          <div class="skill-bottom-tags">
+            <span class="skill-bottom-tags-label">标签</span>
+            <div id="skillBottomTags" style="display:flex; gap:6px;"></div>
+          </div>
+          <div class="skill-bottom-stats" id="skillBottomStats"></div>
+        </div>
+
+      </div>
+
+      <!-- Floating tooltip (TOOLTIP_SYSTEM_V1 reuse) -->
+      <div id="floatingTooltip" class="tt-floating"></div>
+
+    </div>
+  </div>
+  <script src="js/skill.js"></script>
+</body>
+</html>

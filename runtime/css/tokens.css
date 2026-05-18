@@ -361,4 +361,31 @@
   /* ---------- Motion ---------- */
   --char-open-fade: 160ms;
   --char-hover:     120ms;
+
+  /* =============================================================
+     SKILL PANEL V1 tokens (Phase 1 SKILL_PANEL_V1 — final)
+     Source: SKILL PANEL FOUNDATION V1 spec.
+     ============================================================= */
+
+  /* ---------- Panel dimensions ---------- */
+  --skill-panel-w:   1360px;
+  --skill-panel-h:   760px;
+  --skill-panel-pad: 20px;
+  --skill-header-h:  40px;
+  --skill-bottom-h:  80px;
+  --skill-body-gap:  12px;
+
+  /* ---------- Body columns (sum + gaps = 1320 inner) ---------- */
+  --skill-list-w:    320px;
+  --skill-center-w:  560px;
+  --skill-right-w:   416px;
+  --skill-col-gap:   12px;
+
+  /* ---------- Skill list item ---------- */
+  --skill-item-h:    72px;
+  --skill-item-gap:  4px;
+  --skill-icon-size: 56px;
+
+  /* ---------- Motion ---------- */
+  --skill-open-fade: 160ms;
 }
