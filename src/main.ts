@@ -4,7 +4,7 @@
  */
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { CANVAS_W, CANVAS_H, WORLD_W, WORLD_H, ARENA_CENTER_X, ARENA_CENTER_Y, ARENA_HALF, COLOR, TUNE, TIME } from './tokens.js';
-import { initInput, endFrameInput, mouse, isMouseDown, wasPressed } from './input.js';
+import { initInput, endFrameInput, mouse, isMouseDown } from './input.js';
 import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
 import { Projectile } from './entities/projectile.js';
@@ -250,13 +250,20 @@ import { populatePanels } from './panel-stubs.js';
       corruptionMeter = Math.max(0, corruptionMeter - 0.04);
     }
 
-    // ----- Player -----
+    // ----- Click-to-move (LMB held) -----
+    // Always compute world mouse for both move + attack
+    const worldMouse = screenToWorld(mouse.world.x, mouse.world.y);
+    if (isMouseDown(0)) {
+      player.setMoveTarget(worldMouse.x, worldMouse.y);
+    } else {
+      player.clearMoveTarget();
+    }
+
+    // ----- Player tick -----
     player.update(dt, now, spawnFootstepDust);
 
-    // ----- Player attack -----
-    if (isMouseDown(0) && player.canAttack(now) && canSpawnProjectile()) {
-      // Convert mouse from screen to world space
-      const worldMouse = screenToWorld(mouse.world.x, mouse.world.y);
+    // ----- Player attack (RMB hold) -----
+    if (isMouseDown(2) && player.canAttack(now) && canSpawnProjectile()) {
       const px = player.x, py = player.y;
       const dx = worldMouse.x - px;
       const dy = worldMouse.y - py;

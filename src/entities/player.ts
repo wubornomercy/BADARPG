@@ -4,8 +4,11 @@
  * recoil on fire, footstep dust while moving.
  */
 import { Container, Graphics } from 'pixi.js';
-import { COLOR, TUNE, TIME, CANVAS_W, CANVAS_H, WORLD_W, WORLD_H } from '../tokens.js';
-import { inputDir, wasPressed, mouse } from '../input.js';
+import { COLOR, TUNE, TIME, WORLD_W, WORLD_H } from '../tokens.js';
+import { wasPressed, mouse } from '../input.js';
+
+/** Minimum distance before player considers the move target "reached". */
+const MOVE_STOP_DIST = 6;
 
 export class Player {
   container: Container;
@@ -13,9 +16,13 @@ export class Player {
   shadow: Graphics;
   iframeRing: Graphics;
 
-  x: number = CANVAS_W / 2;
-  y: number = CANVAS_H / 2;
+  x: number = WORLD_W / 2;
+  y: number = WORLD_H / 2;
   vx = 0; vy = 0;
+
+  // Click-to-move target (Diablo-style). null when LMB not held.
+  // Set externally via setMoveTarget(); cleared on LMB release.
+  moveTarget: { x: number, y: number } | null = null;
   hp: number = TUNE.PLAYER_HP;
   hpMax: number = TUNE.PLAYER_HP;
 
@@ -83,39 +90,48 @@ export class Player {
     const dt = dtMs / 1000;
 
     // ---------- Dodge trigger ----------
+    // Click-to-move scheme: dodge fires toward the mouse cursor (facing dir).
     if (wasPressed('dodge') && now >= this.dodgeReadyAt) {
-      const dir = inputDir();
-      let dx = dir.x, dy = dir.y;
-      if (dx === 0 && dy === 0) {
-        dx = this.facingX; dy = this.facingY;
+      let dx = this.facingX, dy = this.facingY;
+      // Fallback to last movement dir if cursor right on top of player
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
+        const v = Math.hypot(this.vx, this.vy);
+        if (v > 1) { dx = this.vx / v; dy = this.vy / v; }
+        else { dx = 1; dy = 0; }
       }
       this.dodgeDir = { x: dx, y: dy };
       this.dodgeUntil = now + TIME.DODGE_DURATION;
       this.dodgeReadyAt = now + TIME.DODGE_COOLDOWN;
-      // Burst velocity is set inside dodge branch every frame; on START
-      // also zero any lingering recoil so dodge feels "clean".
       this.recoilVx = 0; this.recoilVy = 0;
     }
-    const dodgingPrev = now < this.dodgeUntil + dtMs;   // captures "was dodging last frame"
+    const dodgingPrev = now < this.dodgeUntil + dtMs;
     const dodging = now < this.dodgeUntil;
     this.iframeRing.visible = dodging;
 
-    // ---------- Movement ----------
+    // ---------- Movement (click-to-move) ----------
     if (dodging) {
       const speed = TUNE.PLAYER_MAX_SPEED * TUNE.DODGE_SPEED_MULT;
       this.vx = this.dodgeDir.x * speed;
       this.vy = this.dodgeDir.y * speed;
     } else {
-      // CRITICAL for combat feel: if dodge JUST ended this frame, instantly
-      // zero the player's velocity so there's no "slide" tail. This was the
-      // #1 floaty-feel offender in V1.
+      // Snap to zero on dodge end (no slide tail)
       if (!dodging && dodgingPrev && this.dodgeUntil !== 0 && now - this.dodgeUntil < dtMs) {
         this.vx = 0; this.vy = 0;
       }
-      const dir = inputDir();
-      const targetVx = dir.x * TUNE.PLAYER_MAX_SPEED;
-      const targetVy = dir.y * TUNE.PLAYER_MAX_SPEED;
-      const accel = (dir.x === 0 && dir.y === 0) ? TUNE.PLAYER_DECEL : TUNE.PLAYER_ACCEL;
+      // Compute desired direction from move target (LMB hold)
+      let dirX = 0, dirY = 0;
+      if (this.moveTarget) {
+        const dx = this.moveTarget.x - this.x;
+        const dy = this.moveTarget.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > MOVE_STOP_DIST) {
+          dirX = dx / dist;
+          dirY = dy / dist;
+        }
+      }
+      const targetVx = dirX * TUNE.PLAYER_MAX_SPEED;
+      const targetVy = dirY * TUNE.PLAYER_MAX_SPEED;
+      const accel = (dirX === 0 && dirY === 0) ? TUNE.PLAYER_DECEL : TUNE.PLAYER_ACCEL;
       this.vx = approach(this.vx, targetVx, accel * dt);
       this.vy = approach(this.vy, targetVy, accel * dt);
     }
@@ -161,6 +177,14 @@ export class Player {
     } else {
       this.drawBody(false);
     }
+  }
+
+  /** Set click-to-move target in world coords. Called every frame while LMB held. */
+  setMoveTarget(x: number, y: number) {
+    this.moveTarget = { x, y };
+  }
+  clearMoveTarget() {
+    this.moveTarget = null;
   }
 
   isInvulnerable(now: number): boolean {

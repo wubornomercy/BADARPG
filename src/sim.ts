@@ -82,7 +82,7 @@ export class DebugHud {
     this.container.addChild(this.textBounds);
 
     this.textControls = new Text({
-      text: 'WASD 移动  ·  LMB 射击  ·  Space/Shift 翻滚',
+      text: 'LMB 移动  ·  RMB 攻击  ·  Space 翻滚',
       style: { ...STYLE, fontSize: 11, fill: COLOR.hudTextDim, letterSpacing: 1 },
     });
     this.textControls.x = 12; this.textControls.y = 124;
