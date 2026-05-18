@@ -323,4 +323,42 @@
   --clr-actor-player:    #BFC5CE;
   --clr-actor-enemy:     #5A2A2E;
   --clr-actor-projectile:#E1A84A;
+
+  /* =============================================================
+     CHARACTER PANEL V1 tokens (Phase 1 CHARACTER_PANEL_V1)
+     Source: CHARACTER PANEL FOUNDATION V1 spec.
+     ============================================================= */
+
+  /* ---------- Panel dimensions ---------- */
+  --char-panel-w:    1320px;
+  --char-panel-h:    760px;
+  --char-panel-pad:  20px;
+  --char-header-h:   40px;
+  --char-bottom-h:   80px;
+  --char-body-gap:   12px;
+
+  /* ---------- Body column widths (sum + gaps = 1280 inner) ---------- */
+  --char-left-w:     300px;
+  --char-center-w:   540px;
+  --char-right-w:    420px;
+  --char-col-gap:    10px;
+
+  /* ---------- Section / sub-section spacing ---------- */
+  --char-section-gap: 18px;
+  --char-stat-row-h:  28px;
+
+  /* ---------- Portrait ---------- */
+  --char-portrait-w:  220px;
+  --char-portrait-h:  300px;
+
+  /* ---------- Stat / value typography ---------- */
+  --char-stat-label-size: 12px;
+  --char-stat-value-size: 16px;
+
+  /* ---------- Tag chips ---------- */
+  --char-chip-h: 22px;
+
+  /* ---------- Motion ---------- */
+  --char-open-fade: 160ms;
+  --char-hover:     120ms;
 }

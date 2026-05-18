@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — 角色面板 V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/tooltip.css" />
+  <link rel="stylesheet" href="css/character.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- Dimmed game-world background -->
+      <div class="char-page-bg"></div>
+
+      <!-- ============== CHARACTER PANEL ============== -->
+      <div class="char-panel">
+        <span class="char-rivet-tr"></span>
+        <span class="char-rivet-bl"></span>
+
+        <!-- HEADER -->
+        <div class="char-header">
+          <div class="char-title">角色</div>
+          <div class="char-build-switcher" id="charSwitcher">
+            <button class="char-build-btn is-active" data-build="venom">毒蚀弹射猎人</button>
+            <button class="char-build-btn"           data-build="crit">暴击触发猎人</button>
+            <button class="char-build-btn"           data-build="corruption">腐化弓手</button>
+          </div>
+          <button class="char-close" id="charClose" aria-label="关闭">×</button>
+        </div>
+
+        <!-- BODY -->
+        <div class="char-body">
+
+          <!-- LEFT: Character Identity -->
+          <div class="char-identity-col">
+            <div class="char-section-label">角色身份</div>
+
+            <div class="char-portrait">
+              <svg class="char-portrait-svg" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <!-- hood -->
+                <rect x="11" y="2"  width="10" height="6"  fill="#2A2E35"/>
+                <rect x="10" y="3"  width="1"  height="6"  fill="#2A2E35"/>
+                <rect x="21" y="3"  width="1"  height="6"  fill="#2A2E35"/>
+                <!-- face shadow under hood -->
+                <rect x="13" y="6"  width="6"  height="4"  fill="#0A0C10"/>
+                <!-- two eye pixels (subtle) -->
+                <rect x="14" y="8"  width="1"  height="1"  fill="#5E646D"/>
+                <rect x="17" y="8"  width="1"  height="1"  fill="#5E646D"/>
+                <!-- cloak / chest -->
+                <rect x="9"  y="10" width="14" height="2"  fill="#1F2329"/>
+                <rect x="8"  y="12" width="16" height="20" fill="#23272F"/>
+                <!-- belt / strap -->
+                <rect x="9"  y="22" width="14" height="2"  fill="#0A0C10"/>
+                <rect x="14" y="14" width="4"  height="2"  fill="#7E1F24"/>
+                <!-- legs -->
+                <rect x="11" y="32" width="3"  height="12" fill="#1A1D22"/>
+                <rect x="18" y="32" width="3"  height="12" fill="#1A1D22"/>
+                <!-- feet -->
+                <rect x="10" y="44" width="5"  height="3"  fill="#0A0C10"/>
+                <rect x="17" y="44" width="5"  height="3"  fill="#0A0C10"/>
+                <!-- bow held in left hand -->
+                <rect x="3"  y="14" width="2"  height="20" fill="#3A4048"/>
+                <rect x="5"  y="14" width="1"  height="2"  fill="#3A4048"/>
+                <rect x="5"  y="32" width="1"  height="2"  fill="#3A4048"/>
+                <rect x="2"  y="22" width="1"  height="4"  fill="#3A4048"/>
+                <!-- quiver on back -->
+                <rect x="23" y="14" width="3"  height="14" fill="#1A1D22"/>
+                <rect x="24" y="13" width="1"  height="2"  fill="#3A4048"/>
+                <rect x="24" y="11" width="1"  height="2"  fill="#3A4048"/>
+                <!-- ground shadow -->
+                <rect x="8"  y="47" width="16" height="1"  fill="#0A0C10" opacity="0.7"/>
+              </svg>
+            </div>
+
+            <div class="char-meta">
+              <div class="char-archetype" id="charArchetype">猎人</div>
+              <div class="char-level"><span id="charLevel">14</span> 级</div>
+            </div>
+            <div class="char-build-name" id="charBuildName">毒蚀弹射 / VENOM RICOCHET</div>
+
+            <div class="char-tags" id="charTags">
+              <!-- chips injected by JS -->
+            </div>
+          </div>
+
+          <!-- CENTER: Offense / Defense -->
+          <div class="char-stats-col">
+
+            <div class="char-stats-group offense">
+              <div class="char-section-label">攻击属性</div>
+              <div id="charOffenseList">
+                <!-- 6 stat rows injected by JS -->
+              </div>
+            </div>
+
+            <div class="char-stats-group defense">
+              <div class="char-section-label">防御属性</div>
+              <div id="charDefenseList">
+                <!-- 5 stat rows injected by JS -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT: Build Summary + Mechanics + Corruption -->
+          <div class="char-build-col">
+
+            <div class="char-section">
+              <div class="char-section-label">流派概述</div>
+              <div class="char-build-title" id="charBuildTitle">毒蚀弹射猎人</div>
+              <div id="charBuildBullets">
+                <!-- bullets injected by JS -->
+              </div>
+            </div>
+
+            <div class="char-section">
+              <div class="char-section-label">派系机制</div>
+              <div id="charMechanics">
+                <!-- mechanic blocks injected by JS -->
+              </div>
+            </div>
+
+            <div class="char-section">
+              <div class="char-section-label">腐化状态</div>
+              <div class="char-corruption" id="charCorruption">
+                <!-- corruption block injected by JS -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- BOTTOM: Derived Stats -->
+        <div class="char-bottom" id="charDerived">
+          <!-- 4 derived stats injected by JS -->
+        </div>
+
+      </div>
+
+      <!-- Floating tooltip (TOOLTIP_SYSTEM_V1 reuse) -->
+      <div id="floatingTooltip" class="tt-floating"></div>
+
+    </div>
+  </div>
+  <script src="js/character.js"></script>
+</body>
+</html>

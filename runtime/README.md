@@ -10,6 +10,7 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | Tooltip V1 | `tooltip.html` | ✅ Locked |
 | Inventory V1 | `inventory.html` | ✅ Locked |
 | Loot Presentation V1 | `loot.html` | ✅ Locked |
+| Character Panel V1 | `character.html` | ✅ Locked |
 
 ## Visual Style — PIXEL DARK STEEL
 
@@ -140,6 +141,15 @@ Then visit http://localhost:8080
 | (auto) | Slow atmospheric spawn cycle every 2.5–4.5s (weighted: 45% normal, 29% magic, 16% rare, 8% legendary, 2% heaven) |
 | `G` | Toggle 12-col / safe-area grid overlay |
 
+### Character Panel (`character.html`)
+| Key / Action | Effect |
+|---|---|
+| Click 毒蚀弹射猎人 / 暴击触发猎人 / 腐化弓手 | Swap build — all 4 panels re-render (identity, stats, mechanics, derived) |
+| `1` / `2` / `3` | Keyboard shortcut to switch builds |
+| Hover any stat row / mechanic / tag chip | After 80ms, floating tooltip shows the stat description / mechanic explanation |
+| Click × | Logs `[CLOSE] would close character panel` |
+| `G` | Toggle 12-col / safe-area grid overlay |
+
 ## Directory map
 ```
 runtime/
@@ -148,6 +158,7 @@ runtime/
 ├── tooltip.html            # Tooltip prototype — loot evaluation foundation
 ├── inventory.html          # Inventory prototype — loot management foundation
 ├── loot.html               # Loot Presentation — dopamine / rarity hierarchy / world-space drops
+├── character.html          # Character Panel — build identity / offense·defense / corruption state
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
 │   ├── layout.css          # viewport + canvas + dev grid (shared)
@@ -156,13 +167,15 @@ runtime/
 │   ├── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
 │   ├── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
 │   ├── inventory.css       # Inventory: panel / equipment / grid / slot / preview / currency
-│   └── loot.css            # Loot: world-bg / actors / drop / beam / aura / dust / ash / legend
+│   ├── loot.css            # Loot: world-bg / actors / drop / beam / aura / dust / ash / legend
+│   └── character.css       # Character: panel / portrait / stats / chips / build / corruption / derived
 ├── js/
 │   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
 │   ├── hud.js              # HUD: fit + damage/loot spawners + debug toggles
 │   ├── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
 │   ├── inventory.js        # Inventory: 35-item data + render + hover/select/filter/drag
-│   └── loot.js             # Loot: item pool + spawn cycle + density mgr + manual triggers
+│   ├── loot.js             # Loot: item pool + spawn cycle + density mgr + manual triggers
+│   └── character.js        # Character: 3-build data + render + build switcher + stat tooltips
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
 └── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
@@ -279,6 +292,27 @@ runtime/
 | Pixel discipline (no blur, banded only, hard step shadows) | ✅ `image-rendering: pixelated`, banded beams, hard text shadows |
 | Required tags demonstrated: poison / crit / ricochet / trigger / corruption | ✅ in build-enabling drops + ambient pool |
 | No rainbow / no MMO fireworks / no mobile explosion | ✅ low-saturation, restrained excitement |
+
+## Character Panel V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| Panel 1320 × 760, centered, `#111418` @ 92%, dark metallic pixel border | ✅ (chunky 2px + 4 rivets + 8px hard drop shadow) |
+| 4 zones: LEFT identity · CENTER offense/defense · RIGHT build summary/mechanics/corruption · BOTTOM derived stats | ✅ |
+| LEFT — portrait silhouette + archetype + level + build tags | ✅ pixel hunter SVG + 猎人 14级 + 3 tag chips |
+| 5 tag types demonstrable (poison/crit/ricochet/trigger/corruption) | ✅ via 3 builds covering all 5 |
+| Offense stats: Crit / Crit Multi / Projectile Count / Poison DPS / Trigger Chance / Attack Speed | ✅ 6 rows with leader dots + key (gold) emphasis |
+| Defense stats: Health / Armor / Evasion / Corruption Resist / Life Leech | ✅ 5 rows |
+| RIGHT — Build Summary (3 bullets, 2-sec readability), Special Mechanics, Corruption State | ✅ build title gold + bullets + 3 gold-edge mechanic blocks + purple-black corruption section with banded bar |
+| Corruption State: level, instability, mutation tendency | ✅ 等级 3/10 bar + 不稳定度 12% + 2 mutation lines (green up / red down) |
+| BOTTOM derived: DPS / Effective Health / Poison Stack Rate / Trigger Frequency | ✅ 4 columns with separator hairlines |
+| 3 test builds: Venom Ricochet Hunter / Crit Trigger Hunter / Corruption Archer | ✅ all 3 in JS, switchable via header buttons |
+| Switching builds — every panel re-renders | ✅ render() function rebuilds 7 DOM groups |
+| Tooltip integration — all stats / tags / mechanics support 80ms hover tooltip | ✅ `bindStatTooltips()` reuses `.tt-floating` |
+| Open animation 160ms fade | ✅ via `--char-open-fade` token |
+| Hover transitions 120ms steps(4) | ✅ |
+| Pixel discipline (no blur, banded fills, hard step shadows, no glow) | ✅ |
+| Typography Zpix / Pixelify Sans, no fantasy paragraph font | ✅ |
 
 ## What is intentionally NOT here
 

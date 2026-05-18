@@ -1,0 +1,550 @@
+/* =============================================================
+   BAD ARPG — Character Panel V1 (PIXEL DARK STEEL)
+   Build Identity Summary — NOT a stat spreadsheet.
+   ============================================================= */
+
+/* ---------- Page bg (dimmed game world hint, same as inventory) ---------- */
+.char-page-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%,
+      #14181E 0%,    #14181E 24%,
+      #0E1116 24%,   #0E1116 48%,
+      #0A0C10 48%,   #0A0C10 72%,
+      #06080B 72%,   #06080B 100%);
+}
+.char-page-bg::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  top: 740px;
+  height: 2px;
+  background: #1F2329;
+  opacity: 0.5;
+}
+
+/* =============================================================
+   PANEL
+   ============================================================= */
+.char-panel {
+  position: absolute;
+  width:  var(--char-panel-w);
+  height: var(--char-panel-h);
+  left: 300px;       /* (1920-1320)/2 */
+  top:  160px;       /* (1080-760)/2  */
+  background: var(--clr-inv-panel-bg);
+  border: 2px solid var(--clr-inv-panel-border);
+  box-shadow:
+    inset 2px 2px 0 var(--clr-inv-panel-bevel-hi),
+    inset -2px -2px 0 var(--clr-inv-panel-bevel-lo),
+    inset 0 0 0 4px #1A1D22,
+    8px 8px 0 rgba(0,0,0,0.55);
+  padding: var(--char-panel-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--char-body-gap);
+}
+.char-panel > .char-header { height: var(--char-header-h); flex-shrink: 0; }
+.char-panel > .char-body   { flex: 1; min-height: 0; }
+.char-panel > .char-bottom { height: var(--char-bottom-h); flex-shrink: 0; }
+
+/* Corner rivets */
+.char-panel::before,
+.char-panel::after,
+.char-rivet-tr,
+.char-rivet-bl {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  background: var(--clr-inv-panel-border);
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.06),
+    inset -2px -2px 0 rgba(0,0,0,0.55);
+}
+.char-panel::before { top: 8px; left: 8px; }
+.char-panel::after  { bottom: 8px; right: 8px; }
+.char-rivet-tr { top: 8px; right: 8px; }
+.char-rivet-bl { bottom: 8px; left: 8px; }
+
+/* =============================================================
+   HEADER — title + build switcher + close
+   ============================================================= */
+.char-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0 8px;
+  background: var(--clr-inv-header-bg);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+
+.char-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.18em;
+  color: var(--clr-hud-text);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.7);
+  padding: 0 12px;
+}
+
+.char-build-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.char-build-btn {
+  background: transparent;
+  border: 2px solid transparent;
+  color: var(--clr-inv-filter-idle);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: color var(--char-hover) steps(4, end),
+              border-color var(--char-hover) steps(4, end);
+}
+.char-build-btn:hover { color: var(--clr-hud-text); }
+.char-build-btn.is-active {
+  color: var(--clr-tier-1);
+  border-color: var(--clr-tier-1);
+  background: var(--clr-tier-1-bg);
+  box-shadow: inset 1px 1px 0 rgba(225,168,74,0.18);
+}
+
+.char-close {
+  width: 32px; height: 32px;
+  background: var(--clr-btn-bg);
+  border: 2px solid var(--clr-btn-border);
+  color: var(--clr-btn-label);
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.char-close:hover { filter: brightness(1.12); }
+
+/* =============================================================
+   BODY — 3 columns
+   ============================================================= */
+.char-body {
+  display: grid;
+  grid-template-columns:
+    var(--char-left-w)
+    var(--char-col-gap)
+    var(--char-center-w)
+    var(--char-col-gap)
+    var(--char-right-w);
+}
+
+/* Shared section header */
+.char-section-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-hud-text-dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.char-section-label::before {
+  content: "";
+  width: 8px; height: 2px;
+  background: var(--clr-hud-frame-rim);
+}
+
+/* =============================================================
+   LEFT COLUMN — Character Identity
+   ============================================================= */
+.char-identity-col {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: rgba(7,9,13,0.45);
+  border: 2px solid var(--clr-hud-frame-rim);
+  padding: 16px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.03),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+
+.char-portrait {
+  width: var(--char-portrait-w);
+  height: var(--char-portrait-h);
+  margin: 0 auto;
+  background: rgba(13,16,20,0.6);
+  border: 2px solid #1F2329;
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.55);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+/* Pixel grid bg behind portrait — hints at "studio capture" */
+.char-portrait::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  background:
+    repeating-linear-gradient(0deg,
+      transparent 0px, transparent 11px,
+      rgba(40,44,52,0.18) 11px, rgba(40,44,52,0.18) 12px),
+    repeating-linear-gradient(90deg,
+      transparent 0px, transparent 11px,
+      rgba(40,44,52,0.18) 11px, rgba(40,44,52,0.18) 12px);
+}
+
+.char-portrait-svg {
+  width: 192px;
+  height: 280px;
+  position: relative;
+  z-index: 1;
+}
+
+.char-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.char-archetype {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--clr-hud-text);
+}
+.char-level {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--clr-tier-1);
+  background: var(--clr-tier-1-bg);
+  border: 2px solid var(--clr-tier-1);
+  padding: 2px 10px;
+  text-transform: uppercase;
+}
+
+.char-build-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--clr-hud-text-dim);
+  text-transform: uppercase;
+}
+
+.char-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.char-tag {
+  height: var(--char-chip-h);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 2px solid currentColor;
+  background: rgba(8,10,14,0.6);
+  cursor: default;
+}
+.char-tag::before {
+  content: "";
+  width: 6px; height: 6px;
+  background: currentColor;
+}
+.char-tag.tag-poison     { color: var(--clr-tag-poison);     background: var(--clr-tag-poison-bg); }
+.char-tag.tag-crit       { color: var(--clr-tag-crit);       background: var(--clr-tag-crit-bg); }
+.char-tag.tag-ricochet   { color: var(--clr-tag-ricochet);   background: var(--clr-tag-ricochet-bg); }
+.char-tag.tag-trigger    { color: var(--clr-tag-trigger);    background: var(--clr-tag-trigger-bg); }
+.char-tag.tag-corruption { color: var(--clr-tag-corruption); background: var(--clr-tag-corruption-bg); }
+.char-tag.tag-projectile { color: var(--clr-tag-projectile); background: var(--clr-tag-projectile-bg); }
+
+/* =============================================================
+   CENTER COLUMN — Offense + Defense
+   ============================================================= */
+.char-stats-col {
+  grid-column: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.char-stats-group {
+  background: rgba(7,9,13,0.45);
+  border: 2px solid var(--clr-hud-frame-rim);
+  padding: 16px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.03),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.char-stats-group.offense .char-section-label::before { background: var(--clr-cmp-down); }
+.char-stats-group.defense .char-section-label::before { background: var(--clr-cmp-up); }
+
+.char-stat-row {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: baseline;
+  height: var(--char-stat-row-h);
+  gap: 8px;
+  cursor: default;
+  position: relative;
+}
+.char-stat-row::after {
+  /* Leader dots between label and value */
+  content: "";
+  position: absolute;
+  left: 28px; right: 60px;
+  top: 50%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--clr-hud-frame-rim) 0px, var(--clr-hud-frame-rim) 2px,
+    transparent 2px, transparent 6px);
+  opacity: 0.35;
+  z-index: 0;
+}
+.char-stat-icon {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--clr-hud-text-dim);
+  z-index: 1;
+}
+.char-stat-label {
+  font-family: var(--font-ui);
+  font-size: var(--char-stat-label-size);
+  letter-spacing: 0.04em;
+  color: var(--clr-hud-text-dim);
+  background: rgba(17, 20, 24, 0.92);
+  padding-right: 8px;
+  z-index: 1;
+}
+.char-stat-value {
+  font-family: var(--font-ui);
+  font-size: var(--char-stat-value-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--clr-hud-text);
+  font-variant-numeric: tabular-nums;
+  background: rgba(17, 20, 24, 0.92);
+  padding-left: 8px;
+  text-align: right;
+  z-index: 1;
+}
+.char-stat-row.is-key .char-stat-value { color: var(--clr-tier-1); }
+.char-stat-row:hover { filter: brightness(1.10); }
+
+/* =============================================================
+   RIGHT COLUMN — Build Summary + Mechanics + Corruption State
+   ============================================================= */
+.char-build-col {
+  grid-column: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(7,9,13,0.45);
+  border: 2px solid var(--clr-hud-frame-rim);
+  padding: 16px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.03),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+
+.char-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.char-build-title {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--clr-tier-1);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.55);
+}
+
+.char-build-bullet {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--clr-hud-text);
+}
+.char-build-bullet::before {
+  content: "◆";
+  color: var(--clr-tier-1);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.char-mechanic {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--clr-tier-1-bg);
+  border-left: 3px solid var(--clr-tier-1);
+}
+.char-mechanic-name {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--clr-tier-1);
+}
+.char-mechanic-desc {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--clr-hud-text);
+  grid-column: 2;
+}
+.char-mechanic::before {
+  content: "◆";
+  color: var(--clr-tier-1);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Corruption State */
+.char-corruption {
+  background: rgba(60,31,74,0.16);
+  border: 2px solid var(--clr-sem-corruption);
+  border-left-width: 4px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.char-corruption-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+}
+.char-corruption-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clr-hud-text-dim);
+}
+.char-corruption-value {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--clr-sem-corruption);
+  filter: brightness(1.6);
+  font-variant-numeric: tabular-nums;
+}
+.char-corruption-bar {
+  height: 6px;
+  background: #14171B;
+  border: 1px solid var(--clr-hud-frame-rim);
+  position: relative;
+}
+.char-corruption-bar-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  /* banded purple-black fill */
+  background: linear-gradient(180deg,
+    #6E48A4 0%,  #6E48A4 33%,
+    #4B2A78 33%, #4B2A78 66%,
+    #3C1F4A 66%, #3C1F4A 100%);
+  filter: brightness(1.4);
+}
+.char-mutation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.char-mutation-line {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--clr-hud-text);
+}
+.char-mutation-line.up   { color: var(--clr-cmp-up); }
+.char-mutation-line.down { color: var(--clr-cmp-down); }
+.char-mutation-line::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--clr-hud-frame-rim);
+}
+
+/* =============================================================
+   BOTTOM — Derived Stats
+   ============================================================= */
+.char-bottom {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 0 8px;
+  background: rgba(7,9,13,0.7);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.04),
+    inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+
+.char-derived {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: center;
+  justify-content: start;
+  padding: 0 16px;
+  position: relative;
+}
+.char-derived:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 12px; bottom: 12px;
+  width: 1px;
+  background: var(--clr-hud-frame-rim);
+}
+.char-derived-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clr-hud-text-dim);
+  margin-bottom: 2px;
+}
+.char-derived-value {
+  font-family: var(--font-ui);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--clr-hud-text);
+  font-variant-numeric: tabular-nums;
+}
+.char-derived-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clr-hud-text-dim);
+  margin-left: 4px;
+}
+.char-derived.key .char-derived-value { color: var(--clr-tier-1); }
