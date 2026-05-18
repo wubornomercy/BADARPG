@@ -15,6 +15,11 @@ permissions:
   pages: write
   id-token: write
 
+# Silence the Node 20 deprecation warning by opting into Node 24
+# (Node 20 actions are forced to Node 24 by June 2026 anyway).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -39,6 +44,11 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Auto-create the Pages site if it doesn't exist yet so the
+          # first deploy doesn't require manual repo Settings -> Pages
+          # configuration. Requires the `pages: write` permission above.
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
