@@ -78,6 +78,47 @@
     }
     #menuScreen.is-active { display: block; }
 
+    /* Pause overlay — sits below menu (z 180) so a settings-from-pause
+       layers above pause; HUD stays visible behind. */
+    #pauseScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 180;
+      background: rgba(0, 0, 0, 0.62);
+      display: none;
+      place-items: center;
+    }
+    #pauseScreen.is-active { display: grid; }
+    .pause-frame {
+      width: 360px;
+      padding: 28px 24px;
+      background: var(--clr-inv-panel-bg);
+      border: 2px solid var(--clr-inv-panel-border);
+      box-shadow:
+        inset 2px 2px 0 var(--clr-inv-panel-bevel-hi),
+        inset -2px -2px 0 var(--clr-inv-panel-bevel-lo),
+        inset 0 0 0 4px #1A1D22,
+        8px 8px 0 rgba(0,0,0,0.55);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .pause-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      letter-spacing: 0.32em;
+      color: var(--clr-hud-text);
+      text-shadow: 0 2px 0 rgba(0,0,0,0.7);
+    }
+    .pause-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    .pause-stack .btn-main { width: 100%; }
+
     /* Hide the Phase 1 .viewport / .canvas grid styles for our local
        wrapper so Pixi canvas can sit at native size. */
     body { background: #000; }
@@ -431,6 +472,18 @@
               <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">投射物</span><span class="skill-bottom-stat-value">3</span></div>
               <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">触发率</span><span class="skill-bottom-stat-value">18<span class="skill-bottom-stat-unit">%</span></span></div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== PAUSE OVERLAY =================== -->
+      <div id="pauseScreen">
+        <div class="pause-frame">
+          <div class="pause-title">暂停</div>
+          <div class="pause-stack">
+            <button class="btn-main" id="pauseResume">继续游戏</button>
+            <button class="btn-main" id="pauseSettings">设置</button>
+            <button class="btn-main" id="pauseToMenu">回主菜单</button>
           </div>
         </div>
       </div>

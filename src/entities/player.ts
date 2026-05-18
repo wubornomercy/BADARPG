@@ -5,7 +5,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import { COLOR, TUNE, TIME, WORLD_W, WORLD_H } from '../tokens.js';
-import { wasPressed, mouse } from '../input.js';
+import { wasActionPressed, mouse } from '../input.js';
 
 /** Minimum distance before player considers the move target "reached". */
 const MOVE_STOP_DIST = 6;
@@ -89,9 +89,8 @@ export class Player {
   update(dtMs: number, now: number, onFootstep?: (x: number, y: number) => void) {
     const dt = dtMs / 1000;
 
-    // ---------- Dodge trigger ----------
-    // Click-to-move scheme: dodge fires toward the mouse cursor (facing dir).
-    if (wasPressed('dodge') && now >= this.dodgeReadyAt) {
+    // ---------- Dodge trigger (reads rebindable 'dodge' action) ----------
+    if (wasActionPressed('dodge') && now >= this.dodgeReadyAt) {
       let dx = this.facingX, dy = this.facingY;
       // Fallback to last movement dir if cursor right on top of player
       if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {

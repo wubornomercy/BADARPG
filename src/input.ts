@@ -1,10 +1,12 @@
 /**
- * Input system — keyboard + mouse polling.
- * Frame-coherent state. Read once per tick from any system.
+ * Input system — raw key + mouse state, plus action-aware helpers that
+ * read the current keybinds registry (so user rebinds actually affect
+ * gameplay).
  */
+import { getBinding, type ActionId } from './keybinds.js';
 
-const keys = new Set<string>();
-const justPressed = new Set<string>();
+const keyCodes = new Set<string>();
+const justPressedCodes = new Set<string>();
 const mouseButtons = new Set<number>();
 const justMouse = new Set<number>();
 
@@ -19,12 +21,11 @@ export function initInput(canvas: HTMLCanvasElement, w: number, h: number) {
   canvasH = h;
 
   window.addEventListener('keydown', (e) => {
-    const k = normKey(e);
-    if (!keys.has(k)) justPressed.add(k);
-    keys.add(k);
+    if (!keyCodes.has(e.code)) justPressedCodes.add(e.code);
+    keyCodes.add(e.code);
   });
   window.addEventListener('keyup', (e) => {
-    keys.delete(normKey(e));
+    keyCodes.delete(e.code);
   });
 
   canvas.addEventListener('mousedown', (e) => {
@@ -34,59 +35,61 @@ export function initInput(canvas: HTMLCanvasElement, w: number, h: number) {
   canvas.addEventListener('mouseup', (e) => {
     mouseButtons.delete(e.button);
   });
+  // Also catch mouseup outside canvas to avoid sticky buttons
+  window.addEventListener('mouseup', (e) => {
+    mouseButtons.delete(e.button);
+  });
   canvas.addEventListener('mousemove', (e) => {
     updateMousePos(e.clientX, e.clientY);
   });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  window.addEventListener('blur', () => { keys.clear(); mouseButtons.clear(); });
-}
-
-function normKey(e: KeyboardEvent): string {
-  // Normalize WASD + arrow keys + special keys to lowercase letter / Code form
-  const c = e.code;
-  if (c === 'KeyW' || c === 'ArrowUp')    return 'up';
-  if (c === 'KeyS' || c === 'ArrowDown')  return 'down';
-  if (c === 'KeyA' || c === 'ArrowLeft')  return 'left';
-  if (c === 'KeyD' || c === 'ArrowRight') return 'right';
-  if (c === 'Space')      return 'dodge';
-  if (c === 'ShiftLeft' || c === 'ShiftRight') return 'dodge';
-  return c.toLowerCase();
+  window.addEventListener('blur', () => {
+    keyCodes.clear();
+    mouseButtons.clear();
+  });
 }
 
 function updateMousePos(cx: number, cy: number) {
   if (!canvasEl) return;
   const rect = canvasEl.getBoundingClientRect();
-  // Scale CSS coords to canvas internal coords
   const sx = canvasW / rect.width;
   const sy = canvasH / rect.height;
   mouse.x = (cx - rect.left) * sx;
   mouse.y = (cy - rect.top)  * sy;
-  // World coords match for fixed camera
   mouse.world.x = mouse.x;
   mouse.world.y = mouse.y;
 }
 
-export function isDown(key: string): boolean { return keys.has(key); }
-export function wasPressed(key: string): boolean { return justPressed.has(key); }
+// =========================================================================
+// Raw queries (rarely used directly; prefer action helpers below)
+// =========================================================================
+export function isKeyHeld(code: string): boolean { return keyCodes.has(code); }
+export function wasKeyPressed(code: string): boolean { return justPressedCodes.has(code); }
 export function isMouseDown(btn = 0): boolean { return mouseButtons.has(btn); }
 export function mouseJust(btn = 0): boolean { return justMouse.has(btn); }
 
-/** Called once per frame AFTER all systems have read input. */
-export function endFrameInput() {
-  justPressed.clear();
-  justMouse.clear();
+// =========================================================================
+// Action-aware queries — these are the ONES game systems should use.
+// They consult keybinds.ts so user rebinds immediately take effect.
+// =========================================================================
+export function isActionHeld(action: ActionId): boolean {
+  const k = getBinding(action);
+  if (k === 'LMB') return mouseButtons.has(0);
+  if (k === 'RMB') return mouseButtons.has(2);
+  if (k === 'MMB') return mouseButtons.has(1);
+  return keyCodes.has(k);
 }
 
-/** Returns a normalized input direction vector based on WASD state. */
-export function inputDir(): { x: number, y: number } {
-  let x = 0, y = 0;
-  if (isDown('left'))  x -= 1;
-  if (isDown('right')) x += 1;
-  if (isDown('up'))    y -= 1;
-  if (isDown('down'))  y += 1;
-  if (x !== 0 && y !== 0) {
-    const inv = 1 / Math.SQRT2;
-    x *= inv; y *= inv;
-  }
-  return { x, y };
+export function wasActionPressed(action: ActionId): boolean {
+  const k = getBinding(action);
+  if (k === 'LMB') return justMouse.has(0);
+  if (k === 'RMB') return justMouse.has(2);
+  if (k === 'MMB') return justMouse.has(1);
+  return justPressedCodes.has(k);
+}
+
+/** Called once per frame AFTER all systems have read input. */
+export function endFrameInput() {
+  justPressedCodes.clear();
+  justMouse.clear();
 }

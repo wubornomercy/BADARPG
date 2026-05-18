@@ -4,7 +4,8 @@
  */
 import { Application, Container, Graphics, Text } from 'pixi.js';
 import { CANVAS_W, CANVAS_H, WORLD_W, WORLD_H, ARENA_CENTER_X, ARENA_CENTER_Y, ARENA_HALF, COLOR, TUNE, TIME } from './tokens.js';
-import { initInput, endFrameInput, mouse, isMouseDown } from './input.js';
+import { initInput, endFrameInput, mouse, isActionHeld, wasActionPressed } from './input.js';
+import { getBinding } from './keybinds.js';
 import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
 import { Projectile } from './entities/projectile.js';
@@ -73,6 +74,7 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   // ---------------------------------------------------------------------
   const sceneParam = new URL(location.href).searchParams.get('scene');
   if (sceneParam === 'play')     setScene('PLAYING');
+  if (sceneParam === 'pause')    setScene('PAUSE');
   if (sceneParam === 'inv')      setScene('PANEL_INV');
   if (sceneParam === 'char')     setScene('PANEL_CHAR');
   if (sceneParam === 'skill')    setScene('PANEL_SKILL');
@@ -174,25 +176,42 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   document.getElementById('menuExit')?.addEventListener('click', () => {
     console.log('[EXIT] would close runtime');
   });
-  // Panel close buttons — return to wherever we came from (MENU or PLAYING)
+  // Panel close buttons — return to wherever we came from (MENU/PLAYING/PAUSE)
   document.querySelectorAll('[data-close]').forEach(el => {
     el.addEventListener('click', () => setScene(getReturnScene()));
   });
 
-  // Keyboard panel toggles + ESC
+  // Pause overlay buttons
+  document.getElementById('pauseResume')?.addEventListener('click', () => {
+    setScene('PLAYING');
+  });
+  document.getElementById('pauseSettings')?.addEventListener('click', () => {
+    // Open Settings; closing Settings will return to PAUSE per getReturnScene
+    setScene('PANEL_SETTINGS');
+  });
+  document.getElementById('pauseToMenu')?.addEventListener('click', () => {
+    setScene('MENU');
+  });
+
+  // Keyboard panel toggles + ESC (action-aware, reads rebindable keybinds)
   window.addEventListener('keydown', (e) => {
-    const k = e.key.toLowerCase();
-    // ESC: panel → playing, playing → menu, menu → menu (no-op)
-    if (k === 'escape') {
-      if (isPanelOpen()) setScene(getReturnScene());
-      else if (getScene() === 'PLAYING') setScene('MENU');
+    // ESC / menuBack: PLAYING <-> PAUSE (pause overlay), panel -> return scene
+    if (e.code === getBinding('menuBack')) {
+      if (isPanelOpen())                  setScene(getReturnScene());
+      else if (getScene() === 'PLAYING')  setScene('PAUSE');
+      else if (getScene() === 'PAUSE')    setScene('PLAYING');
+      // MENU: ESC no-op
       return;
     }
-    // Hotkeys only active during PLAYING / panels (NOT menu)
-    if (getScene() === 'MENU') return;
-    if (k === 'i') setScene(getScene() === 'PANEL_INV'  ? 'PLAYING' : 'PANEL_INV');
-    if (k === 'c') setScene(getScene() === 'PANEL_CHAR' ? 'PLAYING' : 'PANEL_CHAR');
-    if (k === 'k') setScene(getScene() === 'PANEL_SKILL'? 'PLAYING' : 'PANEL_SKILL');
+    // Other hotkeys disabled during MENU + PAUSE (only ESC works in those)
+    const s = getScene();
+    if (s === 'MENU' || s === 'PAUSE') return;
+    if (e.code === getBinding('openInventory'))
+      setScene(s === 'PANEL_INV'   ? getReturnScene() : 'PANEL_INV');
+    if (e.code === getBinding('openCharacter'))
+      setScene(s === 'PANEL_CHAR'  ? getReturnScene() : 'PANEL_CHAR');
+    if (e.code === getBinding('openSkill'))
+      setScene(s === 'PANEL_SKILL' ? getReturnScene() : 'PANEL_SKILL');
   });
 
   // When entering PLAYING from MENU, reset player position
@@ -256,10 +275,9 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       corruptionMeter = Math.max(0, corruptionMeter - 0.04);
     }
 
-    // ----- Click-to-move (LMB held) -----
-    // Always compute world mouse for both move + attack
+    // ----- Movement input (rebindable 'move' action — default LMB held) -----
     const worldMouse = screenToWorld(mouse.world.x, mouse.world.y);
-    if (isMouseDown(0)) {
+    if (isActionHeld('move')) {
       player.setMoveTarget(worldMouse.x, worldMouse.y);
     } else {
       player.clearMoveTarget();
@@ -268,8 +286,8 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     // ----- Player tick -----
     player.update(dt, now, spawnFootstepDust);
 
-    // ----- Player attack (RMB hold) -----
-    if (isMouseDown(2) && player.canAttack(now) && canSpawnProjectile()) {
+    // ----- Primary attack (rebindable 'primary' action — default RMB held) -----
+    if (isActionHeld('primary') && player.canAttack(now) && canSpawnProjectile()) {
       const px = player.x, py = player.y;
       const dx = worldMouse.x - px;
       const dy = worldMouse.y - py;

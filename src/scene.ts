@@ -12,6 +12,7 @@
 export type Scene =
   | 'MENU'
   | 'PLAYING'
+  | 'PAUSE'
   | 'PANEL_INV'
   | 'PANEL_CHAR'
   | 'PANEL_SKILL'
@@ -26,11 +27,13 @@ export function getScene(): Scene { return current; }
 /** Where a panel-close (× / ESC) should return to. */
 export function getReturnScene(): Scene { return lastNonPanel; }
 
+const NON_PANEL_SCENES: readonly Scene[] = ['MENU', 'PLAYING', 'PAUSE'];
+
 export function setScene(next: Scene) {
   const prev = current;
   if (prev === next) return;
   // Track the last non-panel scene so close buttons know where to go
-  if (prev === 'MENU' || prev === 'PLAYING') lastNonPanel = prev;
+  if (NON_PANEL_SCENES.includes(prev)) lastNonPanel = prev;
   current = next;
   applyDom(next);
   for (const fn of listeners) fn(next);
@@ -44,9 +47,10 @@ export function isPanelOpen(): boolean {
       || current === 'PANEL_SKILL' || current === 'PANEL_SETTINGS';
 }
 
-/** True while Pixi runtime should tick (game world updates) */
+/** True while Pixi runtime should tick (game world updates).
+ *  Panels keep ticking (spec); MENU + PAUSE freeze the world. */
 export function shouldGameTick(): boolean {
-  return current !== 'MENU';   // game keeps running during panel views per spec
+  return current !== 'MENU' && current !== 'PAUSE';
 }
 
 function applyDom(s: Scene) {
@@ -58,10 +62,12 @@ function applyDom(s: Scene) {
 
   // Menu visible only in MENU
   setActive($('menuScreen'), s === 'MENU');
-  // HUD visible in PLAYING + panel states (it's the "ongoing combat" HUD)
+  // HUD visible everywhere except MENU
   setActive($('gameHud'), s !== 'MENU');
   // Scene hint shown during PLAYING only
   setActive($('sceneHint'), s === 'PLAYING');
+  // Pause overlay only in PAUSE
+  setActive($('pauseScreen'), s === 'PAUSE');
   // World dim active when a panel is up
   setActive($('worldDim'),
     s === 'PANEL_INV' || s === 'PANEL_CHAR' || s === 'PANEL_SKILL' || s === 'PANEL_SETTINGS');
