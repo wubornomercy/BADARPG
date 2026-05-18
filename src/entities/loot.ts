@@ -6,7 +6,9 @@ import { Container, Graphics, Text } from 'pixi.js';
 import { COLOR } from '../tokens.js';
 
 type Rarity = 'normal' | 'magic' | 'rare';
-const BEAM_HEIGHT: Record<Rarity, number> = { normal: 0, magic: 40, rare: 80 };
+// Loot beam DISABLED per user feedback ("光柱做的太丑了，先禁用了之后重做").
+// Flip values back (e.g. magic: 40, rare: 80) to re-enable.
+const BEAM_HEIGHT: Record<Rarity, number> = { normal: 0, magic: 0, rare: 0 };
 const COLORS: Record<Rarity, number> = {
   normal: COLOR.rarityNormal,
   magic:  COLOR.rarityMagic,
