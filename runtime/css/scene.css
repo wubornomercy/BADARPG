@@ -1,114 +1,104 @@
 /* =============================================================
-   BAD ARPG — Scene Layers
+   BAD ARPG — Scene Layers (PIXEL DARK STEEL)
    Layer 1 Sky / 2 Moon / 3 Castle / 4 Fog / 5 Forest / 6 Campfire
-   Ambient motion lives here (CSS-only, no JS dependency).
+   No CSS blur, no smooth gradients, no soft shadows.
    ============================================================= */
 
-/* ---------- LAYER_01_Sky ---------- */
+/* ---------- LAYER_01_Sky ----------
+   Banded gradient — 6 stops with hard stops between, producing
+   visible bands instead of smooth transition. */
 .layer-sky {
   z-index: var(--z-sky);
   background: linear-gradient(
     180deg,
-    var(--clr-bg-sky-top) 0%,
-    var(--clr-bg-sky-bottom) 100%
+    #0A0C10 0%,   #0A0C10 18%,
+    #0C0F14 18%,  #0C0F14 36%,
+    #0F1218 36%,  #0F1218 54%,
+    #131620 54%,  #131620 72%,
+    #161A22 72%,  #161A22 88%,
+    #1A1D22 88%,  #1A1D22 100%
   );
 }
 
-/* ---------- LAYER_02_Moon (center 1480, 120) ---------- */
+/* ---------- LAYER_02_Moon ---------- */
 .layer-moon { z-index: var(--z-moon); }
 
+/* Pixel moon disc — hard-edge circle, NO blur, NO smooth radial.
+   Crater "dither" via inset hard shadows at 4px steps. */
 .moon-disc {
   position: absolute;
   width: 220px; height: 220px;
-  /* center anchor: 1480 - 110, 120 - 110 */
   left: 1370px; top: 10px;
   border-radius: 50%;
-  background: var(--clr-atmos-moon);
+  background: #D8E0F0;
   opacity: 0.22;
-  /* subtle craters via box-shadow inset */
+  /* Hard stepped inner shadows (no blur) to suggest pixel craters / shading */
   box-shadow:
-    inset -6px -6px 14px rgba(10,12,16,0.18),
-    inset 4px 4px 10px rgba(216,224,240,0.06);
-  animation: moon-haze 8s ease-in-out infinite alternate;
+    inset -8px -8px 0 rgba(10,12,16,0.16),
+    inset -16px -16px 0 rgba(10,12,16,0.08),
+    inset 4px 4px 0 rgba(216,224,240,0.06);
 }
 
+/* Banded moon haze — 3 stacked rings at descending opacity, no blur */
 .moon-haze {
   position: absolute;
-  width: 320px; height: 320px;
-  left: 1320px; top: -40px;
+  width: 280px; height: 280px;
+  left: 1340px; top: -20px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(216,224,240,0.10) 0%,
-    rgba(216,224,240,0.03) 55%,
-    rgba(216,224,240,0) 100%
-  );
-  filter: blur(6px);
+  background: rgba(216,224,240,0.05);
+  box-shadow:
+    0 0 0 12px rgba(216,224,240,0.025),
+    0 0 0 24px rgba(216,224,240,0.012);
 }
 
-@keyframes moon-haze {
-  0%   { opacity: 0.20; }
-  100% { opacity: 0.24; }
-}
-
-/* ---------- LAYER_03_FarCastle (center 960, 280; 680x320) ---------- */
+/* ---------- LAYER_03_FarCastle ---------- */
 .layer-castle { z-index: var(--z-castle); }
 
 .castle-svg {
   position: absolute;
-  /* center anchor: 960-340, 280-160 */
   left: 620px; top: 120px;
   width: 680px; height: 320px;
   opacity: 0.72;
-  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.4));
+  shape-rendering: crispEdges;
+  /* hard pixel base shadow line, no blur */
+  filter: drop-shadow(0 4px 0 rgba(0,0,0,0.5));
 }
 
-/* ---------- LAYER_04_Fog (bottom 40% band) ---------- */
+/* ---------- LAYER_04_Fog ---------- */
+/* No CSS filter:blur (forbidden by pixel rules).
+   Composed from 6 banded horizontal rectangles at increasing opacity. */
 .layer-fog { z-index: var(--z-fog); }
 
 .fog-band {
   position: absolute;
-  left: -200px;
-  width: 2400px;  /* wider than canvas so drift loops seamlessly */
-  height: 432px;
-  background:
-    linear-gradient(180deg,
-      rgba(174,183,196,0) 0%,
-      rgba(174,183,196,0.10) 40%,
-      rgba(174,183,196,0.06) 100%);
-  filter: blur(24px);
+  left: -160px;
+  width: 2240px;
+  height: 80px;
+  background: #AEB7C4;
   will-change: transform;
 }
 
-.fog-band-1 {
-  top: 648px;
-  /* 1920 / 0.4 px/s = 4800s = too slow visually; use 240s for one full 480-px loop */
-  animation: fog-drift-1 240s linear infinite;
-}
-
-.fog-band-2 {
-  top: 720px;
-  height: 360px;
-  opacity: 0.55;
-  filter: blur(32px);
-  background:
-    linear-gradient(180deg,
-      rgba(174,183,196,0) 0%,
-      rgba(174,183,196,0.08) 50%,
-      rgba(174,183,196,0.04) 100%);
-  animation: fog-drift-2 320s linear infinite;
-}
+.fog-band-1 { top: 648px; opacity: 0.04;
+  animation: fog-drift-1 240s linear infinite; }
+.fog-band-2 { top: 728px; opacity: 0.06;
+  animation: fog-drift-2 320s linear infinite; }
+.fog-band-3 { top: 808px; opacity: 0.07;
+  animation: fog-drift-1 280s linear infinite; }
+.fog-band-4 { top: 888px; opacity: 0.06;
+  animation: fog-drift-2 360s linear infinite; }
+.fog-band-5 { top: 968px; opacity: 0.04;
+  animation: fog-drift-1 220s linear infinite; }
 
 @keyframes fog-drift-1 {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-480px); }
+  100% { transform: translateX(-320px); }
 }
 @keyframes fog-drift-2 {
   0%   { transform: translateX(0); }
-  100% { transform: translateX(-480px); }
+  100% { transform: translateX(-320px); }
 }
 
-/* ---------- LAYER_05_DeadForest (Y center ~640 ground line) ---------- */
+/* ---------- LAYER_05_DeadForest ---------- */
 .layer-forest { z-index: var(--z-forest); }
 
 .forest-svg {
@@ -117,25 +107,26 @@
   top: 460px;
   width: 1920px;
   height: 420px;
+  shape-rendering: crispEdges;
 }
 
-/* ---------- LAYER_06_Campfire (center 960, 760) ---------- */
+/* ---------- LAYER_06_Campfire ----------
+   Pixel campfire — banded glow without blur (3 concentric circles
+   of increasing transparency, plus stepped flicker animation). */
 .layer-campfire { z-index: var(--z-campfire); }
 
 .campfire-glow {
   position: absolute;
-  width: 220px; height: 220px;
-  /* center on (960, 770) */
-  left: 850px; top: 660px;
+  width: 64px; height: 64px;
+  left: 928px; top: 738px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 55%,
-    rgba(242,140,56,0.22) 0%,
-    rgba(168,72,29,0.10) 50%,
-    rgba(168,72,29,0) 100%
-  );
-  filter: blur(12px);
-  animation: campfire-pulse 3.2s ease-in-out infinite;
+  background: rgba(242,140,56,0.22);
+  /* hard concentric rings instead of soft radial gradient */
+  box-shadow:
+    0 0 0 16px rgba(242,140,56,0.12),
+    0 0 0 32px rgba(168,72,29,0.07),
+    0 0 0 56px rgba(168,72,29,0.03);
+  animation: campfire-pulse 3.2s steps(4, end) infinite;
   will-change: opacity;
 }
 
@@ -143,19 +134,20 @@
   position: absolute;
   width: 200px; height: 200px;
   left: 860px; top: 660px;
-  /* brightness pulse on the flame itself, 3-8% */
-  animation: campfire-flicker 2.8s ease-in-out infinite;
+  shape-rendering: crispEdges;
+  /* brightness flicker stepped — pixel-style (no smooth interp) */
+  animation: campfire-flicker 2.8s steps(4, end) infinite;
   will-change: filter;
 }
 
 @keyframes campfire-pulse {
-  0%, 100% { opacity: 0.92; }
+  0%, 100% { opacity: 0.85; }
   50%      { opacity: 1.00; }
 }
 @keyframes campfire-flicker {
   0%   { filter: brightness(1.00); }
-  37%  { filter: brightness(1.06); }
-  58%  { filter: brightness(1.03); }
-  82%  { filter: brightness(1.07); }
+  25%  { filter: brightness(1.06); }
+  50%  { filter: brightness(1.03); }
+  75%  { filter: brightness(1.08); }
   100% { filter: brightness(1.00); }
 }

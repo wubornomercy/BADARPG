@@ -1,9 +1,21 @@
 /* =============================================================
    BAD ARPG — Design Tokens
-   Source of truth: BLUEPRINT_SPEC.md §2/§3/§4
+   Source of truth: BLUEPRINT_SPEC.md §2/§3/§4 + Project Plan V10 §7
+   Project style: PIXEL DARK STEEL — every visual must read as pixel art.
    These tokens MUST be inherited by HUD / Inventory / Tooltip later.
    No literal hex / px values outside this file.
    ============================================================= */
+
+/* ---------- Zpix (pixel CJK font, MIT licensed) ----------
+   github.com/SolidZORO/zpix-pixel-font
+   Loaded via jsDelivr CDN. */
+@font-face {
+  font-family: 'Zpix';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/SolidZORO/zpix-pixel-font@latest/dist/Zpix.ttf') format('truetype');
+}
 
 :root {
   /* ---------- Canvas ---------- */
@@ -63,13 +75,19 @@
   --clr-sem-heal:       #5E8C5A;
 
   /* ---------- Typography ----------
-     Stacks include CJK fallbacks so Latin chars render in
-     Cinzel / Inter while CJK chars render in Noto Serif/Sans SC. */
-  --font-display: 'Cinzel', 'Noto Serif SC', 'Source Han Serif SC',
-                  'Times New Roman', serif;
-  --font-ui:      'Inter', 'Noto Sans SC', 'PingFang SC',
-                  'Microsoft YaHei', 'IBM Plex Sans', 'Segoe UI',
-                  sans-serif;
+     PIXEL DARK STEEL fonts. Latin chars render in pixel fonts,
+     CJK falls back to Zpix (pixel CJK). Smooth fonts kept as last
+     resort only when CJK browsers cannot fetch Zpix.
+       - display: Jacquard 12 (gothic blackletter pixel) — logo
+       - ui:      Pixelify Sans (modern pixel sans) — all body UI
+       - cjk:     Zpix (12pt pixel CJK font) */
+  --font-display: 'Jacquard 12', 'Zpix', 'Noto Serif SC', serif;
+  --font-ui:      'Pixelify Sans', 'Zpix', 'Noto Sans SC',
+                  'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* ---------- Pixel discipline ---------- */
+  --px:           4px;    /* base "game pixel" — every position/size SHOULD be a multiple */
+  --px-half:      2px;
 
   --type-logo:    96px;
   --type-btn:     18px;

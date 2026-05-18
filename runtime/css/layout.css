@@ -1,11 +1,26 @@
 /* =============================================================
-   BAD ARPG — Layout
+   BAD ARPG — Layout + Global Pixel Discipline
    - .viewport: fills the actual browser viewport, dark letterbox
    - .canvas:   fixed 1920x1080, scaled uniformly by JS to fit viewport
    - All inner positioning is absolute within the 1920x1080 reference
+   - PIXEL DARK STEEL rendering enforced globally
    ============================================================= */
 
 * { box-sizing: border-box; }
+
+/* ---------- Global Pixel Rendering ----------
+   Disables font antialiasing and forces nearest-neighbor scaling for
+   all images / SVGs / canvases so the runtime reads as authentic pixel
+   art, not high-DPI smooth web UI. Required by Project Plan V10 §7. */
+html, body, * {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+svg, svg * {
+  shape-rendering: crispEdges;
+}
 
 html, body {
   margin: 0;
@@ -16,8 +31,11 @@ html, body {
   height: 100%;
   font-family: var(--font-ui);
   color: var(--clr-logo-main);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  /* PIXEL DISCIPLINE: kill antialiasing on text. */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+  text-rendering: geometricPrecision;
   /* prevent text selection on UI */
   user-select: none;
   -webkit-user-select: none;

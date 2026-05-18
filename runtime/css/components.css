@@ -1,5 +1,5 @@
 /* =============================================================
-   BAD ARPG — UI Components
+   BAD ARPG — UI Components (PIXEL DARK STEEL)
    Logo / Menu Buttons / Version Text
    ============================================================= */
 
@@ -8,20 +8,49 @@
 
 .logo {
   position: absolute;
-  /* center anchor: 960-310, 180-70 */
   left: 650px; top: 110px;
   width: 620px; height: 140px;
 }
 
+/* Bracket = absolute-positioned hard pixel frame, no gradients */
 .logo-bracket {
   position: absolute;
   top: 0;
   width: 56px; height: 100%;
   pointer-events: none;
-  z-index: 2;     /* sits above logo text as a metallic overlay */
+  z-index: 2;
 }
 .logo-bracket-left  { left: 0; }
 .logo-bracket-right { right: 0; }
+
+/* Two stacked horizontal bars (top + bottom) + a vertical edge bar */
+.logo-bracket::before,
+.logo-bracket::after {
+  content: "";
+  position: absolute;
+  background: var(--clr-logo-border);
+}
+.logo-bracket::before { /* top horizontal arm */
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.logo-bracket::after { /* bottom horizontal arm */
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+}
+.logo-bracket-left  { box-shadow: inset 4px 0 0 var(--clr-logo-border); }
+.logo-bracket-right { box-shadow: inset -4px 0 0 var(--clr-logo-border); }
+
+.logo-bracket-decor {
+  position: absolute;
+  top: 50%;
+  width: 12px; height: 12px;
+  background: var(--clr-logo-border);
+  transform: translateY(-50%) rotate(45deg);
+  /* hard pixel diamond — no smoothing */
+}
+.logo-bracket-left  .logo-bracket-decor { left: 8px; }
+.logo-bracket-right .logo-bracket-decor { right: 8px; }
 
 .logo-center {
   position: absolute;
@@ -30,70 +59,26 @@
   place-items: center;
   z-index: 1;
 }
-.logo-bracket::before,
-.logo-bracket::after {
-  content: "";
-  position: absolute;
-  background: var(--clr-logo-border);
-}
-/* vertical edge of bracket */
-.logo-bracket::before {
-  top: 14px; bottom: 14px;
-  width: 2px;
-}
-.logo-bracket-left::before  { left: 8px;  }
-.logo-bracket-right::before { right: 8px; }
-/* horizontal arms (top + bottom) */
-.logo-bracket::after {
-  height: 2px;
-  width: 32px;
-}
-.logo-bracket-left.top::after,
-.logo-bracket-right.top::after { display: none; }
-
-.logo-bracket-decor {
-  position: absolute;
-  top: 50%;
-  width: 8px; height: 8px;
-  background: var(--clr-logo-border);
-  transform: translateY(-50%) rotate(45deg);
-}
-.logo-bracket-left  .logo-bracket-decor { left: 4px; }
-.logo-bracket-right .logo-bracket-decor { right: 4px; }
-
-/* Top + bottom hairline arms of the bracket */
-.logo-bracket-left,
-.logo-bracket-right {
-  background:
-    linear-gradient(to bottom,
-      var(--clr-logo-border) 0, var(--clr-logo-border) 2px,
-      transparent 2px) top    left  / 100% 2px no-repeat,
-    linear-gradient(to bottom,
-      var(--clr-logo-border) 0, var(--clr-logo-border) 2px,
-      transparent 2px) bottom left  / 100% 2px no-repeat;
-}
 
 .logo-text {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--type-logo);       /* 96px, per BLUEPRINT_SPEC §3 */
-  letter-spacing: 0.06em;            /* +60 in Figma units */
+  font-family: var(--font-display);   /* Jacquard 12 — gothic pixel */
+  font-weight: 400;
+  font-size: 96px;                    /* multiple of 12 for crisp pixel grid */
+  letter-spacing: 0.02em;
   color: var(--clr-logo-main);
   text-align: center;
   line-height: 1;
   white-space: nowrap;
-  /* gothic restraint: thin outline, no glow */
-  -webkit-text-stroke: 1px var(--clr-logo-border);
-  paint-order: stroke fill;
+  /* Hard 1-step shadow (no blur) for metallic emboss */
   text-shadow:
-    0 1px 0 rgba(0,0,0,0.6),
-    0 0 1px rgba(0,0,0,0.4);
+    0 4px 0 rgba(0,0,0,0.55),
+    0 0 0 1px rgba(0,0,0,0.5);
 }
 
 /* Skull crest pip above the logo center */
 .logo-crest {
   position: absolute;
-  left: 50%; top: -2px;
+  left: 50%; top: 0px;
   transform: translateX(-50%);
   width: 56px; height: 22px;
   pointer-events: none;
@@ -102,13 +87,12 @@
 /* Horizontal hairline through logo midline (sides only, breaks at letters) */
 .logo-rule {
   position: absolute;
-  height: 1px;
+  height: 2px;
   background: var(--clr-logo-border);
   top: 50%;
-  opacity: 0.6;
 }
-.logo-rule-left  { left: 64px;  width: 120px; }
-.logo-rule-right { right: 64px; width: 120px; }
+.logo-rule-left  { left: 64px;  width: 80px; }
+.logo-rule-right { right: 64px; width: 80px; }
 
 /* ---------- LAYER_08_MenuButtons (group center 960, 540) ---------- */
 .layer-menu {
@@ -130,30 +114,36 @@
   height: 54px;
   background: var(--clr-btn-bg);
   border: 2px solid var(--clr-btn-border);
-  border-radius: 0;   /* sharp gothic restraint */
+  border-radius: 0;
   color: var(--clr-btn-label);
   font-family: var(--font-ui);
   font-weight: 500;
-  font-size: var(--type-btn);
-  letter-spacing: 0.12em;
+  font-size: 18px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   position: relative;
   outline: none;
+  /* Hard step shadows (no blur) — pixel chunky bevel */
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.04),
+    inset -2px -2px 0 rgba(0,0,0,0.55),
+    4px 4px 0 rgba(0,0,0,0.45);
+  /* Stepped transitions (4-step linear feel) instead of smooth ease */
   transition:
-    background-color var(--motion-hover) var(--ease-out),
-    border-color     var(--motion-hover) var(--ease-out),
-    color            var(--motion-hover) var(--ease-out);
+    background-color var(--motion-hover) steps(4, end),
+    border-color     var(--motion-hover) steps(4, end),
+    color            var(--motion-hover) steps(4, end);
 }
 
-/* corner ornaments (4 small triangles, metallic) */
+/* corner ornaments — already pixel-friendly */
 .btn-main::before,
 .btn-main::after {
   content: "";
   position: absolute;
   width: 8px; height: 8px;
   background: var(--clr-btn-border);
-  transition: background-color var(--motion-hover) var(--ease-out);
+  transition: background-color var(--motion-hover) steps(4, end);
 }
 .btn-main::before {
   top: -2px; left: -2px;
@@ -176,12 +166,15 @@
 .btn-main:active {
   background: var(--clr-btn-bg-press);
   transition-duration: var(--motion-press);
+  box-shadow:
+    inset 2px 2px 0 rgba(0,0,0,0.55),
+    inset -2px -2px 0 rgba(255,255,255,0.04),
+    2px 2px 0 rgba(0,0,0,0.45);
 }
 
 .btn-main:focus-visible {
-  /* keyboard-focus ring: subtle, matches metallic palette, no blue */
-  outline: 1px solid var(--clr-btn-label);
-  outline-offset: 3px;
+  outline: 2px solid var(--clr-btn-label);
+  outline-offset: 4px;
 }
 
 .btn-main[disabled],
@@ -205,12 +198,12 @@
   bottom: 28px;
   font-family: var(--font-ui);
   font-weight: 500;
-  font-size: var(--type-version);
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   color: var(--clr-text-version);
 }
 .version-text .version-build { margin-right: var(--space-2); }
 .version-text .version-tag {
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
 }

@@ -1,28 +1,31 @@
 /* =============================================================
-   BAD ARPG — HUD System V1
+   BAD ARPG — HUD System V1 (PIXEL DARK STEEL)
    Runtime Combat UI Foundation
-   Spec source: HUD SYSTEM FOUNDATION V1
    ============================================================= */
 
 /* ---------- World placeholder background ---------- */
-/* Prototype neutral combat backdrop: dark gradient + faint ground
-   line + subtle vignette. Real game will draw the world here. */
+/* Banded radial — 5 stepped concentric rings, no smooth radial. */
 .hud-world-bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 55%, #1F2329 0%, #11131A 70%, #07080B 100%);
+    radial-gradient(circle at 50% 55%,
+      #1F2329 0%,    #1F2329 20%,
+      #181B22 20%,   #181B22 40%,
+      #13161C 40%,   #13161C 60%,
+      #0E1014 60%,   #0E1014 80%,
+      #07080B 80%,   #07080B 100%);
   z-index: var(--z-sky);
 }
 .hud-world-bg::after {
-  /* very faint horizon */
+  /* horizon hairline */
   content: "";
   position: absolute;
   left: 0; right: 0;
   top: 640px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, #2A2E35 40%, #2A2E35 60%, transparent);
-  opacity: 0.35;
+  background: #2A2E35;
+  opacity: 0.4;
 }
 
 /* ---------- Combat Safe Zone (debug overlay; key S toggles) ---------- */
@@ -36,7 +39,7 @@
   top:  var(--hud-safe-y-min);
   width:  calc(var(--hud-safe-x-max) - var(--hud-safe-x-min));
   height: calc(var(--hud-safe-y-max) - var(--hud-safe-y-min));
-  border: 1px dashed rgba(226, 198, 106, 0.45);
+  border: 2px dashed rgba(226, 198, 106, 0.45);
   pointer-events: none;
   z-index: var(--z-debug);
 }
@@ -45,7 +48,7 @@
   position: absolute;
   top: 4px; left: 8px;
   font-family: var(--font-ui);
-  font-size: var(--type-debug);
+  font-size: 10px;
   color: rgba(226, 198, 106, 0.7);
   letter-spacing: 0.16em;
 }
@@ -62,7 +65,7 @@
   pointer-events: none;
 }
 
-/* ---- Area Info (top center) ---- */
+/* Area Info — pixel banner */
 .hud-area-info {
   position: absolute;
   top: 28px;
@@ -73,31 +76,35 @@
   align-items: center;
   gap: 14px;
   min-width: 360px;
-  padding: 6px 18px;
+  padding: 8px 18px;
   font-family: var(--font-ui);
-  font-size: 13px;
-  letter-spacing: 0.22em;
+  font-size: 14px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--clr-hud-text);
-  background: linear-gradient(180deg, rgba(20,23,27,0.55), rgba(20,23,27,0));
+  background: rgba(20,23,27,0.7);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.04),
+    inset -2px -2px 0 rgba(0,0,0,0.55);
 }
 .hud-area-info::before,
 .hud-area-info::after {
   content: "";
-  width: 64px; height: 1px;
+  width: 48px; height: 2px;
   background: var(--clr-hud-frame-rim);
 }
 .hud-area-name { text-align: center; }
 .hud-area-tier {
   color: var(--clr-hud-text-dim);
-  font-size: 11px;
-  letter-spacing: 0.3em;
+  font-size: 12px;
+  letter-spacing: 0.22em;
 }
 
-/* ---- Buff Bar (top center, below area info) ---- */
+/* Buff bar */
 .hud-buff-bar {
   position: absolute;
-  top: 84px;
+  top: 96px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -107,36 +114,39 @@
   width: var(--buff-size);
   height: var(--buff-size);
   background: var(--clr-hud-slot-bg);
-  border: 1px solid var(--clr-hud-slot-border);
+  border: 2px solid var(--clr-hud-slot-border);
   position: relative;
   font-family: var(--font-ui);
   font-size: 10px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   color: var(--clr-hud-text-dim);
   display: grid;
   place-items: center;
+  /* hard pixel inset bevel */
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.04),
+    inset -2px -2px 0 rgba(0,0,0,0.55);
 }
 .buff-glyph {
-  /* placeholder glyph — replace with sprite later */
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 400;
+  font-size: 24px;
   color: var(--clr-hud-text);
   line-height: 1;
 }
 .buff-timer {
   position: absolute;
-  bottom: -14px;
+  bottom: -16px;
   left: 0; right: 0;
   text-align: center;
   font-size: 10px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: var(--clr-hud-text-dim);
 }
 .buff-debuff { border-color: #5A2A2E; }
 .buff-debuff .buff-glyph { color: #B2383F; }
 
-/* ---- Corruption Status (top right) ---- */
+/* Corruption Status */
 .hud-corruption {
   position: absolute;
   top: 32px;
@@ -145,29 +155,29 @@
   grid-template-columns: auto auto;
   align-items: center;
   gap: 12px;
-  padding: 8px 14px;
-  background: linear-gradient(180deg, rgba(60,31,74,0.18), rgba(60,31,74,0));
-  border-left: 2px solid var(--clr-sem-corruption);
+  padding: 8px 16px;
+  background: rgba(60,31,74,0.18);
+  border: 2px solid var(--clr-sem-corruption);
+  border-left-width: 4px;
   font-family: var(--font-ui);
   color: var(--clr-hud-text);
 }
 .corruption-label {
-  font-size: 10px;
-  letter-spacing: 0.32em;
+  font-size: 11px;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--clr-hud-text-dim);
 }
 .corruption-value {
   font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   color: var(--clr-sem-corruption);
-  /* desaturated, restrained per spec — no glow */
   filter: brightness(1.6);
 }
 
 /* =============================================================
-   ORBS :: HP (left) / MANA (right)
+   ORBS — pixel chunky
    ============================================================= */
 
 .orb {
@@ -176,18 +186,23 @@
   height: 160px;
   z-index: var(--z-hud-base);
 }
-.orb-hp   { left: 160px; top: 830px; }      /* center 240,910 */
-.orb-mana { left: 1600px; top: 830px; }     /* center 1680,910 */
+.orb-hp   { left: 160px; top: 830px; }
+.orb-mana { left: 1600px; top: 830px; }
 
-/* circular metal rim */
+/* Chunky metallic rim — 4-step concentric hard rings */
 .orb-rim {
   position: absolute; inset: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 50%, transparent 65%, var(--clr-hud-frame-rim) 67%, var(--clr-hud-frame-outer) 76%, transparent 80%);
+  background: transparent;
+  border: 4px solid var(--clr-hud-frame-rim);
+  box-shadow:
+    inset 0 0 0 4px var(--clr-hud-frame-outer),
+    inset 0 0 0 8px var(--clr-hud-frame-inner),
+    0 4px 0 rgba(0,0,0,0.45);
   z-index: 3;
 }
-/* inner well (the liquid chamber) */
+
+/* Inner well — pixel-shadow inset */
 .orb-well {
   position: absolute;
   inset: 12px;
@@ -195,51 +210,54 @@
   background: var(--clr-hud-slot-bg);
   overflow: hidden;
   z-index: 1;
-  box-shadow: inset 0 4px 12px rgba(0,0,0,0.65);
+  box-shadow:
+    inset 4px 4px 0 rgba(0,0,0,0.6),
+    inset -2px -2px 0 rgba(0,0,0,0.4);
 }
 .orb-fluid {
   position: absolute;
   left: -20%;
   width: 140%;
-  /* height defines current resource %; default 80% */
   height: 80%;
   bottom: 0;
 }
-.orb-hp   .orb-fluid {
-  background:
-    linear-gradient(180deg, var(--clr-hp-highlight) 0%, var(--clr-hp-primary) 70%);
-  animation: orb-liquid-hp 4.5s ease-in-out infinite;
+/* Banded HP fill — 4 stops, hard transitions */
+.orb-hp .orb-fluid {
+  background: linear-gradient(180deg,
+    #B2383F 0%,   #B2383F 30%,
+    #8C2228 30%,  #8C2228 60%,
+    #7E1F24 60%,  #7E1F24 100%);
+  animation: orb-liquid-hp 4.5s steps(8, end) infinite;
 }
+/* Banded Mana fill — 4 stops, hard transitions */
 .orb-mana .orb-fluid {
-  background:
-    linear-gradient(180deg, var(--clr-mana-highlight) 0%, var(--clr-mana-primary) 70%);
-  animation: orb-liquid-mana 5.8s ease-in-out infinite;
+  background: linear-gradient(180deg,
+    #5C8CC7 0%,   #5C8CC7 30%,
+    #3A6798 30%,  #3A6798 60%,
+    #264766 60%,  #264766 100%);
+  animation: orb-liquid-mana 5.8s steps(8, end) infinite;
 }
 @keyframes orb-liquid-hp {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  50%      { transform: translateY(-1.5px) rotate(0.5deg); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
 }
 @keyframes orb-liquid-mana {
-  0%, 100% { transform: translateY(0) rotate(0); }
-  50%      { transform: translateY(-2px) rotate(-0.4deg); }
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
 }
 
-/* glassy highlight crescent */
+/* Pixel highlight crescent — single hard band, no soft radial */
 .orb-glass {
   position: absolute;
-  inset: 14px;
+  left: 30%; top: 20%;
+  width: 24px; height: 24px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 38% 30%,
-    rgba(255,255,255,0.08) 0%,
-    rgba(255,255,255,0.02) 30%,
-    rgba(255,255,255,0) 60%
-  );
+  background: rgba(255,255,255,0.10);
   z-index: 2;
   pointer-events: none;
 }
 
-/* numeric readout */
+/* Readout */
 .orb-text {
   position: absolute;
   inset: 0;
@@ -248,9 +266,9 @@
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: 18px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--clr-hud-text);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.85);
   z-index: 4;
   pointer-events: none;
 }
@@ -260,18 +278,16 @@
   font-weight: 500;
   color: var(--clr-hud-text-dim);
   letter-spacing: 0.16em;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 /* =============================================================
-   SKILL BAR
+   SKILL BAR — pixel chunky slots
    ============================================================= */
 
 .hud-skill-bar {
   position: absolute;
-  /* 9 slots * 72 + 8 gaps * 10 = 728; center at X 960 -> left 596 */
   left: 596px;
-  /* center Y 950, height 72 -> top 914 */
   top: 914px;
   display: flex;
   gap: var(--skill-slot-gap);
@@ -284,28 +300,36 @@
   background: var(--clr-hud-slot-bg);
   border: 2px solid var(--clr-hud-slot-border);
   position: relative;
-  transition: filter var(--skill-hover-duration) var(--ease-out),
-              border-color var(--skill-hover-duration) var(--ease-out);
   cursor: pointer;
   pointer-events: auto;
+  /* hard pixel bevel — no blur shadow */
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.04),
+    inset -2px -2px 0 rgba(0,0,0,0.55),
+    2px 2px 0 rgba(0,0,0,0.45);
+  transition: filter var(--skill-hover-duration) steps(4, end),
+              border-color var(--skill-hover-duration) steps(4, end);
 }
 .slot:hover {
-  filter: brightness(1.06);                  /* +6% per spec */
+  filter: brightness(1.06);
   border-color: var(--clr-hud-frame-rim);
 }
 .slot:active {
   filter: brightness(0.92);
   transition-duration: 80ms;
+  box-shadow:
+    inset 2px 2px 0 rgba(0,0,0,0.55),
+    inset -2px -2px 0 rgba(255,255,255,0.04),
+    1px 1px 0 rgba(0,0,0,0.45);
 }
 
-/* slot corner ornaments — match button language */
 .slot::before,
 .slot::after {
   content: "";
   position: absolute;
   width: 6px; height: 6px;
   background: var(--clr-hud-slot-border);
-  transition: background-color var(--skill-hover-duration) var(--ease-out);
+  transition: background-color var(--skill-hover-duration) steps(4, end);
 }
 .slot::before { top: -2px; left: -2px; clip-path: polygon(0 0, 100% 0, 0 100%); }
 .slot::after  { bottom: -2px; right: -2px; clip-path: polygon(100% 100%, 100% 0, 0 100%); }
@@ -318,10 +342,9 @@
   display: grid;
   place-items: center;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
   font-size: 30px;
   color: var(--clr-hud-text);
-  letter-spacing: 0;
   user-select: none;
 }
 .slot-key {
@@ -331,11 +354,10 @@
   font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   color: var(--clr-hud-text-dim);
 }
 .slot-cd {
-  /* charge / cooldown text bottom right */
   position: absolute;
   bottom: 3px;
   right: 5px;
@@ -344,7 +366,7 @@
   font-weight: 600;
   color: var(--clr-hud-text);
 }
-/* differentiated states */
+/* state variants */
 .slot-dodge   { border-color: #5C8CC7; }
 .slot-dodge::before, .slot-dodge::after { background: #5C8CC7; }
 .slot-dodge .slot-glyph { color: var(--clr-mana-highlight); }
@@ -352,7 +374,6 @@
 .slot-utility { border-color: #5E646D; }
 .slot-utility .slot-glyph { color: var(--clr-hud-text-dim); font-size: 22px; }
 
-/* cooldown overlay (shows when .is-cooling-down) */
 .slot-cd-overlay {
   position: absolute;
   inset: 0;
@@ -365,38 +386,42 @@
   color: #E7C66A;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 80ms var(--ease-out);
+  transition: opacity 80ms steps(4, end);
 }
 .slot.is-cooling-down .slot-cd-overlay { opacity: 1; }
 
 /* =============================================================
-   XP BAR (bottom center, very minimal)
+   XP BAR — minimal pixel bar
    ============================================================= */
 .hud-xp-bar {
   position: absolute;
-  /* width 680, center X 960 -> left 620 */
   left: 620px;
-  /* below skill bar; canvas bottom 1080, skill bar bottom 986; place at 1004 */
   top: 1004px;
   width: 680px;
-  height: 10px;
+  height: 12px;
   background: var(--clr-xp-trough);
-  border: 1px solid var(--clr-hud-frame-rim);
+  border: 2px solid var(--clr-hud-frame-rim);
   z-index: var(--z-hud-base);
+  /* hard pixel inset */
+  box-shadow: inset 2px 2px 0 rgba(0,0,0,0.5);
 }
 .hud-xp-fill {
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 38%;        /* example progress */
-  background: linear-gradient(180deg, #9C8A4A 0%, var(--clr-xp-fill) 60%, #5E5028 100%);
+  width: 38%;
+  /* banded gold fill */
+  background: linear-gradient(180deg,
+    #9C8A4A 0%,   #9C8A4A 33%,
+    #7A6A3A 33%,  #7A6A3A 66%,
+    #5E5028 66%,  #5E5028 100%);
 }
 .hud-xp-label {
   position: absolute;
   right: 0;
-  top: -16px;
+  top: -18px;
   font-family: var(--font-ui);
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   color: var(--clr-hud-text-dim);
   text-transform: uppercase;
 }
@@ -411,24 +436,23 @@
   pointer-events: none;
 }
 
-/* ---- Damage Numbers ---- */
+/* Damage Numbers — pixel font, hard step shadow */
 .dmg {
   position: absolute;
   font-family: var(--font-ui);
   font-weight: 700;
   font-size: 24px;
   color: var(--clr-dmg-normal);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-  letter-spacing: 0.02em;
+  text-shadow:
+    0 2px 0 rgba(0,0,0,0.85),
+    2px 0 0 rgba(0,0,0,0.55);
+  letter-spacing: 0;
   white-space: nowrap;
   pointer-events: none;
   will-change: transform, opacity;
 }
-/* Spec: 0.45s upward drift, fade out. Runtime spawns get the animation.
-   `.dmg-static` is used for HTML-seeded demo numbers so the prototype
-   screenshot can show representative state without animation timing. */
 .dmg:not(.dmg-static) {
-  animation: dmg-float var(--dmg-duration) ease-out forwards;
+  animation: dmg-float var(--dmg-duration) steps(6, end) forwards;
 }
 .dmg-crit {
   color: var(--clr-dmg-crit);
@@ -436,46 +460,47 @@
 }
 
 @keyframes dmg-float {
-  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  0%   { transform: translateY(0); opacity: 0; }
   10%  { opacity: 1; }
-  100% { transform: translateY(-46px); opacity: 0; }
+  100% { transform: translateY(-48px); opacity: 0; }
 }
 
-/* ---- Loot Labels ---- */
+/* Loot Labels — pixel pill */
 .loot {
   position: absolute;
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: 14px;
   letter-spacing: 0.04em;
-  padding: 3px 8px;
-  background: rgba(8,10,14,0.78);
-  border: 1px solid #2A2E35;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+  padding: 4px 8px;
+  background: rgba(8,10,14,0.85);
+  border: 2px solid #2A2E35;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.85);
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  animation: loot-appear var(--loot-fade-in) ease-out forwards;
+  animation: loot-appear var(--loot-fade-in) steps(4, end) forwards;
+  /* hard pixel inset bevel */
+  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.05);
 }
 .loot::before {
-  /* tiny rarity bullet to the left */
   content: "";
   display: inline-block;
-  width: 6px; height: 6px;
+  width: 8px; height: 8px;
   margin-right: 8px;
   vertical-align: middle;
   background: currentColor;
 }
 .loot-normal    { color: var(--clr-loot-normal); }
-.loot-magic     { color: var(--clr-loot-magic); }
-.loot-rare      { color: var(--clr-loot-rare); }
+.loot-magic     { color: var(--clr-loot-magic);  }
+.loot-rare      { color: var(--clr-loot-rare);   }
 .loot-legendary {
   color: var(--clr-loot-legendary);
-  border-color: rgba(225,168,74,0.30);
+  border-color: rgba(225,168,74,0.55);
 }
 .loot-heaven {
   color: var(--clr-loot-heaven);
-  border-color: rgba(244,242,232,0.30);
+  border-color: rgba(244,242,232,0.55);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-size: 13px;
@@ -486,7 +511,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 .loot.is-fading {
-  animation: loot-disappear var(--loot-fade-out) ease-in forwards;
+  animation: loot-disappear var(--loot-fade-out) steps(4, end) forwards;
 }
 @keyframes loot-disappear {
   from { opacity: 1; }

@@ -9,6 +9,38 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 | HUD V1 | `hud.html` | ✅ Locked |
 | Tooltip V1 | `tooltip.html` | ✅ Locked |
 
+## Visual Style — PIXEL DARK STEEL
+
+Per Project Plan V10 §7, the project's visual identity is **Pixel Dark Steel**. The Phase 1 prototypes enforce pixel-art rendering globally even though final pixel assets will come from Aseprite later. Smooth modern web UI is **forbidden**.
+
+### Pixel Discipline Rules (enforced in `layout.css`)
+| Rule | Enforced via |
+|---|---|
+| No anti-aliased text | `-webkit-font-smoothing: none; font-smooth: never; text-rendering: geometricPrecision;` on `html, body` |
+| No smooth image scaling | `image-rendering: pixelated; image-rendering: crisp-edges;` on `*` |
+| No smooth SVG edges | `shape-rendering: crispEdges;` on `svg, svg *` |
+| Pixel fonts only | Display = Jacquard 12 (gothic pixel), UI = Pixelify Sans (modern pixel), CJK = Zpix |
+| No CSS `filter: blur()` | Replaced by banded layers / hard step shadows |
+| No smooth shadows | `box-shadow` with `0` blur radius only — hard step bevel |
+| No smooth gradients | Banded `linear-gradient` with hard color stops |
+| All sizes multiples of `--px` (4px) | Tokens express positions in 4-multiple values |
+| Step-based animations | `steps(4-8, end)` instead of cubic-bezier easing for ambient pulses |
+
+### Font stack
+```
+--font-display: 'Jacquard 12', 'Zpix', 'Noto Serif SC', serif;
+--font-ui:      'Pixelify Sans', 'Zpix', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+```
+Latin chars render in pixel Latin fonts; CJK falls back to Zpix (CDN-loaded from jsDelivr).
+
+### Tech stack (project-wide)
+- **PixiJS** — final runtime renderer (Phase 2+)
+- **TypeScript** — game logic
+- **Aseprite** — pixel art authoring
+- **Bfxr** — sound effects
+
+Current HTML prototypes are **structural blueprints**, not the final render path. When Aseprite assets land, runtime will be ported to PixiJS WebGL renderer with pixel-perfect display.
+
 ## Localization (本地化)
 
 All in-game display strings are **Simplified Chinese (zh-CN)**:
