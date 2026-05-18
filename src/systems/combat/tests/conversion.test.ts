@@ -20,7 +20,7 @@ import { StatManager, StatType, ModifierType, SourceType } from '../../stats/ind
 function makeEntity(stats: ReadonlyMap<StatType, number> = new Map(), id = 'e'): CombatEntity {
   const sm = new StatManager();
   sm.setBases(stats);
-  return { id, hp: 10000, hpMax: 10000, alive: true, statManager: sm };
+  return { id, hp: 10000, hpMax: 10000, x: 0, y: 0, alive: true, statManager: sm };
 }
 function ctx(overrides: Partial<DamageContext> = {}): DamageContext {
   return {
@@ -96,7 +96,7 @@ describe('Conversion — pipeline integration', () => {
   it('TEST 7 — converted fire chunk picks up +fire damage scaling automatically', () => {
     const sm = new StatManager();
     sm.modifiers.add({ id: '', stat: StatType.FIRE_DAMAGE, modifierType: ModifierType.FLAT, value: 100, sourceType: SourceType.ITEM, sourceId: 'ring' });
-    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, alive: true, statManager: sm };
+    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, x: 0, y: 0, alive: true, statManager: sm };
     const tgt = makeEntity();
 
     const p = new DamagePipeline();
@@ -112,7 +112,7 @@ describe('Conversion — pipeline integration', () => {
   it('TEST 7 — tag-based scaling: projectile tag pulls in PROJECTILE_DAMAGE', () => {
     const sm = new StatManager();
     sm.modifiers.add({ id: '', stat: StatType.PROJECTILE_DAMAGE, modifierType: ModifierType.FLAT, value: 50, sourceType: SourceType.ITEM, sourceId: 'bow' });
-    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, alive: true, statManager: sm };
+    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, x: 0, y: 0, alive: true, statManager: sm };
     const tgt = makeEntity();
 
     const p = new DamagePipeline();
@@ -128,7 +128,7 @@ describe('Conversion — pipeline integration', () => {
     const sm = new StatManager();
     sm.modifiers.add({ id: '', stat: StatType.PHYSICAL_DAMAGE, modifierType: ModifierType.MORE, value: 30, sourceType: SourceType.BUFF, sourceId: 'frenzy' });
     sm.modifiers.add({ id: '', stat: StatType.PHYSICAL_DAMAGE, modifierType: ModifierType.MORE, value: 20, sourceType: SourceType.SKILL, sourceId: 'support' });
-    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, alive: true, statManager: sm };
+    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, x: 0, y: 0, alive: true, statManager: sm };
     const tgt = makeEntity();
     const p = new DamagePipeline();
     const r = p.resolve(src, tgt, ctx({ baseDamage: 100 }));

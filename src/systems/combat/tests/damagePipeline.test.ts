@@ -23,6 +23,8 @@ function makeEntity(opts: Partial<CombatEntity> & { stats?: ReadonlyMap<StatType
     id:           opts.id ?? 'e',
     hp:           opts.hp ?? 100,
     hpMax:        opts.hpMax ?? opts.hp ?? 100,
+    x:            opts.x ?? 0,
+    y:            opts.y ?? 0,
     shield:       opts.shield,
     alive:        opts.alive ?? true,
     statManager:  sm,
@@ -136,6 +138,7 @@ describe('DamagePipeline — flow', () => {
       id: 'tgt',
       hp: 100,
       hpMax: 100,
+      x: 0, y: 0,
       shield: 50,
       alive: true,
       statManager: new StatManager(),
@@ -149,7 +152,7 @@ describe('DamagePipeline — flow', () => {
   });
 
   it('TEST 12 — shield fully absorbs when damage <= shield', () => {
-    const tgt: CombatEntity = { id: 'tgt', hp: 100, hpMax: 100, shield: 200, alive: true, statManager: new StatManager() };
+    const tgt: CombatEntity = { id: 'tgt', hp: 100, hpMax: 100, x: 0, y: 0, shield: 200, alive: true, statManager: new StatManager() };
     const p = new DamagePipeline();
     p.resolve(makeEntity({ id: 's' }), tgt, basicCtx({ baseDamage: 100 }));
     expect(tgt.shield).toBe(100);
@@ -160,7 +163,7 @@ describe('DamagePipeline — flow', () => {
     const sm = new StatManager();
     sm.modifiers.add({ id: '', stat: StatType.PHYSICAL_DAMAGE, modifierType: ModifierType.FLAT, value: 50, sourceType: SourceType.ITEM, sourceId: 'a' });
     sm.modifiers.add({ id: '', stat: StatType.PHYSICAL_DAMAGE, modifierType: ModifierType.MORE, value: 20, sourceType: SourceType.BUFF, sourceId: 'b' });
-    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, alive: true, statManager: sm };
+    const src: CombatEntity = { id: 'src', hp: 1, hpMax: 1, x: 0, y: 0, alive: true, statManager: sm };
     const tgt = makeEntity({ id: 'tgt', hp: 10000 });
 
     const p = new DamagePipeline();

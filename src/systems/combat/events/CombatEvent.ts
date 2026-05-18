@@ -30,6 +30,13 @@ export interface CombatEvent {
   targetKilled:   boolean;
   /** True if this was a DOT tick (no hit roll, no lifesteal). */
   isDOT:          boolean;
+  /**
+   * Free-form data carried from DamageContext.metadata. Skill behaviours
+   * stash `sourceSkillId`, `dirX/dirY`, `hitX/hitY`, etc. here so VFX
+   * listeners on the main side can render in the right place without
+   * the pipeline knowing about Pixi.
+   */
+  metadata?:      Record<string, any>;
   /** Full pipeline result — reference, not a copy. */
   result:         DamageResult;
 }

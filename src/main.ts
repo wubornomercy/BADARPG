@@ -8,9 +8,8 @@ import { initInput, endFrameInput, mouse, isActionHeld, wasActionPressed } from 
 import { getBinding } from './keybinds.js';
 import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
-import { Projectile } from './entities/projectile.js';
 import { LootDrop } from './entities/loot.js';
-import { DebugHud, sim, canSpawnProjectile, canSpawnEnemy } from './sim.js';
+import { DebugHud, sim, canSpawnEnemy } from './sim.js';
 import { StatDebugPanel } from './systems/stats/debug/StatDebugPanel.js';
 import { StatType } from './systems/stats/types/StatType.js';
 import {
@@ -21,6 +20,19 @@ import {
   type CombatEntity,
   type DamageContext,
 } from './systems/combat/index.js';
+import {
+  SkillManager,
+  SkillBehaviorType,
+  SkillTargetingType,
+  SkillEventType,
+  ProjectileBehavior, NovaBehavior, DashBehavior, BeamBehavior, GroundAOEBehavior,
+  STARTER_SKILLS,
+  SKILL_CORRUPT_BOLT, SKILL_VENOM_NOVA, SKILL_SHADOW_DASH, SKILL_CORRUPTION_FIELD,
+  SkillDebugPanel,
+  type SkillWorld,
+  type SkillContext,
+  type ProjectileEntity,
+} from './systems/skills/index.js';
 import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
 import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange, getReturnScene } from './scene.js';
 import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
@@ -130,7 +142,6 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   // Entity lists
   // ---------------------------------------------------------------------
   const enemies: Enemy[] = [];
-  const projectiles: Projectile[] = [];
   const lootDrops: LootDrop[] = [];
 
   // Spawn-tracking state. MUST be declared BEFORE the seed loop below,
@@ -185,8 +196,71 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     id:    'corruption',
     hp:    1,
     hpMax: 1,
+    x:     0,
+    y:     0,
     alive: true,
   };
+
+  // ---------------------------------------------------------------------
+  // Skill system — single owner of cast logic, projectile spawning, and
+  // skill events. SkillWorld is a thin adapter over the enemies array.
+  // ---------------------------------------------------------------------
+  const skillWorld: SkillWorld = {
+    enemiesInRadius(cx, cy, r) {
+      const out: CombatEntity[] = [];
+      for (let i = 0; i < enemies.length; i++) {
+        const e = enemies[i];
+        if (!e.alive) continue;
+        const dx = e.x - cx, dy = e.y - cy;
+        if (dx * dx + dy * dy <= r * r) out.push(e);
+      }
+      return out;
+    },
+  };
+  const skills = new SkillManager(combat, skillWorld);
+  skills.worldBounds = { minX: -40, minY: -40, maxX: WORLD_W + 40, maxY: WORLD_H + 40 };
+  skills.registerBehavior(SkillBehaviorType.PROJECTILE,  new ProjectileBehavior());
+  skills.registerBehavior(SkillBehaviorType.NOVA,        new NovaBehavior());
+  skills.registerBehavior(SkillBehaviorType.DASH,        new DashBehavior());
+  skills.registerBehavior(SkillBehaviorType.BEAM,        new BeamBehavior());
+  skills.registerBehavior(SkillBehaviorType.GROUND_AOE,  new GroundAOEBehavior());
+  skills.registerAll(STARTER_SKILLS);
+  skills.trackCaster(player);
+  // Q W E R bindings (slot 0..3). Slot 0 is also fired by RMB ("primary").
+  player.equippedSkills[0] = SKILL_CORRUPT_BOLT.id;
+  player.equippedSkills[1] = SKILL_VENOM_NOVA.id;
+  player.equippedSkills[2] = SKILL_SHADOW_DASH.id;
+  player.equippedSkills[3] = SKILL_CORRUPTION_FIELD.id;
+
+  // Render projectiles via Pixi Graphics. The skill system has no Pixi
+  // dependency — we hang a Graphics off `renderHandle` on spawn and clean
+  // up on death. Per-frame position sync happens inside the ticker.
+  const PROJ_COLORS: Record<string, [number, number]> = {
+    physical:  [COLOR.projPlayer,     COLOR.projPlayerTrail],
+    poison:    [COLOR.projCorruption, 0x3C1F4A],
+    fire:      [0xE07A3E,             0x8A3A1F],
+    cold:      [0x5C8CC7,             0x264766],
+    lightning: [0xE7C66A,             0xA88A40],
+  };
+  skills.projectiles.setOnSpawn((p) => {
+    const g = new Graphics();
+    const [core, halo] = PROJ_COLORS[p.damageType] ?? PROJ_COLORS.physical;
+    g.rect(-1, -4, 2, 8).fill(core);
+    g.rect(-4, -1, 8, 2).fill(core);
+    g.rect(-1, -5, 2, 1).fill(halo);
+    g.rect(-1, 4, 2, 1).fill(halo);
+    g.rect(-5, -1, 1, 2).fill(halo);
+    g.rect(4, -1, 1, 2).fill(halo);
+    g.rect(-1, -1, 2, 2).fill(0xFFFFFF);
+    g.x = Math.round(p.x);
+    g.y = Math.round(p.y);
+    layerProjectiles.addChild(g);
+    p.renderHandle = g;
+  });
+  skills.projectiles.setOnDeath((p) => {
+    const g = p.renderHandle as Graphics | null;
+    if (g) { g.destroy(); p.renderHandle = null; }
+  });
 
   // Lifesteal — fires on every non-DOT hit dealt by the player.
   combat.events.on(CombatEventType.ON_HIT, (ev) => {
@@ -201,10 +275,52 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       player.applyHitReactions(performance.now());
     }
   });
+  // Per-hit VFX on enemies — pipeline owns math, listener owns visuals.
+  combat.events.on(CombatEventType.ON_HIT, (ev) => {
+    if (ev.source !== (player as unknown as CombatEntity)) return;
+    if (ev.wasDodged || ev.finalDamage <= 0) return;
+    const tgt = ev.target as unknown as Enemy;
+    if (tgt === (player as unknown as Enemy) || tgt.id === corruptionSource.id) return;
+    const meta = ev.metadata ?? {};
+    const hx = (meta.hitX as number | undefined) ?? tgt.x;
+    const hy = (meta.hitY as number | undefined) ?? tgt.y;
+    const dirX = (meta.dirX as number | undefined) ?? 0;
+    const dirY = (meta.dirY as number | undefined) ?? 0;
+    const tNow = performance.now();
+    spawnDamageNumber(hx, hy - 16, Math.round(ev.finalDamage), ev.wasCrit);
+    if (!ev.isDOT) {
+      spawnImpactBurst(hx, hy, ev.wasCrit);
+      requestHitStop(ev.wasCrit ? TIME.HIT_STOP_CRIT : TIME.HIT_STOP_NORMAL, tNow);
+      requestShake(ev.wasCrit ? TUNE.SHAKE_CRIT : TUNE.SHAKE_HIT, ev.wasCrit ? 220 : 110, tNow);
+      if (typeof tgt.applyHitReactions === 'function') {
+        tgt.applyHitReactions(tNow, dirX, dirY, ev.wasCrit);
+      }
+    }
+  });
+  // Death burst + loot drop on kill.
+  combat.events.on(CombatEventType.ON_KILL, (ev) => {
+    if (ev.source !== (player as unknown as CombatEntity)) return;
+    const tgt = ev.target as unknown as Enemy;
+    if (tgt === (player as unknown as Enemy) || tgt.id === corruptionSource.id) return;
+    const meta = ev.metadata ?? {};
+    const dirX = (meta.dirX as number | undefined) ?? 0;
+    const dirY = (meta.dirY as number | undefined) ?? 0;
+    const tNow = performance.now();
+    tgt.diedThisFrame = true;
+    requestHitStop(TIME.HIT_STOP_DEATH, tNow);
+    requestShake(TUNE.SHAKE_DEATH, 160, tNow);
+    spawnDeathBurst(tgt.x, tgt.y, dirX, dirY, tNow, ev.wasCrit);
+    sim.kills++;
+    dropLoot(tgt.x, tgt.y, tNow);
+  });
 
   // F9 toggle — combat-pipeline debug log overlay.
   const combatDebug = new CombatDebugPanel();
   combatDebug.attach(combat);
+
+  // F10 toggle — skill debug overlay.
+  const skillDebug = new SkillDebugPanel();
+  skillDebug.attach(skills);
 
   // ---------------------------------------------------------------------
   // HUD bridge — wire player state to HTML HUD overlay
@@ -361,24 +477,39 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     // ----- Player tick -----
     player.update(dt, now, spawnFootstepDust);
 
-    // ----- Primary attack (rebindable 'primary' action — default RMB held) -----
-    if (isActionHeld('primary') && player.canAttack(now) && canSpawnProjectile()) {
-      const px = player.x, py = player.y;
-      const dx = worldMouse.x - px;
-      const dy = worldMouse.y - py;
-      const mag = Math.hypot(dx, dy) || 1;
-      const dirX = dx / mag, dirY = dy / mag;
-      const vx = dirX * TUNE.PROJ_SPEED;
-      const vy = dirY * TUNE.PROJ_SPEED;
-      const p = new Projectile(px + dirX * 18, py + dirY * 18, vx, vy, now, true);
-      projectiles.push(p);
-      layerProjectiles.addChild(p.container);
-      sim.projectileCount++;
-      // Attack cadence now reads ATTACK_SPEED via StatManager (see Player).
-      player.consumeAttack(now);
-      player.applyRecoil(dirX, dirY);
-      spawnMuzzleFlash(px + dirX * 20, py + dirY * 20);
+    // ----- Skill input → SkillExecutor -----
+    // RMB ("primary") = slot 0 (matches the existing muscle-memory).
+    // Q W E R                    = slots 0, 1, 2, 3.
+    // Held / repeated presses are rate-limited by skill cooldown + cast time.
+    const dxAim = worldMouse.x - player.x;
+    const dyAim = worldMouse.y - player.y;
+    const magAim = Math.hypot(dxAim, dyAim) || 1;
+    const aimX = dxAim / magAim;
+    const aimY = dyAim / magAim;
+
+    function castSlot(slot: number) {
+      const id = player.equippedSkills[slot];
+      if (!id) return;
+      const def = skills.get(id);
+      if (!def) return;
+      // Cast position: ground target = cursor, everything else = caster.
+      const isGroundTarget = def.targetingType === SkillTargetingType.GROUND_TARGET;
+      const ctx: SkillContext = {
+        casterId:     player.id,
+        skillId:      id,
+        castPosition: isGroundTarget ? { x: worldMouse.x, y: worldMouse.y } : { x: player.x, y: player.y },
+        direction:    { x: aimX, y: aimY },
+        runtimeTags:  [],
+      };
+      const r = skills.cast(player, id, ctx, now);
+      if (!r.ok && r.reason) skillDebug.logCastFailure(id, r.reason);
     }
+
+    if (isActionHeld('primary')) castSlot(0);
+    if (isActionHeld('skill1'))  castSlot(0);
+    if (isActionHeld('skill2'))  castSlot(1);
+    if (isActionHeld('skill3'))  castSlot(2);
+    if (isActionHeld('skill4'))  castSlot(3);
 
     // ----- Enemy spawner (top up to 8 active) -----
     if (now >= nextSpawnAt && enemies.filter(e => e.alive).length < 8) {
@@ -486,69 +617,20 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       }
     }
 
-    // ----- Projectiles + collision -----
-    for (const p of projectiles) {
-      if (!p.alive) continue;
-      p.update(dt, now);
-      if (p.x < -20 || p.x > WORLD_W + 20 || p.y < -20 || p.y > WORLD_H + 20) {
-        p.alive = false;
-      }
-      if (p.alive && p.ownerIsPlayer) {
-        for (const e of enemies) {
-          if (!e.alive) continue;
-          const dxh = e.x - p.x;
-          const dyh = e.y - p.y;
-          if (dxh * dxh + dyh * dyh <= (TUNE.ENEMY_RADIUS + TUNE.PROJ_RADIUS) ** 2) {
-            // All damage math goes through the DamagePipeline. main.ts only
-            // owns the per-hit presentation (impact burst, damage number,
-            // hit-stop / shake) since those depend on hit-local data
-            // (projectile direction, position) the pipeline does not see.
-            const hitCtx: DamageContext = {
-              sourceEntityId: player.id,
-              targetEntityId: e.id,
-              sourceTags:     ['projectile', 'attack'],
-              baseDamage:     TUNE.PROJ_DAMAGE,
-              damageType:     DamageType.PHYSICAL,
-              canCrit:        true,
-              canBeBlocked:   true,
-              canBeDodged:    true,
-            };
-            const result = combat.resolve(player, e, hitCtx);
-            p.alive = false;
-
-            if (!result.wasDodged) {
-              e.applyHitReactions(now, p.dirX, p.dirY, result.wasCrit);
-              requestHitStop(result.wasCrit ? TIME.HIT_STOP_CRIT : TIME.HIT_STOP_NORMAL, now);
-              requestShake(result.wasCrit ? TUNE.SHAKE_CRIT : TUNE.SHAKE_HIT, result.wasCrit ? 220 : 110, now);
-              spawnImpactBurst(e.x, e.y, result.wasCrit);
-              spawnDamageNumber(e.x, e.y - 16, Math.round(result.finalDamage), result.wasCrit);
-            }
-            if (result.targetKilled) {
-              e.diedThisFrame = true;
-              requestHitStop(TIME.HIT_STOP_DEATH, now);
-              requestShake(TUNE.SHAKE_DEATH, 160, now);
-              spawnDeathBurst(e.x, e.y, p.dirX, p.dirY, now, result.wasCrit);
-              sim.kills++;
-              dropLoot(e.x, e.y, now);
-            }
-            break;
-          }
-        }
-      }
+    // ----- Skill system tick (pending casts, projectile collisions, ground AOE ticks) -----
+    skills.update(now, dt / 1000);
+    // Sync projectile graphics to entity positions.
+    for (const p of skills.projectiles.all()) {
+      const g = p.renderHandle as Graphics | null;
+      if (!g) continue;
+      g.x = Math.round(p.x);
+      g.y = Math.round(p.y);
     }
+    sim.projectileCount = skills.projectiles.count();
 
     for (const v of vfxList) v.update(dt, now);
     for (const d of dmgList) d.update(dt, now);
     for (const l of lootDrops) l.update(dt, now);
-
-    // Cleanup
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-      if (!projectiles[i].alive) {
-        projectiles[i].container.destroy();
-        projectiles.splice(i, 1);
-        sim.projectileCount--;
-      }
-    }
     for (let i = enemies.length - 1; i >= 0; i--) {
       if (!enemies[i].alive) {
         enemies[i].container.destroy();
@@ -579,10 +661,11 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       statDebug.render();
       lastStatDebugRenderAt = now;
     }
-    // CombatDebugPanel re-renders itself inside its event listeners; no
-    // per-frame poll needed. `combatDebug` is referenced here to keep its
-    // F9 handler alive for the lifetime of the app.
+    // CombatDebugPanel + SkillDebugPanel render reactively from their
+    // event listeners; just keep references alive so their keydown
+    // handlers stay registered for the app lifetime.
     void combatDebug;
+    void skillDebug;
 
     endFrameInput();
   });

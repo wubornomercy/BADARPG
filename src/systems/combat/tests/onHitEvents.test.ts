@@ -20,7 +20,7 @@ import { StatManager, StatType } from '../../stats/index.js';
 function makeEntity(stats: ReadonlyMap<StatType, number> = new Map(), id = 'e', hp = 100): CombatEntity {
   const sm = new StatManager();
   sm.setBases(stats);
-  return { id, hp, hpMax: hp, alive: true, statManager: sm };
+  return { id, hp, hpMax: hp, x: 0, y: 0, alive: true, statManager: sm };
 }
 function ctx(overrides: Partial<DamageContext> = {}): DamageContext {
   return {

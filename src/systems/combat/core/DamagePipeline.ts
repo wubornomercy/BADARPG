@@ -279,6 +279,7 @@ export class DamagePipeline {
       wasDodged:   result.wasDodged,
       targetKilled: result.targetKilled,
       isDOT:       ctx.isDOT === true,
+      metadata:    ctx.metadata,
       result,
     };
     this.events.emit(evt);

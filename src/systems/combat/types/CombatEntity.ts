@@ -21,6 +21,11 @@ export interface CombatEntity {
   hp: number;
   /** Maximum health. Currently informational (used for clamping heals). */
   hpMax: number;
+  /** World-space position in PIXELS. Read by skill behaviours (AOE radius,
+   *  beam line-checks, projectile spawn origin). Free-floating combat
+   *  fixtures (synthetic DOT sources) can default to (0,0). */
+  x: number;
+  y: number;
   /** Optional armour-style buffer absorbed before HP. Spec V1 architecture-only. */
   shield?: number;
   /** Flipped to false by the pipeline on first hit that takes hp ≤ 0. */

@@ -38,6 +38,19 @@ export class Player {
   /** Movement-speed baseline in stat units; maps to TUNE.PLAYER_MAX_SPEED 1:1. */
   private readonly moveSpeedBase: number;
 
+  // ---- Skill-system driven ----
+  /** Skill slot bindings. Slot index → registered skill id; null = empty slot. */
+  equippedSkills: (string | null)[] = [null, null, null, null, null];
+  /** While performing a cast time, movement is slowed (spec: 35% of normal). */
+  castingUntil: number = 0;
+  /**
+   * Per-cast override for the dodge / dash movement speed (px/s). Non-zero
+   * means "use this exact speed instead of TUNE.DODGE_SPEED_MULT × max
+   * speed" — DASH skills set this so the spec distance lands exactly inside
+   * the spec duration.
+   */
+  dodgeSpeedOverride: number = 0;
+
   // Dodge state
   dodgeUntil = 0;
   dodgeReadyAt = 0;
@@ -109,9 +122,11 @@ export class Player {
     const dt = dtMs / 1000;
 
     // Effective max movement speed: stat-driven, mapped from spec base
-    // (5.2) to pixel speed (TUNE.PLAYER_MAX_SPEED).
+    // (5.2) to pixel speed (TUNE.PLAYER_MAX_SPEED). While in a cast-time
+    // window the spec slows movement to 35% of normal.
     const moveSpeedFinal = this.statManager.getFinalStat(StatType.MOVE_SPEED);
-    const effectiveMaxSpeed = TUNE.PLAYER_MAX_SPEED * (moveSpeedFinal / this.moveSpeedBase);
+    let effectiveMaxSpeed = TUNE.PLAYER_MAX_SPEED * (moveSpeedFinal / this.moveSpeedBase);
+    if (this.castingUntil > now) effectiveMaxSpeed *= 0.35;
 
     // ---------- Dodge trigger (reads rebindable 'dodge' action) ----------
     if (wasActionPressed('dodge') && now >= this.dodgeReadyAt) {
@@ -133,10 +148,16 @@ export class Player {
 
     // ---------- Movement (click-to-move) ----------
     if (dodging) {
-      const speed = effectiveMaxSpeed * TUNE.DODGE_SPEED_MULT;
+      // Dodge / dash: dodgeSpeedOverride lets DASH skills inject an exact
+      // px/s figure so spec distance × duration math lands cleanly.
+      const speed = this.dodgeSpeedOverride > 0
+        ? this.dodgeSpeedOverride
+        : effectiveMaxSpeed * TUNE.DODGE_SPEED_MULT;
       this.vx = this.dodgeDir.x * speed;
       this.vy = this.dodgeDir.y * speed;
     } else {
+      // Clear the override the first frame after the dodge / dash window ends.
+      if (this.dodgeSpeedOverride !== 0 && now >= this.dodgeUntil) this.dodgeSpeedOverride = 0;
       // Snap to zero on dodge end (no slide tail)
       if (!dodging && dodgingPrev && this.dodgeUntil !== 0 && now - this.dodgeUntil < dtMs) {
         this.vx = 0; this.vy = 0;
