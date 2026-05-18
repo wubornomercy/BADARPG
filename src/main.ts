@@ -238,13 +238,15 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   skills.projectiles.setOnSpawn((p) => {
     const g = new Graphics();
     const [core, halo] = PROJ_COLORS[p.damageType] ?? PROJ_COLORS.physical;
-    g.rect(-1, -4, 2, 8).fill(core);
-    g.rect(-4, -1, 8, 2).fill(core);
-    g.rect(-1, -5, 2, 1).fill(halo);
-    g.rect(-1, 4, 2, 1).fill(halo);
-    g.rect(-5, -1, 1, 2).fill(halo);
-    g.rect(4, -1, 1, 2).fill(halo);
-    g.rect(-1, -1, 2, 2).fill(0xFFFFFF);
+    // Chunky pixel diamond — sized up vs the original so the projectile
+    // reads clearly even on the dark Pixel Dark Steel background.
+    g.rect(-2, -6, 4, 12).fill(core);
+    g.rect(-6, -2, 12, 4).fill(core);
+    g.rect(-1, -7, 2, 1).fill(halo);
+    g.rect(-1, 6,  2, 1).fill(halo);
+    g.rect(-7, -1, 1, 2).fill(halo);
+    g.rect(6,  -1, 1, 2).fill(halo);
+    g.rect(-2, -2, 4, 4).fill(0xFFFFFF);
     g.x = Math.round(p.x);
     g.y = Math.round(p.y);
     layerProjectiles.addChild(g);
@@ -314,6 +316,43 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   // F10 toggle — skill debug overlay.
   const skillDebug = new SkillDebugPanel();
   skillDebug.attach(skills);
+
+  // ---------------------------------------------------------------------
+  // Skill visual feedback — every cast lands a guaranteed visual cue so
+  // the player can tell that Q/W/E/R actually fired even when no enemies
+  // are in range. Behavior-aware:
+  //   NOVA       → expanding ring at caster
+  //   GROUND_AOE → persistent translucent patch at cast position
+  //   default    → small spawn flash at caster
+  // ---------------------------------------------------------------------
+  const NOVA_COLOR_BY_TYPE: Record<string, number> = {
+    physical:  0xE7C66A,
+    poison:    COLOR.projCorruption,
+    fire:      0xE07A3E,
+    cold:      0x5C8CC7,
+    lightning: 0xE7C66A,
+  };
+  skills.events.on(SkillEventType.ON_SKILL_CAST, (ev) => {
+    const def = ev.skill;
+    const ctx = ev.context;
+    const tNow = performance.now();
+    const colorKey = def.damageType ?? 'physical';
+    const ringColor = NOVA_COLOR_BY_TYPE[colorKey] ?? 0xE7C66A;
+
+    if (def.behaviorType === SkillBehaviorType.NOVA) {
+      const radius = ((def.behaviorConfig?.radius as number | undefined) ?? 3.5) * 32;
+      spawnNovaRing(ctx.castPosition.x, ctx.castPosition.y, radius, ringColor, tNow);
+    } else if (def.behaviorType === SkillBehaviorType.GROUND_AOE) {
+      const radius   = ((def.behaviorConfig?.radius   as number | undefined) ?? 3.0) * 32;
+      const duration = ((def.behaviorConfig?.duration as number | undefined) ?? 4) * 1000;
+      spawnGroundPatch(ctx.castPosition.x, ctx.castPosition.y, radius, ringColor, duration, tNow);
+    } else if (def.behaviorType === SkillBehaviorType.DASH) {
+      // Existing dodge i-frame ring already provides the visual.
+    } else {
+      // PROJECTILE / BEAM / others — small caster-side flash.
+      spawnCastFlash(ev.caster.x, ev.caster.y, ringColor, tNow);
+    }
+  });
 
   // ---------------------------------------------------------------------
   // Itemization core — registries + generator + equipment + debug panel.
@@ -967,6 +1006,80 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
         if (t >= 1) { this.alive = false; return; }
         cnt.alpha = 1 - t;
         cnt.scale.set(1 + t * 0.4);
+      },
+    });
+  }
+
+  /** Brief on-cast burst at caster position — used for PROJECTILE / BEAM and as a generic fallback. */
+  function spawnCastFlash(x: number, y: number, color: number, now: number) {
+    const cnt = new Container();
+    cnt.x = Math.round(x); cnt.y = Math.round(y);
+    layerImpactFx.addChild(cnt);
+    const ring = new Graphics();
+    cnt.addChild(ring);
+    const life = 220;
+    vfxList.push({
+      container: cnt, alive: true, spawnAt: now,
+      update(_dt, n) {
+        const t = (n - now) / life;
+        if (t >= 1) { this.alive = false; return; }
+        ring.clear();
+        const r = 10 + t * 24;
+        const a = 1 - t;
+        ring.circle(0, 0, r).stroke({ color, width: 2, alpha: a });
+        ring.circle(0, 0, r - 3).stroke({ color: 0xFFFFFF, width: 1, alpha: a * 0.7 });
+      },
+    });
+  }
+
+  /** Expanding ring for NOVA skills. Scales to the skill's actual radius. */
+  function spawnNovaRing(x: number, y: number, radiusPx: number, color: number, now: number) {
+    const cnt = new Container();
+    cnt.x = Math.round(x); cnt.y = Math.round(y);
+    layerImpactFx.addChild(cnt);
+    const ring = new Graphics();
+    cnt.addChild(ring);
+    const life = 460;
+    vfxList.push({
+      container: cnt, alive: true, spawnAt: now,
+      update(_dt, n) {
+        const t = (n - now) / life;
+        if (t >= 1) { this.alive = false; return; }
+        ring.clear();
+        const r = radiusPx * t;
+        const a = 1 - t;
+        ring.circle(0, 0, r).stroke({ color, width: 3, alpha: a });
+        ring.circle(0, 0, r - 6).stroke({ color: 0xFFFFFF, width: 1, alpha: a * 0.5 });
+      },
+    });
+  }
+
+  /**
+   * Persistent ground patch for GROUND_AOE skills. Renders a translucent
+   * circle on the ground for the full skill duration so the player can
+   * see the danger zone — purely presentational, damage still flows via
+   * the skill system's scheduled ticks.
+   */
+  function spawnGroundPatch(x: number, y: number, radiusPx: number, color: number, durationMs: number, now: number) {
+    const cnt = new Container();
+    cnt.x = Math.round(x); cnt.y = Math.round(y);
+    layerGroundFx.addChild(cnt);
+    const fill = new Graphics();
+    const rim = new Graphics();
+    cnt.addChild(fill);
+    cnt.addChild(rim);
+    vfxList.push({
+      container: cnt, alive: true, spawnAt: now,
+      update(_dt, n) {
+        const t = (n - now) / durationMs;
+        if (t >= 1) { this.alive = false; return; }
+        // Pulsing rim + steady fill — readable on dark ground.
+        const pulse = 0.85 + Math.sin(t * Math.PI * 6) * 0.15;
+        fill.clear();
+        fill.circle(0, 0, radiusPx).fill({ color, alpha: 0.18 + (1 - t) * 0.10 });
+        rim.clear();
+        rim.circle(0, 0, radiusPx).stroke({ color, width: 2, alpha: 0.85 * pulse * (1 - t * 0.5) });
+        rim.circle(0, 0, radiusPx - 4).stroke({ color: 0xFFFFFF, width: 1, alpha: 0.35 * (1 - t) });
       },
     });
   }

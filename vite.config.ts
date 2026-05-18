@@ -4,7 +4,9 @@ export default defineConfig({
   // Phase 2 combat runtime — single-page Pixi+TS game
   base: './',
   server: {
-    port: 5173,
+    // Allow the host to override via PORT env (used by Claude Preview MCP);
+    // fall back to 5173 for normal `npm run dev`.
+    port: process.env.PORT ? Number(process.env.PORT) : 5173,
     strictPort: false,    // auto-fallback to next free port (e.g. 5174)
   },
   build: {
