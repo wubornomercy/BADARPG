@@ -5,10 +5,11 @@
  */
 import {
   listBindings, setBinding, resetBindings, defaultBindingFor,
-  displayKey, onBindingChange, type ActionId,
+  displayKey, onBindingChange, findConflict, labelFor, type ActionId,
 } from './keybinds.js';
 
 let listening: { action: ActionId, btn: HTMLButtonElement } | null = null;
+let conflictFlashTimer: number | null = null;
 
 /** One-time wiring on app start. */
 export function initSettingsUI() {
@@ -40,6 +41,11 @@ export function initSettingsUI() {
       return;
     }
     e.preventDefault();
+    const conflict = findConflict(e.code, listening.action);
+    if (conflict) {
+      flashConflict(listening.btn, conflict, e.code);
+      return; // keep listening — user can press a different key
+    }
     setBinding(listening.action, e.code);
     cancelListen();
     renderKeybindList();
@@ -54,6 +60,11 @@ export function initSettingsUI() {
     if (action === 'move' || action === 'primary') {
       const key = e.button === 0 ? 'LMB' : e.button === 2 ? 'RMB' : 'MMB';
       e.preventDefault();
+      const conflict = findConflict(key, action);
+      if (conflict) {
+        flashConflict(listening.btn, conflict, key);
+        return;
+      }
       setBinding(action, key);
       cancelListen();
       renderKeybindList();
@@ -96,8 +107,29 @@ function renderKeybindList() {
 function cancelListen() {
   if (!listening) return;
   listening.btn.classList.remove('is-listening');
+  listening.btn.classList.remove('is-conflict');
   listening.btn.textContent = '重新绑定';
   listening = null;
+  if (conflictFlashTimer !== null) {
+    window.clearTimeout(conflictFlashTimer);
+    conflictFlashTimer = null;
+  }
+}
+
+/**
+ * Briefly indicate that the pressed key is already bound to `conflictAction`.
+ * Keeps `listening` true so the user can immediately try another key.
+ */
+function flashConflict(btn: HTMLButtonElement, conflictAction: ActionId, key: string) {
+  btn.classList.add('is-conflict');
+  btn.textContent = `${displayKey(key)} 已用于 "${labelFor(conflictAction)}"`;
+  if (conflictFlashTimer !== null) window.clearTimeout(conflictFlashTimer);
+  conflictFlashTimer = window.setTimeout(() => {
+    conflictFlashTimer = null;
+    if (!listening || listening.btn !== btn) return;
+    btn.classList.remove('is-conflict');
+    btn.textContent = '按任意键...';
+  }, 1400);
 }
 
 function confirmReset(): boolean {

@@ -181,6 +181,17 @@
   border-color: var(--clr-tier-1);
   background: var(--clr-tier-1-bg);
 }
+.keybind-rebind.is-conflict {
+  color: #F4F2E8;
+  border-color: #C86B6B;
+  background: rgba(200, 107, 107, 0.18);
+  animation: keybindConflictShake 0.18s ease-in-out 2;
+}
+@keyframes keybindConflictShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px); }
+  75%      { transform: translateX(3px); }
+}
 
 .settings-actions {
   display: flex;

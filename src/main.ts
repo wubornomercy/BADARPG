@@ -105,21 +105,26 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
   const layerGroundFx    = new Container();
   const layerLoot        = new Container();
-  const layerEnemies     = new Container();
+  // Single y-sorted layer for player + enemies. Per-frame each actor's
+  // container.zIndex is set to round(y) so actors lower on the screen
+  // render in front of actors higher up — the depth illusion that makes
+  // overlapping sprites feel grounded instead of like paper cut-outs.
+  const layerActors      = new Container();
+  layerActors.sortableChildren = true;
   const layerProjectiles = new Container();
-  const layerPlayer      = new Container();
   const layerImpactFx    = new Container();
   const layerFloatText   = new Container();
   worldRoot.addChild(
-    layerGroundFx, layerLoot, layerEnemies, layerProjectiles,
-    layerPlayer, layerImpactFx, layerFloatText,
+    layerGroundFx, layerLoot, layerActors, layerProjectiles,
+    layerImpactFx, layerFloatText,
   );
 
   // Player spawned at arena center
   const player = new Player();
   player.x = ARENA_CENTER_X;
   player.y = ARENA_CENTER_Y;
-  layerPlayer.addChild(player.container);
+  player.container.zIndex = Math.round(player.y);
+  layerActors.addChild(player.container);
 
   // ---------------------------------------------------------------------
   // Entity lists
@@ -149,8 +154,9 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     const y = ARENA_CENTER_Y + Math.sin(angle) * r;
     const e = new Enemy(x, y);
     e.id = 'enemy_' + (++nextEnemyId);
+    e.container.zIndex = Math.round(e.y);
     enemies.push(e);
-    layerEnemies.addChild(e.container);
+    layerActors.addChild(e.container);
     sim.enemyCount++;
   }
 
@@ -384,6 +390,81 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     for (const e of enemies) {
       if (!e.alive) continue;
       e.update(dt, now, { x: player.x, y: player.y });
+    }
+
+    // ----- Entity separation (no-overlap physics) -----
+    // Push overlapping pairs apart so player and enemies feel like real
+    // bodies instead of free-passing sprites. Mass is asymmetric: player
+    // is heavier than a single enemy (30/70 split); enemies vs enemies
+    // are even (50/50). Player phases through during dodge i-frames.
+    const PLAYER_R   = TUNE.PLAYER_RADIUS;
+    const ENEMY_R    = TUNE.ENEMY_RADIUS;
+    const PE_MIN_SQ  = (PLAYER_R + ENEMY_R) ** 2;
+    const EE_MIN     = ENEMY_R * 2;
+    const EE_MIN_SQ  = EE_MIN * EE_MIN;
+    const playerPhase = player.isInvulnerable(now);
+
+    if (!playerPhase) {
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        const dx = e.x - player.x;
+        const dy = e.y - player.y;
+        const dsq = dx * dx + dy * dy;
+        if (dsq >= PE_MIN_SQ || dsq <= 0.0001) continue;
+        const dist = Math.sqrt(dsq);
+        const overlap = (PLAYER_R + ENEMY_R) - dist;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        player.x -= nx * overlap * 0.30;
+        player.y -= ny * overlap * 0.30;
+        e.x      += nx * overlap * 0.70;
+        e.y      += ny * overlap * 0.70;
+      }
+    }
+    for (let i = 0; i < enemies.length; i++) {
+      const a = enemies[i];
+      if (!a.alive) continue;
+      for (let j = i + 1; j < enemies.length; j++) {
+        const b = enemies[j];
+        if (!b.alive) continue;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dsq = dx * dx + dy * dy;
+        if (dsq >= EE_MIN_SQ || dsq <= 0.0001) continue;
+        const dist = Math.sqrt(dsq);
+        const overlap = EE_MIN - dist;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        a.x -= nx * overlap * 0.5;
+        a.y -= ny * overlap * 0.5;
+        b.x += nx * overlap * 0.5;
+        b.y += ny * overlap * 0.5;
+      }
+    }
+    // Clamp post-separation positions back into the world.
+    const WBOUND = 40;
+    player.x = Math.max(WBOUND, Math.min(WORLD_W - WBOUND, player.x));
+    player.y = Math.max(WBOUND, Math.min(WORLD_H - WBOUND, player.y));
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      e.x = Math.max(WBOUND, Math.min(WORLD_W - WBOUND, e.x));
+      e.y = Math.max(WBOUND, Math.min(WORLD_H - WBOUND, e.y));
+    }
+    // Y-sort: lower-y actors render behind higher-y actors (depth illusion).
+    // Pixi reads container.zIndex when parent has sortableChildren=true.
+    player.container.x = Math.round(player.x);
+    player.container.y = Math.round(player.y);
+    player.container.zIndex = Math.round(player.y);
+    for (const e of enemies) {
+      if (!e.alive) continue;
+      e.container.x = Math.round(e.x);
+      e.container.y = Math.round(e.y);
+      e.container.zIndex = Math.round(e.y);
+    }
+
+    // ----- Contact damage check (post-separation) -----
+    for (const e of enemies) {
+      if (!e.alive) continue;
       const dist = Math.hypot(e.x - player.x, e.y - player.y);
       if (dist < TUNE.PLAYER_RADIUS + TUNE.ENEMY_RADIUS && e.canContact(now)) {
         if (!player.isInvulnerable(now)) {

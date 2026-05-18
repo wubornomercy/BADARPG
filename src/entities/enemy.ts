@@ -107,8 +107,16 @@ export class Enemy {
     if (now < this.hitFlashUntil) {
       const t = Math.min(1, (this.hitFlashUntil - now) / 140);
       this.drawBody(t);
+      // Hit-squash: brief horizontal-stretch / vertical-compress so the
+      // sprite feels like it took a punch, not a slap on paper.
+      const sx = 1 + t * 0.18;
+      const sy = 1 - t * 0.28;
+      this.container.scale.set(sx, sy);
     } else {
       this.drawBody(0);
+      if (this.container.scale.x !== 1 || this.container.scale.y !== 1) {
+        this.container.scale.set(1, 1);
+      }
     }
   }
 

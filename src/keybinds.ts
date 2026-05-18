@@ -85,6 +85,24 @@ export function setBinding(action: ActionId, key: string) {
   for (const fn of changeListeners) fn(action, key);
 }
 
+/**
+ * Returns the action currently bound to `key`, excluding `exceptAction`.
+ * Used by the rebind UI to prevent two actions from sharing a key.
+ * Returns null if `key` is free.
+ */
+export function findConflict(key: string, exceptAction: ActionId): ActionId | null {
+  for (const id of Object.keys(DEFAULTS) as ActionId[]) {
+    if (id === exceptAction) continue;
+    if (bindings[id] === key) return id;
+  }
+  return null;
+}
+
+/** Display-friendly label for an action (e.g. 'dodge' → '翻滚'). */
+export function labelFor(action: ActionId): string {
+  return DEFAULTS[action].label;
+}
+
 export function resetBindings() {
   for (const id of Object.keys(DEFAULTS) as ActionId[]) {
     bindings[id] = DEFAULTS[id].key;
