@@ -128,13 +128,18 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   const projectiles: Projectile[] = [];
   const lootDrops: LootDrop[] = [];
 
+  // Spawn-tracking state. MUST be declared BEFORE the seed loop below,
+  // because the loop calls spawnEnemyAtArenaEdge() which reads
+  // `nextEnemyId` — `let` bindings hit a TDZ ReferenceError if accessed
+  // before their declaration line.
+  let nextSpawnAt = 0;
+  let nextEnemyId = 0;
+
   // Seed enemies around player
   for (let i = 0; i < TUNE.ENEMY_INITIAL_COUNT; i++) {
     spawnEnemyAtArenaEdge();
   }
 
-  let nextSpawnAt = 0;
-  let nextEnemyId = 0;
   function spawnEnemyAtArenaEdge() {
     if (!canSpawnEnemy()) return;
     // Spawn at the rim of the arena ring (not at world edge)
