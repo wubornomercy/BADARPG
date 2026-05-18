@@ -151,5 +151,55 @@
   --z-hud-world:   100;   /* damage numbers, loot labels (in world space) */
   --z-hud-base:    200;   /* orbs, skill bar, xp bar */
   --z-hud-top:     210;   /* buff bar, area info, corruption */
-  --z-hud-tooltip: 300;   /* reserved for tooltip system */
+  --z-hud-tooltip: 300;   /* tooltip system */
+
+  /* =============================================================
+     TOOLTIP V1 tokens (added Phase 1 TOOLTIP_SYSTEM_V1)
+     Source: TOOLTIP SYSTEM FOUNDATION V1 spec.
+     ============================================================= */
+
+  /* ---------- Tooltip dimensions ---------- */
+  --tt-w:           420px;
+  --tt-pad:         18px;
+  --tt-section-gap: 12px;
+  --tt-affix-gap:   6px;
+
+  /* ---------- Tooltip motion ---------- */
+  --tt-fade-in:      120ms;
+  --tt-fade-out:     120ms;
+  --tt-hover-delay:  80ms;
+
+  /* ---------- Tooltip surface ---------- */
+  --clr-tt-bg:         rgba(10,12,16,0.94);
+  --clr-tt-border:     #2A2E35;
+  --clr-tt-divider:    #1F2227;
+  --clr-tt-text:       #BFC5CE;
+  --clr-tt-text-dim:   #8C9198;
+  --clr-tt-text-strong:#D6DBE3;
+
+  /* ---------- Affix tier emphasis (3-tier hierarchy) ---------- */
+  --clr-tier-1:        #E1A84A;                /* Build Enabling — gold edge */
+  --clr-tier-1-bg:     rgba(225,168,74,0.06);
+  --clr-tier-1-marker: #E1A84A;
+  --clr-tier-2:        #D6DBE3;                /* Core Power — default strong */
+  --clr-tier-3:        #8C9198;                /* Support — dim */
+
+  /* ---------- Comparison delta colors ---------- */
+  --clr-cmp-up:      #7BC47F;
+  --clr-cmp-down:    #C86B6B;
+  --clr-cmp-neutral: #A7ADB7;
+
+  /* ---------- Build interaction tag palette ---------- */
+  --clr-tag-poison:        #6FA85A;
+  --clr-tag-poison-bg:     rgba(111,168,90,0.10);
+  --clr-tag-crit:          #D2B15A;
+  --clr-tag-crit-bg:       rgba(210,177,90,0.10);
+  --clr-tag-ricochet:      #6F9CD2;
+  --clr-tag-ricochet-bg:   rgba(111,156,210,0.10);
+  --clr-tag-trigger:       #D29670;
+  --clr-tag-trigger-bg:    rgba(210,150,112,0.10);
+  --clr-tag-corruption:    #8E5AB2;
+  --clr-tag-corruption-bg: rgba(142,90,178,0.10);
+  --clr-tag-projectile:    #A7ADB7;
+  --clr-tag-projectile-bg: rgba(167,173,183,0.08);
 }

@@ -1,0 +1,458 @@
+/* =============================================================
+   BAD ARPG — Tooltip System V1
+   Runtime Loot Evaluation Foundation
+   Spec source: TOOLTIP SYSTEM FOUNDATION V1
+   ============================================================= */
+
+/* ---------- Showcase page background ----------
+   No explicit z-index — relies on document order so subsequent
+   absolute-positioned siblings (tooltips) stack above it naturally. */
+.tt-page-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 40%, #181B21 0%, #0E1014 60%, #07080B 100%);
+}
+
+/* ---------- Page title strip ---------- */
+.tt-page-title {
+  position: absolute;
+  top: 28px; left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  min-width: 560px;
+  padding: 6px 24px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text);
+}
+.tt-page-title::before,
+.tt-page-title::after {
+  content: ""; height: 1px;
+  background: var(--clr-hud-frame-rim);
+}
+.tt-page-title-sub {
+  color: var(--clr-tt-text-dim);
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+/* ---------- Section label above a tooltip ---------- */
+.tt-section-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text-dim);
+  margin-bottom: 6px;
+}
+.tt-section-label::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--clr-hud-frame-rim);
+}
+
+/* =============================================================
+   TOOLTIP — base
+   ============================================================= */
+.tooltip {
+  width: var(--tt-w);
+  padding: var(--tt-pad);
+  background: var(--clr-tt-bg);
+  border: 1px solid var(--clr-tt-border);
+  font-family: var(--font-ui);
+  color: var(--clr-tt-text);
+  font-size: 13px;
+  line-height: 1.4;
+  position: relative;
+  /* Single inner shadow for depth, no glow — restraint per spec */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    0 6px 18px rgba(0,0,0,0.45);
+}
+
+/* small rarity stripe on left edge — first-glance identifier */
+.tooltip::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+/* ---------- Rarity treatments ---------- */
+.tooltip-normal    { color: var(--clr-loot-normal); }
+.tooltip-magic     { color: var(--clr-loot-magic);  }
+.tooltip-rare      { color: var(--clr-loot-rare);   }
+.tooltip-legendary { color: var(--clr-loot-legendary); border-color: rgba(225,168,74,0.30); }
+.tooltip-heaven    {
+  color: var(--clr-loot-heaven);
+  border-color: rgba(244,242,232,0.30);
+  background:
+    linear-gradient(180deg, rgba(244,242,232,0.025), rgba(244,242,232,0) 40%),
+    var(--clr-tt-bg);
+}
+
+/* ---------- Header ---------- */
+.tt-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  align-items: baseline;
+}
+.tt-name {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: currentColor;            /* rarity-tinted */
+  line-height: 1.1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+.tt-heaven .tt-name,
+.tooltip-heaven .tt-name {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.tt-type {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text-dim);
+  grid-column: 1 / -1;            /* full width under name */
+  margin-top: -2px;
+}
+
+/* ---------- Divider ---------- */
+.tt-divider {
+  height: 1px;
+  background: var(--clr-tt-divider);
+  margin: var(--tt-section-gap) 0;
+}
+
+/* ---------- Core stats block ---------- */
+.tt-core {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 4px;
+  column-gap: 12px;
+  font-size: 13px;
+}
+.tt-core-label {
+  color: var(--clr-tt-text-dim);
+  letter-spacing: 0.04em;
+}
+.tt-core-val {
+  color: var(--clr-tt-text-strong);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =============================================================
+   AFFIXES — 3-tier hierarchy
+   ============================================================= */
+.tt-affixes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tt-affix-gap);
+}
+
+/* TIER 1 — Build Enabling. Highest emphasis, gold left edge + ◆ marker. */
+.tt-affix-t1 {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--clr-tier-1-bg);
+  border-left: 3px solid var(--clr-tier-1);
+  margin-left: -2px;            /* line up with tooltip rarity stripe */
+}
+.tt-affix-t1-marker {
+  font-size: 11px;
+  color: var(--clr-tier-1);
+  line-height: 1.4;
+  font-weight: 700;
+}
+.tt-affix-t1-marker::before { content: "◆"; }
+.tt-affix-t1-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--clr-tier-1);
+  letter-spacing: 0.04em;
+}
+.tt-affix-t1-tag {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clr-tier-1);
+  opacity: 0.7;
+  margin-left: 8px;
+  font-weight: 600;
+}
+.tt-affix-t1-desc {
+  font-size: 12.5px;
+  color: var(--clr-tt-text);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* TIER 2 — Core Power (Prefix/Suffix). Default emphasis. */
+.tt-affix-t2 {
+  font-size: 13px;
+  color: var(--clr-tier-2);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.tt-affix-t2::before {
+  content: "+ ";
+  color: var(--clr-tt-text-dim);
+  font-weight: 400;
+}
+/* Remove the auto "+ " prefix when affix text already starts with + or -.
+   We use data attribute to keep simple semantic content. */
+.tt-affix-t2.has-own-sign::before { content: ""; }
+
+/* TIER 3 — Support Stats. Dim, smaller. */
+.tt-affix-t3 {
+  font-size: 12px;
+  color: var(--clr-tier-3);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+.tt-affix-t3::before {
+  content: "·  ";
+  color: var(--clr-tt-text-dim);
+  opacity: 0.6;
+}
+
+/* =============================================================
+   UTILITY BLOCK — Requirements / Tags / Special interaction
+   ============================================================= */
+.tt-utility {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-req {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--clr-tt-text-dim);
+}
+.tt-req strong {
+  color: var(--clr-tt-text);
+  font-weight: 600;
+}
+.tt-req.is-unmet { color: var(--clr-cmp-down); }
+.tt-req.is-unmet strong { color: var(--clr-cmp-down); }
+
+.tt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tt-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.tt-tag-poison     { color: var(--clr-tag-poison);     background: var(--clr-tag-poison-bg); }
+.tt-tag-crit       { color: var(--clr-tag-crit);       background: var(--clr-tag-crit-bg); }
+.tt-tag-ricochet   { color: var(--clr-tag-ricochet);   background: var(--clr-tag-ricochet-bg); }
+.tt-tag-trigger    { color: var(--clr-tag-trigger);    background: var(--clr-tag-trigger-bg); }
+.tt-tag-corruption { color: var(--clr-tag-corruption); background: var(--clr-tag-corruption-bg); }
+.tt-tag-projectile { color: var(--clr-tag-projectile); background: var(--clr-tag-projectile-bg); }
+
+/* =============================================================
+   BOTTOM BLOCK — Flavor / Value / Corruption status
+   ============================================================= */
+.tt-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tt-flavor {
+  font-family: var(--font-ui);
+  font-style: italic;
+  font-size: 11.5px;
+  color: var(--clr-tt-text-dim);
+  letter-spacing: 0.02em;
+  line-height: 1.45;
+}
+.tt-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.tt-value {
+  color: var(--clr-loot-rare);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tt-value::after { content: " g"; opacity: 0.55; font-weight: 400; }
+.tt-corruption {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text-dim);
+}
+.tt-corruption::before {
+  content: "◐";
+  font-size: 10px;
+  color: var(--clr-tt-text-dim);
+}
+.tt-corruption.is-corrupted {
+  color: var(--clr-sem-corruption);
+  filter: brightness(1.6);
+}
+.tt-corruption.is-corrupted::before {
+  content: "●";
+  color: var(--clr-sem-corruption);
+  filter: brightness(1.6);
+}
+
+/* =============================================================
+   COMPARISON RUNTIME
+   ============================================================= */
+.comparison {
+  display: grid;
+  grid-template-columns: var(--tt-w) 56px var(--tt-w);
+  align-items: stretch;
+  gap: 0;
+}
+.comparison-side {
+  display: flex;
+  flex-direction: column;
+}
+.comparison-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text-dim);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.comparison-label.equipped { color: var(--clr-tt-text-dim); }
+.comparison-label.new      { color: var(--clr-tier-1); }
+.comparison-arrow {
+  align-self: center;
+  font-family: var(--font-display);
+  font-size: 32px;
+  color: var(--clr-hud-frame-rim);
+  text-align: center;
+  padding-top: 60px;            /* roughly align with mid of tooltip */
+  letter-spacing: 0;
+}
+
+/* Per-affix delta tags inside the "new" tooltip */
+.tt-cmp-delta {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid currentColor;
+  background: transparent;
+  border-radius: 0;
+}
+.tt-cmp-up      { /* applied as additional class on .tt-affix to recolor */ }
+.tt-cmp-up      .tt-cmp-delta,
+.tt-cmp-delta.tt-cmp-up      { color: var(--clr-cmp-up);      background: rgba(123,196,127,0.08); }
+.tt-cmp-down    .tt-cmp-delta,
+.tt-cmp-delta.tt-cmp-down    { color: var(--clr-cmp-down);    background: rgba(200,107,107,0.08); }
+.tt-cmp-neutral .tt-cmp-delta,
+.tt-cmp-delta.tt-cmp-neutral { color: var(--clr-cmp-neutral); background: rgba(167,173,183,0.06); }
+
+/* When an affix has a comparison delta, tint the affix line subtly too */
+.tt-affix-t2.tt-cmp-up    { color: var(--clr-cmp-up); }
+.tt-affix-t2.tt-cmp-down  { color: var(--clr-cmp-down); }
+.tt-affix-t3.tt-cmp-up    { color: var(--clr-cmp-up); }
+.tt-affix-t3.tt-cmp-down  { color: var(--clr-cmp-down); }
+
+/* =============================================================
+   HOVER BENCH — interactive item slots
+   ============================================================= */
+.hover-bench {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(10,12,16,0.5);
+  border: 1px solid var(--clr-hud-frame-rim);
+}
+.bench-slot {
+  width: 64px; height: 64px;
+  background: var(--clr-hud-slot-bg);
+  border: 2px solid var(--clr-hud-slot-border);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: filter var(--skill-hover-duration) var(--ease-out),
+              border-color var(--skill-hover-duration) var(--ease-out);
+}
+.bench-slot::before,
+.bench-slot::after {
+  content: "";
+  position: absolute;
+  width: 6px; height: 6px;
+  background: var(--clr-hud-slot-border);
+}
+.bench-slot::before { top: -2px; left: -2px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.bench-slot::after  { bottom: -2px; right: -2px; clip-path: polygon(100% 100%, 100% 0, 0 100%); }
+.bench-slot:hover {
+  filter: brightness(1.06);
+  border-color: var(--clr-hud-frame-rim);
+}
+.bench-slot[data-rarity="normal"]    { border-color: rgba(140,145,152,0.5); }
+.bench-slot[data-rarity="magic"]     { border-color: rgba(90,127,207,0.55); }
+.bench-slot[data-rarity="rare"]      { border-color: rgba(210,177,90,0.55); }
+.bench-slot[data-rarity="legendary"] { border-color: rgba(225,168,74,0.55); }
+.bench-slot[data-rarity="heaven"]    { border-color: rgba(244,242,232,0.55); }
+.bench-glyph {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--clr-tt-text);
+}
+.bench-label {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--clr-tt-text-dim);
+  margin-left: 8px;
+  margin-right: 4px;
+}
+
+/* Floating tooltip — used by JS for hover interactions */
+.tt-floating {
+  position: absolute;
+  z-index: var(--z-hud-tooltip);
+  opacity: 0;
+  transition: opacity var(--tt-fade-in) var(--ease-out);
+  pointer-events: none;
+}
+.tt-floating.is-visible {
+  opacity: 1;
+}

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — Tooltip System V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/tooltip.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <div class="tt-page-bg"></div>
+
+      <!-- Title strip -->
+      <div class="tt-page-title">
+        <span>Tooltip System V1</span>
+        <span class="tt-page-title-sub">Loot Evaluation Foundation · 1920 × 1080</span>
+        <span>BAD ARPG</span>
+      </div>
+
+      <!-- ============================================================
+           ROW 1 — Rarity showcase (Normal · Magic · Rare · Legendary)
+           ============================================================ -->
+
+      <!-- Normal -->
+      <div style="position:absolute; left:63px; top:84px; width:420px;">
+        <div class="tt-section-label">Rarity · Normal</div>
+        <div class="tooltip tooltip-normal" data-item="cracked-shortbow">
+          <div class="tt-header">
+            <div class="tt-name">Cracked Shortbow</div>
+            <div class="tt-type">Hunter Bow · Normal</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-core">
+            <span class="tt-core-label">Damage</span><span class="tt-core-val">12 – 24</span>
+            <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.30 /s</span>
+            <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">5.0 %</span>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-affixes">
+            <div class="tt-affix-t3 has-own-sign" style="opacity:0.6">No affixes</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-utility">
+            <div class="tt-req">Requires <strong>Lv 1</strong></div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-bottom">
+            <div class="tt-meta">
+              <span class="tt-value">8</span>
+              <span class="tt-corruption">Uncorrupted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Magic -->
+      <div style="position:absolute; left:521px; top:84px; width:420px;">
+        <div class="tt-section-label">Rarity · Magic</div>
+        <div class="tooltip tooltip-magic" data-item="cunning-cap">
+          <div class="tt-header">
+            <div class="tt-name">Cunning Cap of Vigor</div>
+            <div class="tt-type">Leather Hood · Magic</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-core">
+            <span class="tt-core-label">Armor</span><span class="tt-core-val">24</span>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-affixes">
+            <div class="tt-affix-t2">14% Crit Chance</div>
+            <div class="tt-affix-t2">8% Cast Speed</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-utility">
+            <div class="tt-req">Requires <strong>Lv 6</strong></div>
+            <div class="tt-tags">
+              <span class="tt-tag tt-tag-crit">crit</span>
+            </div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-bottom">
+            <div class="tt-meta">
+              <span class="tt-value">42</span>
+              <span class="tt-corruption">Uncorrupted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rare -->
+      <div style="position:absolute; left:979px; top:84px; width:420px;">
+        <div class="tt-section-label">Rarity · Rare</div>
+        <div class="tooltip tooltip-rare" data-item="reavers-gauntlet">
+          <div class="tt-header">
+            <div class="tt-name">Reaver's Gauntlet</div>
+            <div class="tt-type">Steel Gauntlet · Rare</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-core">
+            <span class="tt-core-label">Armor</span><span class="tt-core-val">86</span>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-affixes">
+            <div class="tt-affix-t2">18% Attack Speed</div>
+            <div class="tt-affix-t2">14% Crit Damage</div>
+            <div class="tt-affix-t3">24 Life</div>
+            <div class="tt-affix-t3">16% Fire Resistance</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-utility">
+            <div class="tt-req">Requires <strong>Lv 8 · Str 18</strong></div>
+            <div class="tt-tags">
+              <span class="tt-tag tt-tag-crit">crit</span>
+            </div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-bottom">
+            <div class="tt-meta">
+              <span class="tt-value">180</span>
+              <span class="tt-corruption">Uncorrupted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legendary -->
+      <div style="position:absolute; left:1437px; top:84px; width:420px;">
+        <div class="tt-section-label">Rarity · Legendary</div>
+        <div class="tooltip tooltip-legendary" data-item="stormcaller">
+          <div class="tt-header">
+            <div class="tt-name">Stormcaller's Talon</div>
+            <div class="tt-type">Hunter Bow · Legendary</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-core">
+            <span class="tt-core-label">Damage</span><span class="tt-core-val">68 – 142</span>
+            <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.42 /s</span>
+            <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">7.2 %</span>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-affixes">
+            <div class="tt-affix-t1">
+              <span class="tt-affix-t1-marker"></span>
+              <div>
+                <div>
+                  <span class="tt-affix-t1-name">Ricochet Chain</span>
+                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                </div>
+                <div class="tt-affix-t1-desc">Projectiles ricochet up to 4 times to nearby enemies.</div>
+              </div>
+            </div>
+            <div class="tt-affix-t2">28% Projectile Damage</div>
+            <div class="tt-affix-t2">16% Crit Chance</div>
+            <div class="tt-affix-t3">38 Life</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-utility">
+            <div class="tt-req">Requires <strong>Lv 14 · Dex 28</strong></div>
+            <div class="tt-tags">
+              <span class="tt-tag tt-tag-ricochet">ricochet</span>
+              <span class="tt-tag tt-tag-crit">crit</span>
+              <span class="tt-tag tt-tag-projectile">projectile</span>
+            </div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-bottom">
+            <div class="tt-flavor">"The bow that calls down the sky."</div>
+            <div class="tt-meta">
+              <span class="tt-value">1450</span>
+              <span class="tt-corruption">Uncorrupted</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           ROW 2 — Heaven (left) + Comparison runtime (right)
+           ============================================================ -->
+
+      <!-- Heaven -->
+      <div style="position:absolute; left:283px; top:560px; width:420px;">
+        <div class="tt-section-label">Rarity · Heaven · Mythic Tier</div>
+        <div class="tooltip tooltip-heaven" data-item="venomspike-loop">
+          <div class="tt-header">
+            <div class="tt-name">Venomspike Loop</div>
+            <div class="tt-type">Mythic Ring · Heaven</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-core">
+            <span class="tt-core-label">Item Level</span><span class="tt-core-val">30</span>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-affixes">
+            <div class="tt-affix-t1">
+              <span class="tt-affix-t1-marker"></span>
+              <div>
+                <div>
+                  <span class="tt-affix-t1-name">Venom Bloom</span>
+                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                </div>
+                <div class="tt-affix-t1-desc">Critical hits spread Poison to all enemies within 6m.</div>
+              </div>
+            </div>
+            <div class="tt-affix-t1">
+              <span class="tt-affix-t1-marker"></span>
+              <div>
+                <div>
+                  <span class="tt-affix-t1-name">Corpsewake Trigger</span>
+                  <span class="tt-affix-t1-tag">Build Enabling</span>
+                </div>
+                <div class="tt-affix-t1-desc">Killing a Poisoned enemy triggers your last cast skill at 60% power.</div>
+              </div>
+            </div>
+            <div class="tt-affix-t2">28% Crit Chance</div>
+            <div class="tt-affix-t2">24% Poison Damage</div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-utility">
+            <div class="tt-req">Requires <strong>Lv 30</strong></div>
+            <div class="tt-tags">
+              <span class="tt-tag tt-tag-poison">poison</span>
+              <span class="tt-tag tt-tag-crit">crit</span>
+              <span class="tt-tag tt-tag-trigger">trigger</span>
+              <span class="tt-tag tt-tag-corruption">corruption</span>
+            </div>
+          </div>
+          <div class="tt-divider"></div>
+          <div class="tt-bottom">
+            <div class="tt-flavor">"The serpent's circle. Where she walks, the soil drinks."</div>
+            <div class="tt-meta">
+              <span class="tt-value">9999</span>
+              <span class="tt-corruption is-corrupted">Corrupted +3</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison block: Equipped → New -->
+      <div style="position:absolute; left:741px; top:560px;">
+        <div class="tt-section-label">Comparison Runtime · Equipped → New</div>
+        <div class="comparison">
+          <div class="comparison-side">
+            <div class="comparison-label equipped">Equipped</div>
+            <div class="tooltip tooltip-legendary" data-item="stormcaller-eq">
+              <div class="tt-header">
+                <div class="tt-name">Stormcaller's Talon</div>
+                <div class="tt-type">Hunter Bow · Legendary</div>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-core">
+                <span class="tt-core-label">Damage</span><span class="tt-core-val">68 – 142</span>
+                <span class="tt-core-label">Attack Speed</span><span class="tt-core-val">1.42 /s</span>
+                <span class="tt-core-label">Crit Chance</span><span class="tt-core-val">7.2 %</span>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-affixes">
+                <div class="tt-affix-t1">
+                  <span class="tt-affix-t1-marker"></span>
+                  <div>
+                    <div>
+                      <span class="tt-affix-t1-name">Ricochet Chain</span>
+                      <span class="tt-affix-t1-tag">Build Enabling</span>
+                    </div>
+                    <div class="tt-affix-t1-desc">Projectiles ricochet up to 4 times to nearby enemies.</div>
+                  </div>
+                </div>
+                <div class="tt-affix-t2">28% Projectile Damage</div>
+                <div class="tt-affix-t2">16% Crit Chance</div>
+                <div class="tt-affix-t3">38 Life</div>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-utility">
+                <div class="tt-req">Requires <strong>Lv 14 · Dex 28</strong></div>
+                <div class="tt-tags">
+                  <span class="tt-tag tt-tag-ricochet">ricochet</span>
+                  <span class="tt-tag tt-tag-crit">crit</span>
+                  <span class="tt-tag tt-tag-projectile">projectile</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="comparison-arrow">→</div>
+
+          <div class="comparison-side">
+            <div class="comparison-label new">New · Drop</div>
+            <div class="tooltip tooltip-legendary" data-item="ricochet-apostle">
+              <div class="tt-header">
+                <div class="tt-name">Ricochet Apostle Bow</div>
+                <div class="tt-type">Hunter Bow · Legendary</div>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-core">
+                <span class="tt-core-label">Damage</span>
+                <span class="tt-core-val">62 – 138
+                  <span class="tt-cmp-delta tt-cmp-down">−6</span>
+                </span>
+                <span class="tt-core-label">Attack Speed</span>
+                <span class="tt-core-val">1.48 /s
+                  <span class="tt-cmp-delta tt-cmp-up">+0.06</span>
+                </span>
+                <span class="tt-core-label">Crit Chance</span>
+                <span class="tt-core-val">6.8 %
+                  <span class="tt-cmp-delta tt-cmp-down">−0.4</span>
+                </span>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-affixes">
+                <div class="tt-affix-t1">
+                  <span class="tt-affix-t1-marker"></span>
+                  <div>
+                    <div>
+                      <span class="tt-affix-t1-name">Apostle's Volley</span>
+                      <span class="tt-affix-t1-tag">Build Enabling · Changed</span>
+                    </div>
+                    <div class="tt-affix-t1-desc">Each ricochet has a 25% chance to split into 2 projectiles.</div>
+                  </div>
+                </div>
+                <div class="tt-affix-t2 tt-cmp-down">24% Projectile Damage
+                  <span class="tt-cmp-delta tt-cmp-down">−4%</span>
+                </div>
+                <div class="tt-affix-t2 tt-cmp-up">22% Attack Speed
+                  <span class="tt-cmp-delta tt-cmp-up">+10%</span>
+                </div>
+                <div class="tt-affix-t2">8% Movement Speed
+                  <span class="tt-cmp-delta tt-cmp-up">NEW</span>
+                </div>
+                <div class="tt-affix-t3 tt-cmp-down">28 Life
+                  <span class="tt-cmp-delta tt-cmp-down">−10</span>
+                </div>
+              </div>
+              <div class="tt-divider"></div>
+              <div class="tt-utility">
+                <div class="tt-req">Requires <strong>Lv 14 · Dex 30</strong></div>
+                <div class="tt-tags">
+                  <span class="tt-tag tt-tag-ricochet">ricochet</span>
+                  <span class="tt-tag tt-tag-projectile">projectile</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating tooltip container (used by JS for hover demos) -->
+      <div id="floatingTooltip" class="tt-floating"></div>
+
+    </div>
+  </div>
+  <script src="js/tooltip.js"></script>
+</body>
+</html>

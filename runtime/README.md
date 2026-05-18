@@ -7,6 +7,7 @@ Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural bluepri
 |---|---|---|
 | Main Menu V1 | `index.html` | ✅ Locked |
 | HUD V1 | `hud.html` | ✅ Locked |
+| Tooltip V1 | `tooltip.html` | ✅ Locked |
 
 ## What this is
 A 1920×1080 fixed-layout scene that locks the **UI design system foundation** for the rest of the project:
@@ -52,20 +53,32 @@ Then visit http://localhost:8080
 | `L` | Spawn one loot label manually |
 | (auto) | Damage spawns every 280ms, loot every 1100ms |
 
+### Tooltip (`tooltip.html`)
+| Key / Action | Effect |
+|---|---|
+| Hover a showcase tooltip | After 80ms delay, floating duplicate appears next to cursor (fade in 120ms) |
+| Move mouse while hovering | Floating tooltip follows with auto-offset (never blocks cursor) |
+| Leave hover | Fade out 120ms |
+| Click a showcase tooltip | Logs `[COMPARE] would replace NEW pane …` (stub — needs inventory data model) |
+| `G` | Toggle 12-col / safe-area grid overlay |
+
 ## Directory map
 ```
 runtime/
 ├── index.html              # Main Menu — layer structure + content
 ├── hud.html                # HUD prototype — combat UI foundation
+├── tooltip.html            # Tooltip prototype — loot evaluation foundation
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
 │   ├── layout.css          # viewport + canvas + dev grid (shared)
 │   ├── scene.css           # menu: sky/moon/castle/fog/forest/campfire
 │   ├── components.css      # menu: logo / buttons / version
-│   └── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
+│   ├── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
+│   └── tooltip.css         # Tooltip: base / rarity / 3-tier affix / tags / comparison
 ├── js/
 │   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
-│   └── hud.js              # HUD: fit + damage/loot spawners + debug toggles
+│   ├── hud.js              # HUD: fit + damage/loot spawners + debug toggles
+│   └── tooltip.js          # Tooltip: hover delay + auto offset + comparison stubs
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
 └── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
@@ -111,6 +124,30 @@ runtime/
 | All HUD typography Inter (no fantasy body font) | ✅ |
 | No blue glow, no MMO swoosh, no mobile bounce, no oversized orb | ✅ |
 | Semantic palette consistent (Red=HP, Blue=Mana, Gold=Reward, Purple-Black=Corruption) | ✅ — tokens enforced |
+
+## Tooltip V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| Base width 420px, padding 18px, section gap 12px, affix gap 6px | ✅ (tokens) |
+| Header = Item Name + Item Type, name larger than type | ✅ |
+| Core stats block (Damage / Armor / Attack Speed / Crit) | ✅ |
+| Affix 3-tier hierarchy (Build Enabling > Core Power > Support) | ✅ visually distinct |
+| Tier 1 build enabling — gold left-edge + ◆ marker + name highlight + "BUILD ENABLING" tag | ✅ no MMO glow |
+| Tier 2 = prefix/suffix lines, default emphasis | ✅ |
+| Tier 3 = dim support stats, smaller font | ✅ |
+| Utility block: Requirements + Tags (poison/crit/ricochet/trigger/corruption) | ✅ all 5 demonstrated |
+| Bottom block: optional Flavor + Item Value + Corruption Status | ✅ Uncorrupted / Corrupted +3 |
+| Rarity colors (Normal #8C9198 / Magic #5A7FCF / Rare #D2B15A / Legendary #E1A84A / Heaven #F4F2E8) | ✅ tokens shared with HUD loot |
+| 5 test items: Normal / Magic / Rare / Legendary / Heaven | ✅ Cracked Shortbow / Cunning Cap / Reaver's Gauntlet / Stormcaller's Talon / Venomspike Loop |
+| Build-enabling items showcased | ✅ Ricochet Chain, Venom Bloom, Corpsewake Trigger, Apostle's Volley |
+| Comparison runtime: current left, new right | ✅ Stormcaller → Ricochet Apostle Bow |
+| Comparison delta colors (upgrade #7BC47F / downgrade #C86B6B / neutral #A7ADB7) | ✅ on core stats AND affixes |
+| Motion: fade in 120ms / fade out 120ms / hover delay 80ms | ✅ (`tt-fade-in`, `tt-fade-out`, `tt-hover-delay`) |
+| Auto offset (tooltip never blocks cursor center) | ✅ JS clamps and flips if overflow |
+| Typography Inter only, no fantasy body font | ✅ |
+| No glow, no oversized title, no parchment, no MMO scroll | ✅ |
+| All hex from `tokens.css` (no literal hex in tooltip.css/html) | ✅ |
 
 ## What is intentionally NOT here
 
