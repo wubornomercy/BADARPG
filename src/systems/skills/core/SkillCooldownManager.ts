@@ -6,11 +6,16 @@ import type { SkillDefinition } from '../types/SkillDefinition.js';
  * SkillCooldownManager — tracks per-skill cooldown expiry times for a
  * single caster (Player). For NPCs each one would own its own instance.
  *
- * Effective cooldown formula (spec):
- *   effectiveCD = baseCD / (1 + cooldownReduction / 100)
+ * Effective cooldown formula:
+ *   effectiveCD = (baseCD / (1 + cooldownReduction / 100)) / attackSpeedMult
  *
- * CDR is read via StatManager so passive tree / item modifiers flow
- * through automatically. Clamping happens inside StatManager (cap 75%).
+ * `cooldownReduction` is always applied. `attackSpeedMult` is applied
+ * only when the skill opts in via `attackSpeedScaled: true` — used for
+ * basic-attack-style skills (Corrupt Bolt) so +attack speed gear
+ * actually speeds up the spam, not just locked spells.
+ *
+ * Both stats are read via StatManager so passive tree / item modifiers
+ * flow through automatically. CDR is clamped to 75% inside StatManager.
  */
 export class SkillCooldownManager {
   private readonly readyAt: Map<string, number> = new Map();
@@ -29,13 +34,17 @@ export class SkillCooldownManager {
   }
 
   /**
-   * Start the cooldown for `skill`, scaled by source CDR.
-   * No-op when baseCD is 0 (instant-reuse skills like Corrupt Bolt).
+   * Start the cooldown for `skill`, scaled by source CDR + (optionally)
+   * attack speed. No-op when baseCD is 0.
    */
   start(skill: SkillDefinition, sourceSM: StatManager | undefined, now: number): void {
     if (skill.cooldown <= 0) return;
     const cdrPct = sourceSM ? sourceSM.getFinalStat(StatType.COOLDOWN_REDUCTION) : 0;
-    const scaled = (skill.cooldown * 1000) / (1 + cdrPct / 100);
+    let scaled = (skill.cooldown * 1000) / (1 + cdrPct / 100);
+    if (skill.attackSpeedScaled && sourceSM) {
+      const as = Math.max(0.01, sourceSM.getFinalStat(StatType.ATTACK_SPEED));
+      scaled /= as;
+    }
     this.readyAt.set(skill.id, now + scaled);
   }
 

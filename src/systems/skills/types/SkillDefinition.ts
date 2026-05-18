@@ -59,6 +59,14 @@ export interface SkillDefinition {
    */
   triggerProtection?: boolean;
 
+  /**
+   * When true, the effective cooldown is divided by the source's
+   * ATTACK_SPEED stat in addition to the CDR formula. Use this for
+   * basic-attack-style skills so +attack speed gear speeds up their
+   * spam rate. Defaults to false (regular cooldown scaling only).
+   */
+  attackSpeedScaled?: boolean;
+
   /** Behavior-specific knobs (NOVA radius, GROUND_AOE duration, etc.). */
   behaviorConfig?: Record<string, any>;
 }

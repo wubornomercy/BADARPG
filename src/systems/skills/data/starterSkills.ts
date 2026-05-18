@@ -13,19 +13,22 @@ import { DamageType } from '../../combat/types/DamageType.js';
 export const SKILL_CORRUPT_BOLT: SkillDefinition = {
   id:            'corrupt_bolt',
   name:          '腐蚀箭',
-  description:   '基础攻击 — 无消耗、无冷却的毒素弹道，可无限连发。',
+  description:   '基础攻击 — 无法力消耗，带受攻速影响的内置冷却（≈0.24 秒 / 4 发每秒）。',
   icon:          '↟',
   tags:          ['projectile', 'spell', 'poison', 'basic'],
   behaviorType:  SkillBehaviorType.PROJECTILE,
   targetingType: SkillTargetingType.DIRECTIONAL,
-  // Player-feel tweak vs spec V1: cast time + mana cost reduced to 0 so
-  // the slot-0 / RMB primary acts as a true free basic attack. Spec had
-  // 0.25 s cast / 6 mana — kept for reference but a no-cd, no-cost,
-  // instant basic feels better at the starting kit.
-  castTime:      0,
-  cooldown:      0,
-  manaCost:      0,
-  baseDamage:    18,
+  // Free basic attack — no mana cost, no cast time. Per player feedback
+  // "腐蚀箭作为基础攻击做得太强了，像激光一样可以连射", a small
+  // internal attack-speed-scaled cooldown is now applied.
+  //   effectiveCD = 0.24 s ÷ ATTACK_SPEED
+  // At base AS = 1.0 → ~4 shots/sec. Gloves with +4% AS shave a touch
+  // off; future +attack speed affixes scale the spam rate.
+  castTime:          0,
+  cooldown:          0.24,
+  manaCost:          0,
+  attackSpeedScaled: true,
+  baseDamage:        18,
   damageType:    DamageType.POISON,
   canCrit:       true,
   projectile: {
