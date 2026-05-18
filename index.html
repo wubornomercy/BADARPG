@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="/runtime/css/inventory.css" />
   <link rel="stylesheet" href="/runtime/css/character.css" />
   <link rel="stylesheet" href="/runtime/css/skill.css" />
+  <link rel="stylesheet" href="/runtime/css/settings.css" />
 
   <style>
     /* ----------------------------------------------------------
@@ -429,6 +430,38 @@
               <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">法力</span><span class="skill-bottom-stat-value">32</span></div>
               <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">投射物</span><span class="skill-bottom-stat-value">3</span></div>
               <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">触发率</span><span class="skill-bottom-stat-value">18<span class="skill-bottom-stat-unit">%</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== SETTINGS PANEL =================== -->
+      <div id="settingsPanel" class="game-panel">
+        <div class="settings-panel">
+          <span class="settings-rivet-tr"></span>
+          <span class="settings-rivet-bl"></span>
+          <div class="settings-header">
+            <div class="settings-title">设置</div>
+            <div class="settings-tabs">
+              <button class="settings-tab is-active" data-tab="keybinds">按键</button>
+              <button class="settings-tab" data-tab="display">显示</button>
+              <button class="settings-tab" data-tab="audio">音频</button>
+            </div>
+            <button class="settings-close" data-close="settings">×</button>
+          </div>
+          <div class="settings-body">
+            <div class="settings-content" data-tab="keybinds">
+              <div class="settings-section-label">操作绑定</div>
+              <div id="keybindList"></div>
+              <div class="settings-actions">
+                <button class="settings-action danger" id="keybindReset">重置全部默认</button>
+              </div>
+            </div>
+            <div class="settings-content" data-tab="display" hidden>
+              <div class="settings-coming-soon">显示选项 — 即将推出</div>
+            </div>
+            <div class="settings-content" data-tab="audio" hidden>
+              <div class="settings-coming-soon">音频选项 — 即将推出</div>
             </div>
           </div>
         </div>

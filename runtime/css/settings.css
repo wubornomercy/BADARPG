@@ -1,0 +1,215 @@
+/* =============================================================
+   BAD ARPG — Settings Panel V1 (PIXEL DARK STEEL)
+   Reuses Phase 1 panel framework (rivets, chunky border, header).
+   ============================================================= */
+
+.settings-panel {
+  position: absolute;
+  width:  720px;
+  height: 600px;
+  left: 600px;
+  top:  240px;
+  background: var(--clr-inv-panel-bg);
+  border: 2px solid var(--clr-inv-panel-border);
+  box-shadow:
+    inset 2px 2px 0 var(--clr-inv-panel-bevel-hi),
+    inset -2px -2px 0 var(--clr-inv-panel-bevel-lo),
+    inset 0 0 0 4px #1A1D22,
+    8px 8px 0 rgba(0,0,0,0.55);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-panel::before,
+.settings-panel::after,
+.settings-rivet-tr,
+.settings-rivet-bl {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  background: var(--clr-inv-panel-border);
+  box-shadow:
+    inset 2px 2px 0 rgba(255,255,255,0.06),
+    inset -2px -2px 0 rgba(0,0,0,0.55);
+}
+.settings-panel::before { top: 8px; left: 8px; }
+.settings-panel::after  { bottom: 8px; right: 8px; }
+.settings-rivet-tr { top: 8px; right: 8px; }
+.settings-rivet-bl { bottom: 8px; left: 8px; }
+
+.settings-header {
+  height: 40px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 0 8px;
+  background: var(--clr-inv-header-bg);
+  border: 2px solid var(--clr-hud-frame-rim);
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+.settings-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.18em;
+  color: var(--clr-hud-text);
+  text-shadow: 0 2px 0 rgba(0,0,0,0.7);
+  padding: 0 12px;
+}
+.settings-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.settings-tab {
+  background: transparent;
+  border: 2px solid transparent;
+  color: var(--clr-inv-filter-idle);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: color 120ms steps(4, end), border-color 120ms steps(4, end);
+}
+.settings-tab:hover { color: var(--clr-hud-text); }
+.settings-tab.is-active {
+  color: var(--clr-tier-1);
+  border-color: var(--clr-tier-1);
+  background: var(--clr-tier-1-bg);
+  box-shadow: inset 1px 1px 0 rgba(225,168,74,0.18);
+}
+
+.settings-close {
+  width: 32px; height: 32px;
+  background: var(--clr-btn-bg);
+  border: 2px solid var(--clr-btn-border);
+  color: var(--clr-btn-label);
+  font-family: var(--font-ui);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.settings-close:hover { filter: brightness(1.12); }
+
+.settings-body {
+  flex: 1;
+  min-height: 0;
+  background: rgba(7,9,13,0.45);
+  border: 2px solid var(--clr-hud-frame-rim);
+  padding: 16px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.03),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+
+.settings-content[hidden] { display: none; }
+
+.settings-section-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--clr-hud-text-dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-section-label::before {
+  content: "";
+  width: 8px; height: 2px;
+  background: var(--clr-hud-frame-rim);
+}
+
+/* Keybind rows */
+.keybind-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  background: rgba(13,16,20,0.5);
+  border: 1px solid #1F2329;
+  margin-bottom: 4px;
+}
+.keybind-row:hover { filter: brightness(1.08); }
+.keybind-label {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clr-hud-text);
+}
+.keybind-key {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--clr-tier-1);
+  background: var(--clr-tier-1-bg);
+  border: 2px solid var(--clr-tier-1);
+  padding: 3px 12px;
+  min-width: 72px;
+  text-align: center;
+}
+.keybind-rebind {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  padding: 4px 12px;
+  background: var(--clr-btn-bg);
+  border: 2px solid var(--clr-btn-border);
+  color: var(--clr-btn-label);
+  cursor: pointer;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.keybind-rebind:hover { filter: brightness(1.12); border-color: var(--clr-hud-frame-rim); }
+.keybind-rebind.is-listening {
+  color: var(--clr-tier-1);
+  border-color: var(--clr-tier-1);
+  background: var(--clr-tier-1-bg);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+.settings-action {
+  padding: 6px 16px;
+  background: var(--clr-btn-bg);
+  border: 2px solid var(--clr-btn-border);
+  color: var(--clr-btn-label);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.04),
+              inset -2px -2px 0 rgba(0,0,0,0.5);
+}
+.settings-action:hover { filter: brightness(1.12); }
+.settings-action.danger { color: var(--clr-cmp-down); border-color: rgba(200,107,107,0.45); }
+
+.settings-coming-soon {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--clr-hud-text-dim);
+  text-align: center;
+  padding: 60px 8px;
+  text-transform: uppercase;
+}

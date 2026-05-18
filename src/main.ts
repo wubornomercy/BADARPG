@@ -11,10 +11,12 @@ import { Projectile } from './entities/projectile.js';
 import { LootDrop } from './entities/loot.js';
 import { DebugHud, sim, canSpawnProjectile, canSpawnEnemy } from './sim.js';
 import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
-import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange } from './scene.js';
+import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange, getReturnScene } from './scene.js';
 import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
 import { buildWorld, spawnCorruptionZones, updateCorruptionZones } from './world.js';
 import { populatePanels } from './panel-stubs.js';
+import { initSettingsUI } from './settings-ui.js';
+import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
 (async () => {
   // ---------------------------------------------------------------------
@@ -55,9 +57,12 @@ import { populatePanels } from './panel-stubs.js';
   initInput(app.canvas as HTMLCanvasElement, CANVAS_W, CANVAS_H);
 
   // ---------------------------------------------------------------------
-  // Static panel population (one-time)
+  // Static panel population (one-time) + settings + tooltip hover
   // ---------------------------------------------------------------------
   populatePanels();
+  initSettingsUI();
+  initTooltipHover();
+  refreshTooltipTargets();   // re-scan after panels populated
 
   // ---------------------------------------------------------------------
   // URL-param scene override — useful for headless screenshots + debugging
@@ -67,10 +72,11 @@ import { populatePanels } from './panel-stubs.js';
   //   ?scene=skill   -> open skill panel
   // ---------------------------------------------------------------------
   const sceneParam = new URL(location.href).searchParams.get('scene');
-  if (sceneParam === 'play')  setScene('PLAYING');
-  if (sceneParam === 'inv')   setScene('PANEL_INV');
-  if (sceneParam === 'char')  setScene('PANEL_CHAR');
-  if (sceneParam === 'skill') setScene('PANEL_SKILL');
+  if (sceneParam === 'play')     setScene('PLAYING');
+  if (sceneParam === 'inv')      setScene('PANEL_INV');
+  if (sceneParam === 'char')     setScene('PANEL_CHAR');
+  if (sceneParam === 'skill')    setScene('PANEL_SKILL');
+  if (sceneParam === 'settings') setScene('PANEL_SETTINGS');
 
   // ---------------------------------------------------------------------
   // World scene graph
@@ -163,14 +169,14 @@ import { populatePanels } from './panel-stubs.js';
     setScene('PANEL_CHAR');
   });
   document.getElementById('menuSettings')?.addEventListener('click', () => {
-    console.log('[SETTINGS] not implemented in V1');
+    setScene('PANEL_SETTINGS');
   });
   document.getElementById('menuExit')?.addEventListener('click', () => {
     console.log('[EXIT] would close runtime');
   });
-  // Panel close buttons
+  // Panel close buttons — return to wherever we came from (MENU or PLAYING)
   document.querySelectorAll('[data-close]').forEach(el => {
-    el.addEventListener('click', () => setScene('PLAYING'));
+    el.addEventListener('click', () => setScene(getReturnScene()));
   });
 
   // Keyboard panel toggles + ESC
@@ -178,7 +184,7 @@ import { populatePanels } from './panel-stubs.js';
     const k = e.key.toLowerCase();
     // ESC: panel → playing, playing → menu, menu → menu (no-op)
     if (k === 'escape') {
-      if (isPanelOpen()) setScene('PLAYING');
+      if (isPanelOpen()) setScene(getReturnScene());
       else if (getScene() === 'PLAYING') setScene('MENU');
       return;
     }
