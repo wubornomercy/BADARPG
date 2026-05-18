@@ -50,30 +50,17 @@ export class LootDrop {
       this.beam = beam;
     }
 
-    // Pedestal — chunky pixel base
+    // Pedestal — chunky pixel base (only ground marker; no big icon char
+    // per user feedback "directly show the item name, no 靴/盾 big chars").
     const ped = new Graphics()
       .rect(-12, -2, 24, 4).fill(0x0A0C10)
       .rect(-12, -3, 24, 1).fill(0x2A2E35);
     this.container.addChild(ped);
 
-    // Icon — single Chinese char in rarity color
     const name = pick(SAMPLE_NAMES[rarity]);
-    const iconChar = pick(['弓', '匕', '盾', '袍', '靴', '环', '符', '冠']);
-    const icon = new Text({
-      text: iconChar,
-      style: {
-        fontFamily: 'Pixelify Sans, monospace',
-        fontSize: 28,
-        fill: color,
-        align: 'center',
-      },
-    });
-    icon.anchor.set(0.5, 1);
-    icon.x = 0;
-    icon.y = -6;
-    this.container.addChild(icon);
 
-    // Label
+    // Label — sits just above the pedestal/beam, banner with rarity border
+    const labelY = beamH > 0 ? -beamH - 6 : -14;
     const label = new Text({
       text: name,
       style: {
@@ -86,7 +73,7 @@ export class LootDrop {
     });
     label.anchor.set(0.5, 0);
     label.x = 0;
-    label.y = -beamH - 18;
+    label.y = labelY;
 
     // Label background
     const lbg = new Graphics();

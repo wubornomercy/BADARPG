@@ -4,7 +4,7 @@
  * recoil on fire, footstep dust while moving.
  */
 import { Container, Graphics } from 'pixi.js';
-import { COLOR, TUNE, TIME, CANVAS_W, CANVAS_H } from '../tokens.js';
+import { COLOR, TUNE, TIME, CANVAS_W, CANVAS_H, WORLD_W, WORLD_H } from '../tokens.js';
 import { inputDir, wasPressed, mouse } from '../input.js';
 
 export class Player {
@@ -127,10 +127,12 @@ export class Player {
     this.recoilVx -= this.recoilVx * Math.min(1, recoilDecay);
     this.recoilVy -= this.recoilVy * Math.min(1, recoilDecay);
 
-    // Clamp to arena bounds
+    // Clamp to WORLD bounds (not canvas) — the world is 3200x3200, the
+    // camera scrolls around it. V2A: previously clamped to canvas which
+    // is why the playable area felt tiny.
     const m = 40;
-    this.x = Math.max(m, Math.min(CANVAS_W - m, this.x));
-    this.y = Math.max(m, Math.min(CANVAS_H - m, this.y));
+    this.x = Math.max(m, Math.min(WORLD_W - m, this.x));
+    this.y = Math.max(m, Math.min(WORLD_H - m, this.y));
 
     // ---------- Facing ----------
     const fx = mouse.world.x - this.x;

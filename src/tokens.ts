@@ -96,12 +96,13 @@ export const TIME = {
   MOTION_PRESS:   80,
   DODGE_DURATION: 140,        // dodge i-frame window — shorter / harder
   DODGE_COOLDOWN: 800,
-  // Phase 2A spec ranges: normal 25-40, crit 50-70, elite slightly more.
-  HIT_STOP_NORMAL: 35,        // hit-stop pause on enemy hit
-  HIT_STOP_CRIT:   60,        // dramatic stop on crit
-  HIT_STOP_ELITE:  85,        // stronger pause when hitting elite
-  HIT_STOP_DEATH:  60,        // confirmation pause on kill
-  HIT_STOP_HURT:   90,        // when player is hit, the world stops briefly
+  // Hit-stop DISABLED per user feedback ("flicker/freeze nauseating").
+  // Values kept at 0 so call sites remain; flip non-zero to re-enable.
+  HIT_STOP_NORMAL: 0,
+  HIT_STOP_CRIT:   0,
+  HIT_STOP_ELITE:  0,
+  HIT_STOP_DEATH:  0,
+  HIT_STOP_HURT:   0,
   DAMAGE_LIFESPAN: 480,
   LOOT_FADEIN:    120,
   LOOT_FADEOUT:   180,
@@ -122,8 +123,9 @@ export const TUNE = {
   PLAYER_RADIUS:       14,
   // Dodge — short, hard, no slide tail
   DODGE_SPEED_MULT:    4.5,   // burst velocity multiplier
-  // Recoil — micro kickback when shooting (adds "weight" to fire)
-  RECOIL_SPEED:        140,   // px/s impulse backward
+  // Recoil DISABLED per user feedback ("uncomfortable, pushes back").
+  // Set non-zero to re-enable.
+  RECOIL_SPEED:        0,
   // Attack
   PROJ_SPEED:          820,   // px/s — faster, more decisive
   PROJ_LIFE:           1100,  // ms
@@ -147,11 +149,12 @@ export const TUNE = {
   // Death feedback
   DEATH_PARTICLE_COUNT:      16,
   DEATH_PARTICLE_COUNT_CRIT: 22,
-  // Screen shake (max pixel offset)
-  SHAKE_HIT:    2,
-  SHAKE_CRIT:   7,
-  SHAKE_DEATH:  3,
-  SHAKE_HURT:   6,
+  // Screen shake DISABLED per user feedback ("nauseating").
+  // Values 0 = no shake; flip non-zero to re-enable per-event.
+  SHAKE_HIT:    0,
+  SHAKE_CRIT:   0,
+  SHAKE_DEATH:  0,
+  SHAKE_HURT:   0,
   // Spawn
   ENEMY_SPAWN_INTERVAL: 1800,
   ENEMY_INITIAL_COUNT:  6,
