@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — HUD System V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/hud.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- World placeholder background (real game world will draw here) -->
+      <div class="hud-world-bg"></div>
+
+      <!-- Combat Safe Zone debug rect (toggle with S) -->
+      <div class="hud-safe-rect"></div>
+
+      <!-- ============= WORLD SPACE (damage numbers, loot labels) ============= -->
+      <div class="hud-world-space" id="worldSpace">
+        <!-- Static seed examples so the screenshot always shows representative state.
+             js/hud.js will continuously spawn additional ones at runtime. -->
+        <div class="dmg dmg-static"          style="left: 780px;  top: 360px;">47</div>
+        <div class="dmg dmg-static"          style="left: 900px;  top: 410px;">82</div>
+        <div class="dmg dmg-crit dmg-static" style="left: 860px;  top: 290px;">256!</div>
+        <div class="dmg dmg-static"          style="left: 720px;  top: 470px;">16</div>
+        <div class="dmg dmg-crit dmg-static" style="left: 1080px; top: 340px;">187!</div>
+        <div class="dmg dmg-static"          style="left: 1180px; top: 420px;">33</div>
+
+        <div class="loot loot-normal"    style="left: 700px;  top: 540px;">Cracked Shortbow</div>
+        <div class="loot loot-magic"     style="left: 880px;  top: 580px;">Cunning Cap of Vigor</div>
+        <div class="loot loot-rare"      style="left: 720px;  top: 620px;">Reaver's Gauntlet</div>
+        <div class="loot loot-legendary" style="left: 1000px; top: 660px;">Stormcaller's Talon</div>
+        <div class="loot loot-heaven"    style="left: 820px;  top: 700px;">Untouched Ember</div>
+      </div>
+
+      <!-- ============= TOP HUD ============= -->
+      <div class="hud-top">
+        <div class="hud-area-info">
+          <span class="hud-area-name">Dead Forest</span>
+          <span class="hud-area-tier">Tier 1</span>
+        </div>
+
+        <div class="hud-buff-bar" id="buffBar">
+          <div class="buff"><span class="buff-glyph">⚔</span><span class="buff-timer">12s</span></div>
+          <div class="buff"><span class="buff-glyph">⌁</span><span class="buff-timer">8s</span></div>
+          <div class="buff"><span class="buff-glyph">⊕</span><span class="buff-timer">22s</span></div>
+          <div class="buff"><span class="buff-glyph">☥</span><span class="buff-timer">4s</span></div>
+          <div class="buff"><span class="buff-glyph">⚜</span><span class="buff-timer">30s</span></div>
+          <div class="buff buff-debuff"><span class="buff-glyph">☠</span><span class="buff-timer">6s</span></div>
+          <div class="buff"><span class="buff-glyph">✦</span><span class="buff-timer">18s</span></div>
+        </div>
+
+        <div class="hud-corruption">
+          <span class="corruption-label">Corruption</span>
+          <span class="corruption-value">0%</span>
+        </div>
+      </div>
+
+      <!-- ============= HP ORB (left) ============= -->
+      <div class="orb orb-hp">
+        <div class="orb-well">
+          <div class="orb-fluid"></div>
+        </div>
+        <div class="orb-glass"></div>
+        <div class="orb-rim"></div>
+        <div class="orb-text">
+          <div>
+            847 / 1200
+            <span class="orb-text-line2">HEALTH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============= MANA ORB (right) ============= -->
+      <div class="orb orb-mana">
+        <div class="orb-well">
+          <div class="orb-fluid"></div>
+        </div>
+        <div class="orb-glass"></div>
+        <div class="orb-rim"></div>
+        <div class="orb-text">
+          <div>
+            312 / 450
+            <span class="orb-text-line2">MANA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============= SKILL BAR (center bottom) ============= -->
+      <!-- Order: [DODGE] [SKILL Q W E R T Y] [UTIL 1] [UTIL 2] -->
+      <div class="hud-skill-bar" id="skillBar">
+        <div class="slot slot-dodge"   data-key="Shift">
+          <span class="slot-key">SHIFT</span>
+          <span class="slot-glyph">»</span>
+        </div>
+        <div class="slot slot-skill is-cooling-down" data-key="Q">
+          <span class="slot-key">Q</span>
+          <span class="slot-glyph">↟</span>
+          <div class="slot-cd-overlay">2.4</div>
+        </div>
+        <div class="slot slot-skill" data-key="W">
+          <span class="slot-key">W</span>
+          <span class="slot-glyph">✸</span>
+        </div>
+        <div class="slot slot-skill" data-key="E">
+          <span class="slot-key">E</span>
+          <span class="slot-glyph">⌁</span>
+        </div>
+        <div class="slot slot-skill" data-key="R">
+          <span class="slot-key">R</span>
+          <span class="slot-glyph">☄</span>
+          <span class="slot-cd">3</span>
+        </div>
+        <div class="slot slot-skill" data-key="T">
+          <span class="slot-key">T</span>
+          <span class="slot-glyph">✜</span>
+        </div>
+        <div class="slot slot-skill" data-key="Y">
+          <span class="slot-key">Y</span>
+          <span class="slot-glyph">⌖</span>
+        </div>
+        <div class="slot slot-utility" data-key="1">
+          <span class="slot-key">1</span>
+          <span class="slot-glyph">⚗</span>
+          <span class="slot-cd">x4</span>
+        </div>
+        <div class="slot slot-utility" data-key="2">
+          <span class="slot-key">2</span>
+          <span class="slot-glyph">⚐</span>
+          <span class="slot-cd">x2</span>
+        </div>
+      </div>
+
+      <!-- ============= XP BAR (below skill bar) ============= -->
+      <div class="hud-xp-bar">
+        <span class="hud-xp-label">Lv 14 · 38%</span>
+        <div class="hud-xp-fill"></div>
+      </div>
+
+    </div>
+  </div>
+  <script src="js/hud.js"></script>
+</body>
+</html>

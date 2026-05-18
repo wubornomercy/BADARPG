@@ -87,4 +87,69 @@
   --z-menu:       80;
   --z-version:    90;
   --z-debug:      9999;
+
+  /* =============================================================
+     HUD tokens (added Phase 1 HUD_SYSTEM_V1)
+     Source: HUD SYSTEM FOUNDATION V1 spec.
+     ============================================================= */
+
+  /* ---------- Combat Safe Zone ---------- */
+  --hud-safe-x-min: 520px;
+  --hud-safe-x-max: 1400px;
+  --hud-safe-y-min: 180px;
+  --hud-safe-y-max: 860px;
+
+  /* ---------- HP Orb ---------- */
+  --clr-hp-primary:   #7E1F24;
+  --clr-hp-highlight: #B2383F;
+
+  /* ---------- Mana Orb ---------- */
+  --clr-mana-primary:   #264766;
+  --clr-mana-highlight: #5C8CC7;
+
+  /* ---------- XP Bar ---------- */
+  --clr-xp-fill:    #7A6A3A;
+  --clr-xp-trough:  #1A1D22;
+
+  /* ---------- Damage Numbers ---------- */
+  --clr-dmg-normal: #D2D6DC;
+  --clr-dmg-crit:   #E7C66A;
+  --dmg-duration:   450ms;     /* 0.45s lifespan */
+  --dmg-crit-scale: 1.20;      /* +20% size */
+
+  /* ---------- Loot Labels (rarity) ---------- */
+  --clr-loot-normal:    #8C9198;
+  --clr-loot-magic:     #5A7FCF;
+  --clr-loot-rare:      #D2B15A;
+  --clr-loot-legendary: #E1A84A;
+  --clr-loot-heaven:    #F4F2E8;
+
+  --loot-fade-in:  120ms;
+  --loot-fade-out: 180ms;
+  --loot-max-count: 8;          /* informational; enforced in JS */
+
+  /* ---------- HUD frame / metallic surfaces ---------- */
+  --clr-hud-frame-outer: #1A1D22;
+  --clr-hud-frame-inner: #2A2E35;
+  --clr-hud-frame-rim:   #3A4048;
+  --clr-hud-slot-bg:     #14171B;
+  --clr-hud-slot-border: #32363D;
+  --clr-hud-text:        #BFC5CE;
+  --clr-hud-text-dim:    #8C9198;
+
+  /* ---------- Skill slot ---------- */
+  --skill-slot-size: 72px;
+  --skill-slot-gap:  10px;
+  --skill-hover-duration: 120ms;   /* +6% brightness */
+
+  /* ---------- Buff bar ---------- */
+  --buff-size:     36px;
+  --buff-gap:      6px;
+  --buff-max:      8;
+
+  /* ---------- HUD z-layers ---------- */
+  --z-hud-world:   100;   /* damage numbers, loot labels (in world space) */
+  --z-hud-base:    200;   /* orbs, skill bar, xp bar */
+  --z-hud-top:     210;   /* buff bar, area info, corruption */
+  --z-hud-tooltip: 300;   /* reserved for tooltip system */
 }

@@ -1,6 +1,12 @@
 # BAD ARPG — Runtime Blueprint (Phase 1)
 
-Static HTML/CSS/JS prototype of `MAIN_MENU_V1`. Pure structural blueprint — **not** final art.
+Static HTML/CSS/JS prototypes for Phase 1 UI Foundation. Pure structural blueprints — **not** final art.
+
+## Scenes in this runtime
+| Scene | URL | Status |
+|---|---|---|
+| Main Menu V1 | `index.html` | ✅ Locked |
+| HUD V1 | `hud.html` | ✅ Locked |
 
 ## What this is
 A 1920×1080 fixed-layout scene that locks the **UI design system foundation** for the rest of the project:
@@ -27,25 +33,41 @@ python -m http.server 8080
 Then visit http://localhost:8080
 
 ## Controls
+
+### Main Menu (`index.html`)
 | Key / Action | Effect |
 |---|---|
 | Click button | Logs placeholder action to console |
 | `G` | Toggle 12-column / safe-area dev grid overlay |
 | Resize window | Canvas uniformly scales to fit (1:1 aspect kept) |
 
+### HUD (`hud.html`)
+| Key / Action | Effect |
+|---|---|
+| Click skill slot | Logs `[SKILL <key>] activated (stub)` |
+| Hover skill slot | Brightness +6% in 120ms |
+| `G` | Toggle 12-col / safe-area grid overlay |
+| `S` | Toggle Combat Safe Zone rect (520-1400 × 180-860) |
+| `D` | Spawn one damage number manually |
+| `L` | Spawn one loot label manually |
+| (auto) | Damage spawns every 280ms, loot every 1100ms |
+
 ## Directory map
 ```
 runtime/
-├── index.html              # entry — layer structure + content
+├── index.html              # Main Menu — layer structure + content
+├── hud.html                # HUD prototype — combat UI foundation
 ├── css/
 │   ├── tokens.css          # design tokens (single source of truth)
-│   ├── layout.css          # viewport + canvas + dev grid
-│   ├── scene.css           # sky/moon/castle/fog/forest/campfire
-│   └── components.css      # logo / buttons / version
+│   ├── layout.css          # viewport + canvas + dev grid (shared)
+│   ├── scene.css           # menu: sky/moon/castle/fog/forest/campfire
+│   ├── components.css      # menu: logo / buttons / version
+│   └── hud.css             # HUD: orbs / skillbar / xpbar / buffbar / area / corruption / damage / loot
 ├── js/
-│   └── main.js             # fit-to-window + button stubs + grid toggle
+│   ├── main.js             # main menu: fit-to-window + button stubs + grid toggle
+│   └── hud.js              # HUD: fit + damage/loot spawners + debug toggles
 ├── assets/                 # placeholder folders for pixel art (see assets/README.md)
-└── screenshots/            # generated runtime PNGs
+└── screenshots/            # generated runtime PNGs (main_menu_v1, hud_v1)
 ```
 
 ## Acceptance vs spec
@@ -69,6 +91,26 @@ runtime/
 | Button: no bounce / no scale / no MMO swoosh / no blue hover | ✅ |
 | Sharp 0px button corners | ✅ |
 | No drop shadows | ✅ (only `text-shadow` on logo for legibility, no glow) |
+
+## HUD V1 acceptance vs spec
+
+| Spec item | Implemented |
+|---|---|
+| Canvas 1920×1080 fixed (no responsive) | ✅ |
+| Combat Safe Zone X 520–1400, Y 180–860 (no HUD obscures) | ✅ — toggle with `S` to visualize |
+| HP Orb 160×160 @ (240, 910), `#7E1F24` / `#B2383F`, restrained metallic | ✅ |
+| Mana Orb 160×160 @ (1680, 910), `#264766` / `#5C8CC7`, slow arcane flow | ✅ |
+| Skill Bar @ (960, 950), 6 skill + 1 dodge + 2 utility = 9 slots, 72×72, gap 10 | ✅ |
+| Skill slot hover +6% / 120ms / no scale / no bounce | ✅ |
+| XP Bar bottom center 680×10, `#7A6A3A`, minimal | ✅ |
+| Buff Bar top center, max 8, small icons | ✅ (7 seeded, debuff variant included) |
+| Corruption top-right, purple-black tone, restrained | ✅ |
+| Area Info top center | ✅ |
+| Damage Number normal `#D2D6DC`, crit `#E7C66A` +20% size, 0.45s upward drift | ✅ |
+| Loot Label rarities normal/magic/rare/legendary/heaven; max 8 simultaneous; fade in 120ms / out 180ms | ✅ — JS enforces cap |
+| All HUD typography Inter (no fantasy body font) | ✅ |
+| No blue glow, no MMO swoosh, no mobile bounce, no oversized orb | ✅ |
+| Semantic palette consistent (Red=HP, Blue=Mana, Gold=Reward, Purple-Black=Corruption) | ✅ — tokens enforced |
 
 ## What is intentionally NOT here
 
