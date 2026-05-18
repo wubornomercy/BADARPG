@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BAD ARPG — MAIN_MENU_V1 reference.svg
+  1920 x 1080 — Visual reference for BLUEPRINT_SPEC.md v1.0
+  Positions: center-anchor (matches spec §5)
+  This file is a static reference; motion lives in PixiJS step.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Inter, 'IBM Plex Sans', sans-serif">
+
+  <defs>
+    <!-- Sky gradient -->
+    <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0C10"/>
+      <stop offset="100%" stop-color="#1A1D22"/>
+    </linearGradient>
+
+    <!-- Moon haze gradient (radial soft) -->
+    <radialGradient id="moonHaze" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#D8E0F0" stop-opacity="0.30"/>
+      <stop offset="60%" stop-color="#D8E0F0" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#D8E0F0" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Campfire glow -->
+    <radialGradient id="campfireGlow" cx="50%" cy="55%" r="55%">
+      <stop offset="0%" stop-color="#F28C38" stop-opacity="0.28"/>
+      <stop offset="55%" stop-color="#A8481D" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#A8481D" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Fog band (vertical) -->
+    <linearGradient id="fogGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#AEB7C4" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#AEB7C4" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#AEB7C4" stop-opacity="0.06"/>
+    </linearGradient>
+
+    <filter id="fogBlur" x="-5%" y="-5%" width="110%" height="110%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+
+    <filter id="moonBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+
+    <!-- Reusable dead tree (silhouette, ~180px tall) -->
+    <g id="deadTree">
+      <path d="M0,0 L-2,-180 L-4,-150 L-12,-120 L-6,-110 L-3,-100
+               L-10,-80 L-4,-70 L0,-180 L2,-100 L9,-90 L4,-80
+               L11,-60 L5,-50 L1,-30 Z" fill="#23262B"/>
+      <path d="M-3,-130 L-14,-138 M-3,-105 L-12,-95 M2,-85 L13,-78
+               M2,-60 L10,-50" stroke="#23262B" stroke-width="1.5" fill="none"/>
+    </g>
+
+    <!-- Broken stake -->
+    <g id="stake">
+      <path d="M0,0 L-3,-40 L-1,-44 L3,-38 L2,0 Z" fill="#23262B"/>
+    </g>
+
+    <!-- Ruin stone -->
+    <g id="ruin">
+      <path d="M0,0 L-18,-2 L-22,-14 L-12,-22 L8,-20 L18,-10 L14,0 Z" fill="#1F2227"/>
+    </g>
+
+    <!-- Castle silhouette path: gothic skyline -->
+    <path id="castleSil" d="
+      M0,320
+      L0,180 L20,180 L20,160 L40,160 L40,180 L80,180
+      L80,120 L88,120 L88,100 L96,100 L96,120 L116,120 L116,180
+      L160,180 L160,150 L180,150 L180,170 L210,170
+      L210,80 L222,80 L222,55 L234,55 L234,80 L256,80 L256,170
+      L290,170 L290,160 L320,160 L320,170 L360,170
+      L360,90 L376,90 L376,60 L392,60 L392,90 L420,90 L420,170
+      L460,170 L460,140 L490,140 L490,170 L520,170
+      L520,40 L534,40 L534,12 L548,12 L548,40 L572,40 L572,170
+      L610,170 L610,160 L660,160 L660,170
+      L680,170 L680,320 Z" fill="#16181D"/>
+
+    <!-- Logo bracket left (gothic) -->
+    <g id="logoBracketL">
+      <path d="M0,0 L20,0 L24,12 L20,20 L24,40 L18,52 L24,68 L18,82 L24,98
+               L20,110 L24,124 L20,140 L0,140 Z" fill="#3A4048"/>
+      <path d="M8,8 L12,16 M12,30 L8,42 M8,56 L12,68 M12,82 L8,96 M8,110 L12,124"
+            stroke="#5E646D" stroke-width="0.6" fill="none"/>
+    </g>
+
+    <!-- Reusable button (Default state) - 320x54 -->
+    <g id="btnMain">
+      <rect x="0" y="0" width="320" height="54" fill="#171A1F"/>
+      <rect x="1" y="1" width="318" height="52" fill="none" stroke="#32363D" stroke-width="2"/>
+      <!-- corner ornaments -->
+      <path d="M0,0 L8,0 L8,2 L2,2 L2,8 L0,8 Z" fill="#32363D"/>
+      <path d="M320,0 L312,0 L312,2 L318,2 L318,8 L320,8 Z" fill="#32363D"/>
+      <path d="M0,54 L8,54 L8,52 L2,52 L2,46 L0,46 Z" fill="#32363D"/>
+      <path d="M320,54 L312,54 L312,52 L318,52 L318,46 L320,46 Z" fill="#32363D"/>
+    </g>
+
+    <!-- Skull crest for logo top -->
+    <g id="skullCrest">
+      <path d="M0,0 C-12,0 -22,8 -22,18 C-22,26 -16,30 -12,32 L-10,38
+               L-4,38 L-4,32 L4,32 L4,38 L10,38 L12,32 C16,30 22,26 22,18
+               C22,8 12,0 0,0 Z M-10,16 C-10,12 -7,10 -4,10 C-1,10 1,12 1,16
+               C1,19 -1,21 -4,21 C-7,21 -10,19 -10,16 Z M4,16 C4,12 7,10 10,10
+               C13,10 16,12 16,16 C16,19 13,21 10,21 C7,21 4,19 4,16 Z"
+            fill="#3A4048"/>
+    </g>
+  </defs>
+
+  <!-- ========== LAYER_01_Sky ========== -->
+  <rect x="0" y="0" width="1920" height="1080" fill="url(#skyGradient)"/>
+
+  <!-- ========== LAYER_02_Moon  (center 1480,120) ========== -->
+  <g opacity="0.85">
+    <!-- haze -->
+    <circle cx="1480" cy="120" r="130" fill="url(#moonHaze)" filter="url(#moonBlur)"/>
+    <!-- moon disc 220x220 @22% -->
+    <circle cx="1480" cy="120" r="110" fill="#D8E0F0" opacity="0.22"/>
+    <!-- subtle craters (still within 22%, do not increase brightness) -->
+    <circle cx="1465" cy="110" r="8" fill="#0A0C10" opacity="0.15"/>
+    <circle cx="1505" cy="135" r="6" fill="#0A0C10" opacity="0.15"/>
+    <circle cx="1452" cy="145" r="5" fill="#0A0C10" opacity="0.12"/>
+  </g>
+
+  <!-- ========== LAYER_03_FarCastle  (center 960,280, 680x320) ========== -->
+  <g transform="translate(620,120)" opacity="0.72">
+    <use href="#castleSil"/>
+  </g>
+
+  <!-- ========== LAYER_05_DeadForest (Y center 520, BEHIND fog, IN FRONT of castle) ========== -->
+  <g>
+    <!-- Distant smaller trees -->
+    <use href="#deadTree" transform="translate(180,640) scale(0.85,0.85)"/>
+    <use href="#deadTree" transform="translate(280,650) scale(0.78,0.78)"/>
+    <use href="#deadTree" transform="translate(360,640) scale(0.95,0.95)"/>
+    <use href="#deadTree" transform="translate(460,650)"/>
+    <use href="#deadTree" transform="translate(560,640) scale(1.05,1.05)"/>
+    <use href="#deadTree" transform="translate(700,640) scale(0.9,0.9)"/>
+    <use href="#deadTree" transform="translate(820,640) scale(0.8,0.8)"/>
+    <!-- Behind buttons center, smaller -->
+    <use href="#deadTree" transform="translate(1080,640) scale(0.85,0.85)"/>
+    <use href="#deadTree" transform="translate(1200,640) scale(1.0,1.0)"/>
+    <use href="#deadTree" transform="translate(1320,650) scale(0.9,0.9)"/>
+    <use href="#deadTree" transform="translate(1440,640) scale(1.05,1.05)"/>
+    <use href="#deadTree" transform="translate(1560,640) scale(0.85,0.85)"/>
+    <use href="#deadTree" transform="translate(1680,640) scale(0.95,0.95)"/>
+    <use href="#deadTree" transform="translate(1780,650) scale(0.8,0.8)"/>
+
+    <!-- Broken stakes scattered -->
+    <use href="#stake" transform="translate(240,720)"/>
+    <use href="#stake" transform="translate(420,725) scale(1.2,1.2)"/>
+    <use href="#stake" transform="translate(620,720)"/>
+    <use href="#stake" transform="translate(1320,725) scale(1.1,1.1)"/>
+    <use href="#stake" transform="translate(1520,720)"/>
+    <use href="#stake" transform="translate(1720,720) scale(0.9,0.9)"/>
+
+    <!-- Ruin stones near ground line -->
+    <use href="#ruin" transform="translate(320,790) scale(1.2,1.2)"/>
+    <use href="#ruin" transform="translate(540,810) scale(1.4,1.4)"/>
+    <use href="#ruin" transform="translate(800,820) scale(1.0,1.0)"/>
+    <use href="#ruin" transform="translate(1200,820) scale(1.3,1.3)"/>
+    <use href="#ruin" transform="translate(1400,810) scale(1.5,1.5)"/>
+    <use href="#ruin" transform="translate(1620,820) scale(1.1,1.1)"/>
+  </g>
+
+  <!-- ========== LAYER_04_Fog (bottom 40%, IN FRONT of forest visually softens it) ========== -->
+  <g filter="url(#fogBlur)">
+    <rect x="0" y="648" width="1920" height="432" fill="url(#fogGradient)"/>
+  </g>
+  <!-- thin extra fog wisp -->
+  <rect x="0" y="700" width="1920" height="160" fill="#AEB7C4" opacity="0.04" filter="url(#fogBlur)"/>
+
+  <!-- ========== LAYER_06_Campfire (center 960,760) ========== -->
+  <g>
+    <!-- glow halo -->
+    <circle cx="960" cy="770" r="100" fill="url(#campfireGlow)"/>
+    <!-- stone ring -->
+    <g fill="#23262B">
+      <ellipse cx="910" cy="800" rx="14" ry="6"/>
+      <ellipse cx="942" cy="808" rx="12" ry="5"/>
+      <ellipse cx="978" cy="808" rx="13" ry="5"/>
+      <ellipse cx="1010" cy="800" rx="14" ry="6"/>
+      <ellipse cx="930" cy="804" rx="10" ry="4"/>
+      <ellipse cx="990" cy="804" rx="11" ry="4"/>
+    </g>
+    <!-- outer flame -->
+    <path d="M960,720
+             C 940,748 928,768 938,790
+             C 944,800 956,802 960,798
+             C 964,802 976,800 982,790
+             C 992,768 980,748 960,720 Z"
+          fill="#A8481D"/>
+    <!-- inner flame core -->
+    <path d="M960,738
+             C 948,758 944,776 952,790
+             C 956,795 962,795 960,790
+             C 964,795 968,795 968,790
+             C 976,776 972,758 960,738 Z"
+          fill="#F28C38"/>
+    <!-- small spark hot point -->
+    <ellipse cx="960" cy="780" rx="3" ry="6" fill="#F28C38" opacity="0.9"/>
+  </g>
+
+  <!-- ========== LAYER_07_Logo (center 960,180, 620x140) ========== -->
+  <g transform="translate(650,110)">
+    <!-- left bracket -->
+    <use href="#logoBracketL" transform="translate(0,0)"/>
+    <!-- right bracket (mirrored) -->
+    <use href="#logoBracketL" transform="translate(620,0) scale(-1,1)"/>
+    <!-- top skull crest -->
+    <use href="#skullCrest" transform="translate(310,2)"/>
+    <!-- horizontal hairline top -->
+    <line x1="40" y1="14" x2="280" y2="14" stroke="#3A4048" stroke-width="1"/>
+    <line x1="340" y1="14" x2="580" y2="14" stroke="#3A4048" stroke-width="1"/>
+    <!-- horizontal hairline bottom -->
+    <line x1="20" y1="128" x2="600" y2="128" stroke="#3A4048" stroke-width="1"/>
+    <!-- vertical center hairline -->
+    <line x1="310" y1="14" x2="310" y2="128" stroke="#3A4048" stroke-width="1" opacity="0.6"/>
+    <!-- Letters -->
+    <text x="310" y="92" text-anchor="middle"
+          font-family="Cinzel, 'Times New Roman', serif"
+          font-weight="700" font-size="76" letter-spacing="4"
+          fill="#BFC5CE" stroke="#3A4048" stroke-width="1">BAD ARPG</text>
+  </g>
+
+  <!-- ========== LAYER_08_MenuButtons (group center 960,540, 5 buttons, 320x54, gap 14) ========== -->
+  <!-- top-left of group: (800, 377). Button centers Y: 404, 472, 540, 608, 676 -->
+  <g transform="translate(800,377)">
+    <g transform="translate(0,0)"><use href="#btnMain"/>
+      <text x="160" y="34" text-anchor="middle"
+            font-family="Inter, 'IBM Plex Sans', sans-serif"
+            font-weight="500" font-size="18" letter-spacing="2.2"
+            fill="#BFC5CE">CONTINUE</text>
+    </g>
+    <g transform="translate(0,68)"><use href="#btnMain"/>
+      <text x="160" y="34" text-anchor="middle"
+            font-family="Inter, 'IBM Plex Sans', sans-serif"
+            font-weight="500" font-size="18" letter-spacing="2.2"
+            fill="#BFC5CE">NEW GAME</text>
+    </g>
+    <g transform="translate(0,136)"><use href="#btnMain"/>
+      <text x="160" y="34" text-anchor="middle"
+            font-family="Inter, 'IBM Plex Sans', sans-serif"
+            font-weight="500" font-size="18" letter-spacing="2.2"
+            fill="#BFC5CE">CHARACTER</text>
+    </g>
+    <g transform="translate(0,204)"><use href="#btnMain"/>
+      <text x="160" y="34" text-anchor="middle"
+            font-family="Inter, 'IBM Plex Sans', sans-serif"
+            font-weight="500" font-size="18" letter-spacing="2.2"
+            fill="#BFC5CE">SETTINGS</text>
+    </g>
+    <g transform="translate(0,272)"><use href="#btnMain"/>
+      <text x="160" y="34" text-anchor="middle"
+            font-family="Inter, 'IBM Plex Sans', sans-serif"
+            font-weight="500" font-size="18" letter-spacing="2.2"
+            fill="#BFC5CE">EXIT</text>
+    </g>
+  </g>
+
+  <!-- ========== LAYER_09_VersionText (bottom-left, X=152 Y=1052 baseline) ========== -->
+  <text x="120" y="1052"
+        font-family="Inter, 'IBM Plex Sans', sans-serif"
+        font-weight="500" font-size="12" letter-spacing="0.6"
+        fill="#5E646D">v0.0.1a  EARLY ACCESS</text>
+
+</svg>

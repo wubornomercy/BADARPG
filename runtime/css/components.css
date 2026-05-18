@@ -1,0 +1,216 @@
+/* =============================================================
+   BAD ARPG — UI Components
+   Logo / Menu Buttons / Version Text
+   ============================================================= */
+
+/* ---------- LAYER_07_Logo (center 960, 180; 620x140) ---------- */
+.layer-logo { z-index: var(--z-logo); }
+
+.logo {
+  position: absolute;
+  /* center anchor: 960-310, 180-70 */
+  left: 650px; top: 110px;
+  width: 620px; height: 140px;
+}
+
+.logo-bracket {
+  position: absolute;
+  top: 0;
+  width: 56px; height: 100%;
+  pointer-events: none;
+  z-index: 2;     /* sits above logo text as a metallic overlay */
+}
+.logo-bracket-left  { left: 0; }
+.logo-bracket-right { right: 0; }
+
+.logo-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.logo-bracket::before,
+.logo-bracket::after {
+  content: "";
+  position: absolute;
+  background: var(--clr-logo-border);
+}
+/* vertical edge of bracket */
+.logo-bracket::before {
+  top: 14px; bottom: 14px;
+  width: 2px;
+}
+.logo-bracket-left::before  { left: 8px;  }
+.logo-bracket-right::before { right: 8px; }
+/* horizontal arms (top + bottom) */
+.logo-bracket::after {
+  height: 2px;
+  width: 32px;
+}
+.logo-bracket-left.top::after,
+.logo-bracket-right.top::after { display: none; }
+
+.logo-bracket-decor {
+  position: absolute;
+  top: 50%;
+  width: 8px; height: 8px;
+  background: var(--clr-logo-border);
+  transform: translateY(-50%) rotate(45deg);
+}
+.logo-bracket-left  .logo-bracket-decor { left: 4px; }
+.logo-bracket-right .logo-bracket-decor { right: 4px; }
+
+/* Top + bottom hairline arms of the bracket */
+.logo-bracket-left,
+.logo-bracket-right {
+  background:
+    linear-gradient(to bottom,
+      var(--clr-logo-border) 0, var(--clr-logo-border) 2px,
+      transparent 2px) top    left  / 100% 2px no-repeat,
+    linear-gradient(to bottom,
+      var(--clr-logo-border) 0, var(--clr-logo-border) 2px,
+      transparent 2px) bottom left  / 100% 2px no-repeat;
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--type-logo);       /* 96px, per BLUEPRINT_SPEC §3 */
+  letter-spacing: 0.06em;            /* +60 in Figma units */
+  color: var(--clr-logo-main);
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  /* gothic restraint: thin outline, no glow */
+  -webkit-text-stroke: 1px var(--clr-logo-border);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 rgba(0,0,0,0.6),
+    0 0 1px rgba(0,0,0,0.4);
+}
+
+/* Skull crest pip above the logo center */
+.logo-crest {
+  position: absolute;
+  left: 50%; top: -2px;
+  transform: translateX(-50%);
+  width: 56px; height: 22px;
+  pointer-events: none;
+}
+
+/* Horizontal hairline through logo midline (sides only, breaks at letters) */
+.logo-rule {
+  position: absolute;
+  height: 1px;
+  background: var(--clr-logo-border);
+  top: 50%;
+  opacity: 0.6;
+}
+.logo-rule-left  { left: 64px;  width: 120px; }
+.logo-rule-right { right: 64px; width: 120px; }
+
+/* ---------- LAYER_08_MenuButtons (group center 960, 540) ---------- */
+.layer-menu {
+  z-index: var(--z-menu);
+}
+
+.menu-stack {
+  position: absolute;
+  /* group is 320 x 326 (5*54 + 4*14); center on (960, 540) */
+  left: 800px; top: 377px;
+  width: 320px; height: 326px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.btn-main {
+  width: 320px;
+  height: 54px;
+  background: var(--clr-btn-bg);
+  border: 2px solid var(--clr-btn-border);
+  border-radius: 0;   /* sharp gothic restraint */
+  color: var(--clr-btn-label);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--type-btn);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  transition:
+    background-color var(--motion-hover) var(--ease-out),
+    border-color     var(--motion-hover) var(--ease-out),
+    color            var(--motion-hover) var(--ease-out);
+}
+
+/* corner ornaments (4 small triangles, metallic) */
+.btn-main::before,
+.btn-main::after {
+  content: "";
+  position: absolute;
+  width: 8px; height: 8px;
+  background: var(--clr-btn-border);
+  transition: background-color var(--motion-hover) var(--ease-out);
+}
+.btn-main::before {
+  top: -2px; left: -2px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+.btn-main::after {
+  bottom: -2px; right: -2px;
+  clip-path: polygon(100% 100%, 100% 0, 0 100%);
+}
+
+.btn-main:hover {
+  background: var(--clr-btn-bg-hover);
+  border-color: var(--clr-btn-border-hover);
+}
+.btn-main:hover::before,
+.btn-main:hover::after {
+  background: var(--clr-btn-border-hover);
+}
+
+.btn-main:active {
+  background: var(--clr-btn-bg-press);
+  transition-duration: var(--motion-press);
+}
+
+.btn-main:focus-visible {
+  /* keyboard-focus ring: subtle, matches metallic palette, no blue */
+  outline: 1px solid var(--clr-btn-label);
+  outline-offset: 3px;
+}
+
+.btn-main[disabled],
+.btn-main.is-disabled {
+  color: var(--clr-btn-label-dim);
+  cursor: not-allowed;
+  border-color: rgba(50,54,61,0.6);
+}
+.btn-main[disabled]:hover,
+.btn-main.is-disabled:hover {
+  background: var(--clr-btn-bg);
+  border-color: rgba(50,54,61,0.6);
+}
+
+/* ---------- LAYER_09_VersionText ---------- */
+.layer-version { z-index: var(--z-version); }
+
+.version-text {
+  position: absolute;
+  left: 120px;
+  bottom: 28px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--type-version);
+  letter-spacing: 0.05em;
+  color: var(--clr-text-version);
+}
+.version-text .version-build { margin-right: var(--space-2); }
+.version-text .version-tag {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}

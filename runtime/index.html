@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BAD ARPG — Main Menu V1 (Runtime Blueprint)</title>
+  <meta name="viewport" content="width=1920, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/scene.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- ===== LAYER_01_Sky ===== -->
+      <div class="layer layer-sky"></div>
+
+      <!-- ===== LAYER_02_Moon (center 1480, 120) ===== -->
+      <div class="layer layer-moon">
+        <div class="moon-haze"></div>
+        <div class="moon-disc"></div>
+      </div>
+
+      <!-- ===== LAYER_03_FarCastle (center 960, 280; 680x320) ===== -->
+      <div class="layer layer-castle">
+        <svg class="castle-svg" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path fill="#16181D" d="
+            M0,320
+            L0,180 L20,180 L20,160 L40,160 L40,180 L80,180
+            L80,120 L88,120 L88,100 L96,100 L96,120 L116,120 L116,180
+            L160,180 L160,150 L180,150 L180,170 L210,170
+            L210,80 L222,80 L222,55 L234,55 L234,80 L256,80 L256,170
+            L290,170 L290,160 L320,160 L320,170 L360,170
+            L360,90 L376,90 L376,60 L392,60 L392,90 L420,90 L420,170
+            L460,170 L460,140 L490,140 L490,170 L520,170
+            L520,40 L534,40 L534,12 L548,12 L548,40 L572,40 L572,170
+            L610,170 L610,160 L660,160 L660,170
+            L680,170 L680,320 Z" />
+          <!-- inner windows: tiny hollow rects keep the castle "structured" without breaking silhouette -->
+          <g fill="#0A0C10" opacity="0.85">
+            <rect x="86"  y="135" width="4" height="10"/>
+            <rect x="170" y="155" width="3" height="8"/>
+            <rect x="220" y="100" width="4" height="12"/>
+            <rect x="370" y="105" width="4" height="14"/>
+            <rect x="530" y="55"  width="4" height="14"/>
+            <rect x="535" y="80"  width="3" height="10"/>
+            <rect x="468" y="148" width="3" height="10"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ===== LAYER_04_Fog (bottom 40% band, two drifting layers) ===== -->
+      <div class="layer layer-fog">
+        <div class="fog-band fog-band-1"></div>
+        <div class="fog-band fog-band-2"></div>
+      </div>
+
+      <!-- ===== LAYER_05_DeadForest ===== -->
+      <div class="layer layer-forest">
+        <svg class="forest-svg" viewBox="0 0 1920 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <!-- dead tree: ~180px tall, anchored to base at (0, 320) -->
+            <g id="tree">
+              <path d="M0,320 L-2,140 L-4,170 L-12,200 L-6,210 L-3,220 L-10,240 L-4,250
+                       L0,140 L2,220 L9,230 L4,240 L11,260 L5,270 L1,290 Z" fill="#23262B"/>
+              <path d="M-3,190 L-14,182 M-3,215 L-12,225 M2,235 L13,242
+                       M2,260 L10,270" stroke="#23262B" stroke-width="1.5" fill="none"/>
+            </g>
+            <g id="stake">
+              <path d="M0,320 L-3,280 L-1,276 L3,282 L2,320 Z" fill="#23262B"/>
+            </g>
+            <g id="ruin">
+              <path d="M0,320 L-18,318 L-22,306 L-12,298 L8,300 L18,310 L14,320 Z" fill="#1F2227"/>
+            </g>
+          </defs>
+          <!-- ground line shadow -->
+          <rect x="0" y="316" width="1920" height="104" fill="#16181D" opacity="0.55"/>
+          <!-- trees scatter -->
+          <use href="#tree" transform="translate(140,0) scale(0.85)"/>
+          <use href="#tree" transform="translate(240,0) scale(0.78)"/>
+          <use href="#tree" transform="translate(340,0) scale(0.95)"/>
+          <use href="#tree" transform="translate(440,0) scale(1.0)"/>
+          <use href="#tree" transform="translate(540,0) scale(1.05)"/>
+          <use href="#tree" transform="translate(680,0) scale(0.9)"/>
+          <use href="#tree" transform="translate(800,0) scale(0.8)"/>
+          <use href="#tree" transform="translate(1080,0) scale(0.85)"/>
+          <use href="#tree" transform="translate(1200,0) scale(1.0)"/>
+          <use href="#tree" transform="translate(1320,0) scale(0.9)"/>
+          <use href="#tree" transform="translate(1440,0) scale(1.08)"/>
+          <use href="#tree" transform="translate(1560,0) scale(0.85)"/>
+          <use href="#tree" transform="translate(1680,0) scale(0.95)"/>
+          <use href="#tree" transform="translate(1780,0) scale(0.8)"/>
+          <!-- broken stakes -->
+          <use href="#stake" transform="translate(220,0)"/>
+          <use href="#stake" transform="translate(400,0) scale(1.2)"/>
+          <use href="#stake" transform="translate(600,0)"/>
+          <use href="#stake" transform="translate(1300,0) scale(1.1)"/>
+          <use href="#stake" transform="translate(1520,0)"/>
+          <use href="#stake" transform="translate(1720,0) scale(0.9)"/>
+          <!-- ruin stones (raised to ground line) -->
+          <use href="#ruin" transform="translate(300,-2) scale(1.2)"/>
+          <use href="#ruin" transform="translate(520,2)  scale(1.4)"/>
+          <use href="#ruin" transform="translate(780,4)  scale(1.0)"/>
+          <use href="#ruin" transform="translate(1180,4) scale(1.3)"/>
+          <use href="#ruin" transform="translate(1400,2) scale(1.5)"/>
+          <use href="#ruin" transform="translate(1620,4) scale(1.1)"/>
+        </svg>
+      </div>
+
+      <!-- ===== LAYER_06_Campfire (center 960, 760) ===== -->
+      <div class="layer layer-campfire">
+        <div class="campfire-glow"></div>
+        <svg class="campfire-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <!-- stone ring -->
+          <g fill="#23262B">
+            <ellipse cx="50"  cy="148" rx="14" ry="6"/>
+            <ellipse cx="82"  cy="156" rx="12" ry="5"/>
+            <ellipse cx="118" cy="156" rx="13" ry="5"/>
+            <ellipse cx="150" cy="148" rx="14" ry="6"/>
+            <ellipse cx="70"  cy="152" rx="10" ry="4"/>
+            <ellipse cx="130" cy="152" rx="11" ry="4"/>
+          </g>
+          <!-- outer flame -->
+          <path fill="#A8481D" d="
+            M100,68
+            C 80,96 68,116 78,138
+            C 84,148 96,150 100,146
+            C 104,150 116,148 122,138
+            C 132,116 120,96 100,68 Z"/>
+          <!-- inner core flame -->
+          <path fill="#F28C38" d="
+            M100,86
+            C 88,106 84,124 92,138
+            C 96,143 102,143 100,138
+            C 104,143 108,143 108,138
+            C 116,124 112,106 100,86 Z"/>
+          <!-- hot spark -->
+          <ellipse cx="100" cy="128" rx="3" ry="6" fill="#F28C38" opacity="0.9"/>
+        </svg>
+      </div>
+
+      <!-- ===== LAYER_07_Logo (center 960, 180; 620x140) ===== -->
+      <div class="layer layer-logo">
+        <div class="logo" aria-label="BAD ARPG">
+          <!-- left bracket -->
+          <div class="logo-bracket logo-bracket-left">
+            <div class="logo-bracket-decor"></div>
+          </div>
+          <!-- center: crest + letters + hairlines -->
+          <div class="logo-center">
+            <svg class="logo-crest" viewBox="0 0 56 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path fill="#3A4048" d="
+                M28,0 C16,0 6,8 6,18 L12,22 L20,22 L20,18 L36,18 L36,22 L44,22 L50,18
+                C50,8 40,0 28,0 Z
+                M16,12 C16,9 19,7 22,7 C25,7 27,9 27,12 C27,15 25,17 22,17 C19,17 16,15 16,12 Z
+                M29,12 C29,9 32,7 35,7 C38,7 41,9 41,12 C41,15 38,17 35,17 C32,17 29,15 29,12 Z"/>
+            </svg>
+            <div class="logo-rule logo-rule-left"></div>
+            <div class="logo-rule logo-rule-right"></div>
+            <div class="logo-text">BAD ARPG</div>
+          </div>
+          <!-- right bracket -->
+          <div class="logo-bracket logo-bracket-right">
+            <div class="logo-bracket-decor"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LAYER_08_MenuButtons (group center 960, 540) ===== -->
+      <nav class="layer layer-menu" aria-label="Main Menu">
+        <div class="menu-stack">
+          <button class="btn-main is-disabled" disabled data-action="continue">Continue</button>
+          <button class="btn-main" data-action="new-game">New Game</button>
+          <button class="btn-main" data-action="character">Character</button>
+          <button class="btn-main" data-action="settings">Settings</button>
+          <button class="btn-main" data-action="exit">Exit</button>
+        </div>
+      </nav>
+
+      <!-- ===== LAYER_09_VersionText ===== -->
+      <div class="layer layer-version">
+        <div class="version-text">
+          <span class="version-build">v0.0.1a</span>
+          <span class="version-tag">Early Access</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="js/main.js"></script>
+</body>
+</html>

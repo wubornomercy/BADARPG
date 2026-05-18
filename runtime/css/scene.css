@@ -1,0 +1,161 @@
+/* =============================================================
+   BAD ARPG — Scene Layers
+   Layer 1 Sky / 2 Moon / 3 Castle / 4 Fog / 5 Forest / 6 Campfire
+   Ambient motion lives here (CSS-only, no JS dependency).
+   ============================================================= */
+
+/* ---------- LAYER_01_Sky ---------- */
+.layer-sky {
+  z-index: var(--z-sky);
+  background: linear-gradient(
+    180deg,
+    var(--clr-bg-sky-top) 0%,
+    var(--clr-bg-sky-bottom) 100%
+  );
+}
+
+/* ---------- LAYER_02_Moon (center 1480, 120) ---------- */
+.layer-moon { z-index: var(--z-moon); }
+
+.moon-disc {
+  position: absolute;
+  width: 220px; height: 220px;
+  /* center anchor: 1480 - 110, 120 - 110 */
+  left: 1370px; top: 10px;
+  border-radius: 50%;
+  background: var(--clr-atmos-moon);
+  opacity: 0.22;
+  /* subtle craters via box-shadow inset */
+  box-shadow:
+    inset -6px -6px 14px rgba(10,12,16,0.18),
+    inset 4px 4px 10px rgba(216,224,240,0.06);
+  animation: moon-haze 8s ease-in-out infinite alternate;
+}
+
+.moon-haze {
+  position: absolute;
+  width: 320px; height: 320px;
+  left: 1320px; top: -40px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(216,224,240,0.10) 0%,
+    rgba(216,224,240,0.03) 55%,
+    rgba(216,224,240,0) 100%
+  );
+  filter: blur(6px);
+}
+
+@keyframes moon-haze {
+  0%   { opacity: 0.20; }
+  100% { opacity: 0.24; }
+}
+
+/* ---------- LAYER_03_FarCastle (center 960, 280; 680x320) ---------- */
+.layer-castle { z-index: var(--z-castle); }
+
+.castle-svg {
+  position: absolute;
+  /* center anchor: 960-340, 280-160 */
+  left: 620px; top: 120px;
+  width: 680px; height: 320px;
+  opacity: 0.72;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.4));
+}
+
+/* ---------- LAYER_04_Fog (bottom 40% band) ---------- */
+.layer-fog { z-index: var(--z-fog); }
+
+.fog-band {
+  position: absolute;
+  left: -200px;
+  width: 2400px;  /* wider than canvas so drift loops seamlessly */
+  height: 432px;
+  background:
+    linear-gradient(180deg,
+      rgba(174,183,196,0) 0%,
+      rgba(174,183,196,0.10) 40%,
+      rgba(174,183,196,0.06) 100%);
+  filter: blur(24px);
+  will-change: transform;
+}
+
+.fog-band-1 {
+  top: 648px;
+  /* 1920 / 0.4 px/s = 4800s = too slow visually; use 240s for one full 480-px loop */
+  animation: fog-drift-1 240s linear infinite;
+}
+
+.fog-band-2 {
+  top: 720px;
+  height: 360px;
+  opacity: 0.55;
+  filter: blur(32px);
+  background:
+    linear-gradient(180deg,
+      rgba(174,183,196,0) 0%,
+      rgba(174,183,196,0.08) 50%,
+      rgba(174,183,196,0.04) 100%);
+  animation: fog-drift-2 320s linear infinite;
+}
+
+@keyframes fog-drift-1 {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-480px); }
+}
+@keyframes fog-drift-2 {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-480px); }
+}
+
+/* ---------- LAYER_05_DeadForest (Y center ~640 ground line) ---------- */
+.layer-forest { z-index: var(--z-forest); }
+
+.forest-svg {
+  position: absolute;
+  left: 0;
+  top: 460px;
+  width: 1920px;
+  height: 420px;
+}
+
+/* ---------- LAYER_06_Campfire (center 960, 760) ---------- */
+.layer-campfire { z-index: var(--z-campfire); }
+
+.campfire-glow {
+  position: absolute;
+  width: 220px; height: 220px;
+  /* center on (960, 770) */
+  left: 850px; top: 660px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 55%,
+    rgba(242,140,56,0.22) 0%,
+    rgba(168,72,29,0.10) 50%,
+    rgba(168,72,29,0) 100%
+  );
+  filter: blur(12px);
+  animation: campfire-pulse 3.2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+.campfire-svg {
+  position: absolute;
+  width: 200px; height: 200px;
+  left: 860px; top: 660px;
+  /* brightness pulse on the flame itself, 3-8% */
+  animation: campfire-flicker 2.8s ease-in-out infinite;
+  will-change: filter;
+}
+
+@keyframes campfire-pulse {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 1.00; }
+}
+@keyframes campfire-flicker {
+  0%   { filter: brightness(1.00); }
+  37%  { filter: brightness(1.06); }
+  58%  { filter: brightness(1.03); }
+  82%  { filter: brightness(1.07); }
+  100% { filter: brightness(1.00); }
+}

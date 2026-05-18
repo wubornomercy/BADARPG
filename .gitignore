@@ -1,0 +1,52 @@
+# ============ OS ============
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ============ Editor / IDE ============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ============ Node / npm (future PixiJS phase) ============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.pnpm-store/
+
+# ============ Build outputs ============
+dist/
+build/
+out/
+.cache/
+.parcel-cache/
+.vite/
+
+# ============ TypeScript / bundler ============
+*.tsbuildinfo
+.eslintcache
+
+# ============ Env / secrets ============
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ============ Logs ============
+*.log
+logs/
+
+# ============ Test / coverage ============
+coverage/
+.nyc_output/
+
+# ============ Tool-generated previews (keep canonical screenshots) ============
+*.tmp
+*.bak

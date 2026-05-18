@@ -1,0 +1,90 @@
+/* =============================================================
+   BAD ARPG — Design Tokens
+   Source of truth: BLUEPRINT_SPEC.md §2/§3/§4
+   These tokens MUST be inherited by HUD / Inventory / Tooltip later.
+   No literal hex / px values outside this file.
+   ============================================================= */
+
+:root {
+  /* ---------- Canvas ---------- */
+  --canvas-w: 1920px;
+  --canvas-h: 1080px;
+
+  /* ---------- Safe Area ---------- */
+  --safe-left:   120px;
+  --safe-right:  120px;
+  --safe-top:    80px;
+  --safe-bottom: 80px;
+
+  /* ---------- 8-grid spacing ---------- */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --space-10: 80px;
+  --space-15: 120px;
+
+  /* ---------- Color :: Background / Atmosphere ---------- */
+  --clr-bg-sky-top:        #0A0C10;
+  --clr-bg-sky-bottom:     #1A1D22;
+  --clr-silhouette-castle: #16181D;
+  --clr-silhouette-forest: #23262B;
+  --clr-atmos-moon:        #D8E0F0;
+  --clr-atmos-fog:         #AEB7C4;
+
+  /* ---------- Color :: Campfire (only warm light source allowed) ---------- */
+  --clr-fire-core:  #F28C38;
+  --clr-fire-outer: #A8481D;
+
+  /* ---------- Color :: Logo ---------- */
+  --clr-logo-main:   #BFC5CE;
+  --clr-logo-border: #3A4048;
+
+  /* ---------- Color :: Button (BTN_Main) ---------- */
+  --clr-btn-bg:        #171A1F;
+  --clr-btn-bg-hover:  #191D23;   /* +8% brightness (RGB *= 1.08) */
+  --clr-btn-bg-press:  #14171B;   /* -10% brightness (RGB *= 0.90) */
+  --clr-btn-border:    #32363D;
+  --clr-btn-border-hover: #36393F;
+  --clr-btn-label:     #BFC5CE;
+  --clr-btn-label-dim: #5E646D;
+
+  /* ---------- Color :: Text ---------- */
+  --clr-text-version: #5E646D;
+  --clr-divider-hairline: #3A4048;
+
+  /* ---------- Color :: Semantic (reserved, do NOT consume in V1) ---------- */
+  --clr-sem-danger:     #C0392B;
+  --clr-sem-reward:     #D4A24C;
+  --clr-sem-corruption: #3C1F4A;
+  --clr-sem-arcane:     #3A6FA8;
+  --clr-sem-heal:       #5E8C5A;
+
+  /* ---------- Typography ---------- */
+  --font-display: 'Cinzel', 'Times New Roman', serif;
+  --font-ui:      'Inter', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+
+  --type-logo:    96px;
+  --type-btn:     18px;
+  --type-version: 12px;
+  --type-debug:   10px;
+
+  /* ---------- Motion ---------- */
+  --motion-hover: 120ms;
+  --motion-press: 80ms;
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ---------- Z-layers (matches BLUEPRINT_SPEC.md §5) ---------- */
+  --z-sky:        10;
+  --z-moon:       20;
+  --z-castle:     30;
+  --z-fog:        40;
+  --z-forest:     50;
+  --z-campfire:   60;
+  --z-logo:       70;
+  --z-menu:       80;
+  --z-version:    90;
+  --z-debug:      9999;
+}
