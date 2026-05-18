@@ -1,103 +1,203 @@
 /**
- * BAD ARPG — Combat Sandbox V2 (Combat Feel Foundation)
- * Phase 2: Step 1 + Step 5 + Step 6 (combat feel) all in one runtime.
+ * BAD ARPG — First Playable Vertical Slice (Phase 2A)
+ * Entry point. Scene-aware: main menu (HTML) → arena (Pixi) → panels (HTML).
  */
 import { Application, Container, Graphics, Text } from 'pixi.js';
-import { CANVAS_W, CANVAS_H, COLOR, TUNE, TIME } from './tokens.js';
-import { initInput, endFrameInput, mouse, isMouseDown } from './input.js';
+import { CANVAS_W, CANVAS_H, WORLD_W, WORLD_H, ARENA_CENTER_X, ARENA_CENTER_Y, ARENA_HALF, COLOR, TUNE, TIME } from './tokens.js';
+import { initInput, endFrameInput, mouse, isMouseDown, wasPressed } from './input.js';
 import { Player } from './entities/player.js';
 import { Enemy } from './entities/enemy.js';
 import { Projectile } from './entities/projectile.js';
 import { LootDrop } from './entities/loot.js';
 import { DebugHud, sim, canSpawnProjectile, canSpawnEnemy } from './sim.js';
-import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js';
+import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
+import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange } from './scene.js';
+import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
+import { buildWorld, spawnCorruptionZones, updateCorruptionZones } from './world.js';
+import { populatePanels } from './panel-stubs.js';
 
 (async () => {
   // ---------------------------------------------------------------------
-  // Pixi app
+  // Pixi bootstrap — inserted into #pixiHost (not body)
   // ---------------------------------------------------------------------
   const app = new Application();
   await app.init({
     width: CANVAS_W,
     height: CANVAS_H,
-    background: 0x07080B,
+    background: 0x050608,
     antialias: false,
     resolution: 1,
     autoDensity: false,
   });
   app.renderer.canvas.style.imageRendering = 'pixelated';
 
-  const stage = document.getElementById('stage')!;
-  stage.appendChild(app.canvas);
-  fitCanvas(app.canvas as HTMLCanvasElement);
-  window.addEventListener('resize', () => fitCanvas(app.canvas as HTMLCanvasElement));
+  const pixiHost = document.getElementById('pixiHost')!;
+  pixiHost.appendChild(app.canvas);
+
+  // Scale the entire .canvas wrapper (which includes Pixi + HTML overlays)
+  // uniformly to fit the viewport.
+  const canvasWrap = document.getElementById('canvas')!;
+  function fit() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const scale = Math.min(vw / CANVAS_W, vh / CANVAS_H);
+    canvasWrap.style.width  = CANVAS_W + 'px';
+    canvasWrap.style.height = CANVAS_H + 'px';
+    canvasWrap.style.transform = `scale(${scale})`;
+    canvasWrap.style.transformOrigin = 'center center';
+    canvasWrap.style.position = 'absolute';
+    canvasWrap.style.left = ((vw - CANVAS_W) / 2) + 'px';
+    canvasWrap.style.top  = ((vh - CANVAS_H) / 2) + 'px';
+  }
+  window.addEventListener('resize', fit, { passive: true });
+  fit();
 
   initInput(app.canvas as HTMLCanvasElement, CANVAS_W, CANVAS_H);
 
   // ---------------------------------------------------------------------
-  // Scene graph
+  // Static panel population (one-time)
   // ---------------------------------------------------------------------
-  // worldRoot wraps everything that shakes; HUD stays on app.stage directly.
+  populatePanels();
+
+  // ---------------------------------------------------------------------
+  // URL-param scene override — useful for headless screenshots + debugging
+  //   ?scene=play    -> jump to PLAYING on load
+  //   ?scene=inv     -> open inventory panel
+  //   ?scene=char    -> open character panel
+  //   ?scene=skill   -> open skill panel
+  // ---------------------------------------------------------------------
+  const sceneParam = new URL(location.href).searchParams.get('scene');
+  if (sceneParam === 'play')  setScene('PLAYING');
+  if (sceneParam === 'inv')   setScene('PANEL_INV');
+  if (sceneParam === 'char')  setScene('PANEL_CHAR');
+  if (sceneParam === 'skill') setScene('PANEL_SKILL');
+
+  // ---------------------------------------------------------------------
+  // World scene graph
+  // ---------------------------------------------------------------------
   const worldRoot = new Container();
   worldRoot.label = 'worldRoot';
   app.stage.addChild(worldRoot);
 
-  const bg = makeArenaBackground();
-  worldRoot.addChild(bg);
+  const world = buildWorld();
+  worldRoot.addChild(world);
 
-  const layerGroundFx   = new Container();  // footstep dust, blood
-  const layerLoot       = new Container();
-  const layerEnemies    = new Container();
-  const layerProjectiles= new Container();
-  const layerPlayer     = new Container();
-  const layerImpactFx   = new Container();  // hit burst, death burst (above enemies)
-  const layerFloatText  = new Container();  // damage numbers (top)
+  const corruptionLayer = spawnCorruptionZones();
+  worldRoot.addChild(corruptionLayer);
+
+  const layerGroundFx    = new Container();
+  const layerLoot        = new Container();
+  const layerEnemies     = new Container();
+  const layerProjectiles = new Container();
+  const layerPlayer      = new Container();
+  const layerImpactFx    = new Container();
+  const layerFloatText   = new Container();
   worldRoot.addChild(
     layerGroundFx, layerLoot, layerEnemies, layerProjectiles,
     layerPlayer, layerImpactFx, layerFloatText,
   );
 
+  // Player spawned at arena center
   const player = new Player();
+  player.x = ARENA_CENTER_X;
+  player.y = ARENA_CENTER_Y;
   layerPlayer.addChild(player.container);
 
+  // ---------------------------------------------------------------------
+  // Entity lists
+  // ---------------------------------------------------------------------
   const enemies: Enemy[] = [];
   const projectiles: Projectile[] = [];
   const lootDrops: LootDrop[] = [];
 
+  // Seed enemies around player
   for (let i = 0; i < TUNE.ENEMY_INITIAL_COUNT; i++) {
-    spawnEnemyAtEdge();
+    spawnEnemyAtArenaEdge();
   }
 
   let nextSpawnAt = 0;
-  function spawnEnemyAtEdge() {
+  function spawnEnemyAtArenaEdge() {
     if (!canSpawnEnemy()) return;
-    const margin = 80;
-    const side = (Math.random() * 4) | 0;
-    let x = 0, y = 0;
-    if (side === 0)      { x = margin + Math.random() * (CANVAS_W - 2 * margin); y = margin; }
-    else if (side === 1) { x = CANVAS_W - margin; y = margin + Math.random() * (CANVAS_H - 2 * margin); }
-    else if (side === 2) { x = margin + Math.random() * (CANVAS_W - 2 * margin); y = CANVAS_H - margin; }
-    else                 { x = margin; y = margin + Math.random() * (CANVAS_H - 2 * margin); }
+    // Spawn at the rim of the arena ring (not at world edge)
+    const angle = Math.random() * Math.PI * 2;
+    const r = ARENA_HALF - 40 + Math.random() * 80;
+    const x = ARENA_CENTER_X + Math.cos(angle) * r;
+    const y = ARENA_CENTER_Y + Math.sin(angle) * r;
     const e = new Enemy(x, y);
     enemies.push(e);
     layerEnemies.addChild(e.container);
     sim.enemyCount++;
   }
 
+  // ---------------------------------------------------------------------
+  // Debug HUD (Pixi overlay, top-right)
+  // ---------------------------------------------------------------------
   const hud = new DebugHud();
   app.stage.addChild(hud.container);
 
-  const title = new Text({
-    text: '战斗沙盒 V2 · COMBAT FEEL',
-    style: {
-      fontFamily: 'Pixelify Sans, monospace',
-      fontSize: 13,
-      fill: COLOR.hudText,
-      letterSpacing: 4,
-    },
+  // ---------------------------------------------------------------------
+  // HUD bridge — wire player state to HTML HUD overlay
+  // ---------------------------------------------------------------------
+  const $hudHp        = document.getElementById('hudHp')!;
+  const $hpFluid      = document.getElementById('hpFluid')!;
+  const $hudCorrupt   = document.getElementById('hudCorruption')!;
+  let corruptionMeter = 0;  // 0-100, gained from standing in corruption zones
+
+  function updateHtmlHud() {
+    $hudHp.textContent = `${Math.max(0, Math.floor(player.hp))}`;
+    const pct = Math.max(0, Math.min(100, player.hp / player.hpMax * 100));
+    ($hpFluid as HTMLElement).style.height = pct + '%';
+    $hudCorrupt.textContent = `${Math.floor(corruptionMeter)}%`;
+  }
+  updateHtmlHud();
+
+  // ---------------------------------------------------------------------
+  // Scene wiring: menu buttons + panel hotkeys + ESC
+  // ---------------------------------------------------------------------
+  document.getElementById('menuNewGame')?.addEventListener('click', () => {
+    setScene('PLAYING');
   });
-  title.x = 24; title.y = 22;
-  app.stage.addChild(title);
+  // The other menu buttons are placeholders for V1
+  document.getElementById('menuCharacter')?.addEventListener('click', () => {
+    // Treat as "go to character panel directly" — useful demo of integration
+    setScene('PANEL_CHAR');
+  });
+  document.getElementById('menuSettings')?.addEventListener('click', () => {
+    console.log('[SETTINGS] not implemented in V1');
+  });
+  document.getElementById('menuExit')?.addEventListener('click', () => {
+    console.log('[EXIT] would close runtime');
+  });
+  // Panel close buttons
+  document.querySelectorAll('[data-close]').forEach(el => {
+    el.addEventListener('click', () => setScene('PLAYING'));
+  });
+
+  // Keyboard panel toggles + ESC
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    // ESC: panel → playing, playing → menu, menu → menu (no-op)
+    if (k === 'escape') {
+      if (isPanelOpen()) setScene('PLAYING');
+      else if (getScene() === 'PLAYING') setScene('MENU');
+      return;
+    }
+    // Hotkeys only active during PLAYING / panels (NOT menu)
+    if (getScene() === 'MENU') return;
+    if (k === 'i') setScene(getScene() === 'PANEL_INV'  ? 'PLAYING' : 'PANEL_INV');
+    if (k === 'c') setScene(getScene() === 'PANEL_CHAR' ? 'PLAYING' : 'PANEL_CHAR');
+    if (k === 'k') setScene(getScene() === 'PANEL_SKILL'? 'PLAYING' : 'PANEL_SKILL');
+  });
+
+  // When entering PLAYING from MENU, reset player position
+  onSceneChange((s) => {
+    if (s === 'PLAYING' && player.hp <= 0) {
+      // Soft "respawn" on returning from menu after death
+      player.hp = player.hpMax;
+      player.x = ARENA_CENTER_X;
+      player.y = ARENA_CENTER_Y;
+    }
+  });
 
   // ---------------------------------------------------------------------
   // Game loop
@@ -117,18 +217,49 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       fpsAccum = 0; fpsFrames = 0; fpsTimer = 0;
     }
 
+    // ===== Camera + render position =====
+    // Always update camera so the view follows the player even when
+    // panels are open (per spec — "combat 不暂停").
+    cameraFollow(player.x, player.y);
+    const cam = getCameraOffset();
+    const shk = computeShake(now);
+    worldRoot.position.set(cam.x + shk.x, cam.y + shk.y);
+
+    // Visibility: hide game world entirely while in MENU (HTML menu is shown)
+    worldRoot.visible = getScene() !== 'MENU';
+    hud.container.visible = getScene() !== 'MENU';
+
+    // Pause game tick during MENU
+    if (!shouldGameTick()) {
+      hud.update();
+      endFrameInput();
+      return;
+    }
+
     // Global hit-stop freeze
     const dt = isInHitStop(now) ? 0 : Math.min(rawDt, 33);
 
-    // ----- Player + footstep callback -----
+    // ----- Corruption zone DOT -----
+    const corruptionDot = updateCorruptionZones(now, player.x, player.y);
+    if (corruptionDot > 0) {
+      player.takeDamage(corruptionDot, now);
+      corruptionMeter = Math.min(100, corruptionMeter + 0.5);
+      requestShake(2, 60, now);
+    } else {
+      // Slow decay when out of corruption
+      corruptionMeter = Math.max(0, corruptionMeter - 0.04);
+    }
+
+    // ----- Player -----
     player.update(dt, now, spawnFootstepDust);
 
-    // ----- Player attack (with crit + recoil + spawn FX) -----
+    // ----- Player attack -----
     if (isMouseDown(0) && player.canAttack(now) && canSpawnProjectile()) {
-      const px = player.x;
-      const py = player.y;
-      const dx = mouse.world.x - px;
-      const dy = mouse.world.y - py;
+      // Convert mouse from screen to world space
+      const worldMouse = screenToWorld(mouse.world.x, mouse.world.y);
+      const px = player.x, py = player.y;
+      const dx = worldMouse.x - px;
+      const dy = worldMouse.y - py;
       const mag = Math.hypot(dx, dy) || 1;
       const dirX = dx / mag, dirY = dy / mag;
       const vx = dirX * TUNE.PROJ_SPEED;
@@ -139,12 +270,12 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       sim.projectileCount++;
       player.consumeAttack(now);
       player.applyRecoil(dirX, dirY);
-      spawnMuzzleFlash(px + dirX * 20, py + dirY * 20, dirX, dirY);
+      spawnMuzzleFlash(px + dirX * 20, py + dirY * 20);
     }
 
-    // ----- Enemy spawner -----
+    // ----- Enemy spawner (top up to 8 active) -----
     if (now >= nextSpawnAt && enemies.filter(e => e.alive).length < 8) {
-      spawnEnemyAtEdge();
+      spawnEnemyAtArenaEdge();
       nextSpawnAt = now + TUNE.ENEMY_SPAWN_INTERVAL;
     }
 
@@ -156,7 +287,6 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       if (dist < TUNE.PLAYER_RADIUS + TUNE.ENEMY_RADIUS && e.canContact(now)) {
         player.takeDamage(TUNE.ENEMY_DAMAGE, now);
         e.applyContactCooldown(now);
-        // Hurt feedback — big shake + brief hit stop
         requestShake(TUNE.SHAKE_HURT, 220, now);
         requestHitStop(TIME.HIT_STOP_HURT, now);
       }
@@ -166,7 +296,7 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     for (const p of projectiles) {
       if (!p.alive) continue;
       p.update(dt, now);
-      if (p.x < -20 || p.x > CANVAS_W + 20 || p.y < -20 || p.y > CANVAS_H + 20) {
+      if (p.x < -20 || p.x > WORLD_W + 20 || p.y < -20 || p.y > WORLD_H + 20) {
         p.alive = false;
       }
       if (p.alive && p.ownerIsPlayer) {
@@ -175,24 +305,14 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
           const dxh = e.x - p.x;
           const dyh = e.y - p.y;
           if (dxh * dxh + dyh * dyh <= (TUNE.ENEMY_RADIUS + TUNE.PROJ_RADIUS) ** 2) {
-            // ===== CRIT ROLL =====
             const isCrit = Math.random() < TUNE.CRIT_CHANCE;
             const dmg = isCrit ? Math.round(TUNE.PROJ_DAMAGE * TUNE.CRIT_MULT) : TUNE.PROJ_DAMAGE;
-
-            // ===== Damage + knockback =====
             const killed = e.takeDamage(dmg, now, p.dirX, p.dirY, isCrit);
-
-            // ===== Hit-stop + screen shake =====
             requestHitStop(isCrit ? TIME.HIT_STOP_CRIT : TIME.HIT_STOP_NORMAL, now);
             requestShake(isCrit ? TUNE.SHAKE_CRIT : TUNE.SHAKE_HIT, isCrit ? 220 : 110, now);
-
-            // ===== Impact frame + damage number =====
             spawnImpactBurst(e.x, e.y, isCrit);
             spawnDamageNumber(e.x, e.y - 16, dmg, isCrit);
-
             p.alive = false;
-
-            // ===== Death =====
             if (killed) {
               requestHitStop(TIME.HIT_STOP_DEATH, now);
               requestShake(TUNE.SHAKE_DEATH, 160, now);
@@ -206,14 +326,11 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       }
     }
 
-    // ----- VFX update -----
     for (const v of vfxList) v.update(dt, now);
-    // ----- Damage numbers update -----
     for (const d of dmgList) d.update(dt, now);
-
     for (const l of lootDrops) l.update(dt, now);
 
-    // ----- Cleanup dead entities -----
+    // Cleanup
     for (let i = projectiles.length - 1; i >= 0; i--) {
       if (!projectiles[i].alive) {
         projectiles[i].container.destroy();
@@ -242,15 +359,14 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       }
     }
 
-    // ----- Apply screen shake to world (HUD unaffected) -----
-    applyShake(worldRoot, now);
-
+    // HUD updates
+    updateHtmlHud();
     hud.update();
     endFrameInput();
   });
 
   // ---------------------------------------------------------------------
-  // VFX systems
+  // VFX systems (unchanged from V2)
   // ---------------------------------------------------------------------
   type Vfx = {
     container: Container, alive: boolean, spawnAt: number,
@@ -258,7 +374,6 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
   };
   const vfxList: Vfx[] = [];
 
-  /** Pixel impact burst — hard step frame at hit point. White, or gold on crit. */
   function spawnImpactBurst(x: number, y: number, isCrit: boolean) {
     const cnt = new Container();
     cnt.x = Math.round(x); cnt.y = Math.round(y);
@@ -266,7 +381,6 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     const c = isCrit ? 0xFFFFFF : 0xF4F2E8;
     const rim = isCrit ? COLOR.tier1 : 0xD2D6DC;
     const g = new Graphics();
-    // chunky pixel cross + outer ring (single frame, scales out)
     g.rect(-4, -1, 8, 2).fill(c);
     g.rect(-1, -4, 2, 8).fill(c);
     g.rect(-7, -2, 3, 4).fill(rim);
@@ -275,20 +389,19 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     g.rect(-2, 4, 4, 3).fill(rim);
     cnt.addChild(g);
     const lifeMs = TIME.IMPACT_FRAME;
-    const vfx: Vfx = {
-      container: cnt, alive: true, spawnAt: performance.now(),
-      update(_dt: number, n: number) {
-        const t = (n - this.spawnAt) / lifeMs;
+    const spawn = performance.now();
+    vfxList.push({
+      container: cnt, alive: true, spawnAt: spawn,
+      update(_dt, n) {
+        const t = (n - spawn) / lifeMs;
         if (t >= 1) { this.alive = false; return; }
         cnt.scale.set(1 + t * 0.8);
         cnt.alpha = 1 - t;
       },
-    };
-    vfxList.push(vfx);
+    });
     sim.vfxCount++;
   }
 
-  /** Death burst — bigger particle scatter + squash + expanding banded ring. */
   function spawnDeathBurst(x: number, y: number, dirX: number, dirY: number, now: number, isCrit: boolean) {
     const cnt = new Container();
     cnt.x = Math.round(x); cnt.y = Math.round(y);
@@ -302,14 +415,12 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
       cnt.addChild(g);
       particles.push({ g, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed });
     }
-    // Expanding banded ring on top
     const ring = new Graphics();
     cnt.addChild(ring);
-
-    const vfx: Vfx = {
+    vfxList.push({
       container: cnt, alive: true, spawnAt: now,
-      update(dtMs: number, n: number) {
-        const t = (n - this.spawnAt) / TIME.DEATH_BURST;
+      update(dtMs, n) {
+        const t = (n - now) / TIME.DEATH_BURST;
         if (t >= 1) { this.alive = false; return; }
         const dt = dtMs / 1000;
         for (const p of particles) {
@@ -319,7 +430,6 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
           p.vx *= 0.90;
           p.vy *= 0.90;
         }
-        // Ring expands then fades — banded (3 hard concentric pixel circles)
         ring.clear();
         const r = 8 + t * 56;
         const rcol = isCrit ? COLOR.tier1 : 0xD6DBE3;
@@ -328,13 +438,11 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
           ring.circle(0, 0, r + k * 2).stroke({ color: rcol, width: 1, alpha: a * (1 - k * 0.25) });
         }
       },
-    };
-    vfxList.push(vfx);
+    });
     sim.vfxCount++;
   }
 
-  /** Muzzle flash — small white pixel cross at shot origin. */
-  function spawnMuzzleFlash(x: number, y: number, _dirX: number, _dirY: number) {
+  function spawnMuzzleFlash(x: number, y: number) {
     const cnt = new Container();
     cnt.x = Math.round(x); cnt.y = Math.round(y);
     layerImpactFx.addChild(cnt);
@@ -344,19 +452,17 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     cnt.addChild(g);
     const life = 70;
     const start = performance.now();
-    const vfx: Vfx = {
+    vfxList.push({
       container: cnt, alive: true, spawnAt: start,
-      update(_dt: number, n: number) {
+      update(_dt, n) {
         const t = (n - start) / life;
         if (t >= 1) { this.alive = false; return; }
         cnt.alpha = 1 - t;
         cnt.scale.set(1 + t * 0.4);
       },
-    };
-    vfxList.push(vfx);
+    });
   }
 
-  /** Footstep dust — small pixel beneath the player when moving. */
   function spawnFootstepDust(x: number, y: number) {
     const cnt = new Container();
     cnt.x = Math.round(x); cnt.y = Math.round(y);
@@ -366,20 +472,19 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     cnt.addChild(g);
     const start = performance.now();
     const life = 280;
-    const vfx: Vfx = {
+    vfxList.push({
       container: cnt, alive: true, spawnAt: start,
-      update(_dt: number, n: number) {
+      update(_dt, n) {
         const t = (n - start) / life;
         if (t >= 1) { this.alive = false; return; }
         cnt.alpha = (1 - t) * 0.5;
         cnt.scale.x = 1 + t * 0.6;
       },
-    };
-    vfxList.push(vfx);
+    });
   }
 
   // ---------------------------------------------------------------------
-  // Damage numbers
+  // Damage numbers (in-world floating text)
   // ---------------------------------------------------------------------
   type DmgNum = {
     container: Container, alive: boolean, spawnAt: number,
@@ -407,17 +512,16 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     const life = TIME.DAMAGE_LIFESPAN;
     const drift = isCrit ? 56 : 38;
     const wob = (Math.random() - 0.5) * 18;
-    const dn: DmgNum = {
+    dmgList.push({
       container: cnt, alive: true, spawnAt: start,
-      update(_dt: number, n: number) {
+      update(_dt, n) {
         const t = (n - start) / life;
         if (t >= 1) { this.alive = false; return; }
         cnt.y = Math.round(y - t * drift);
         cnt.x = Math.round(x + wob * t);
         cnt.alpha = t < 0.85 ? 1 : (1 - t) / 0.15;
       },
-    };
-    dmgList.push(dn);
+    });
   }
 
   function dropLoot(x: number, y: number, now: number) {
@@ -429,53 +533,3 @@ import { requestShake, applyShake, requestHitStop, isInHitStop } from './feel.js
     sim.lootDrops++;
   }
 })();
-
-// ---------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------
-function makeArenaBackground(): Container {
-  const c = new Container();
-  const bg = new Graphics();
-  const rings = [
-    { r: 0,    c: 0x14181E },
-    { r: 320,  c: 0x0E1116 },
-    { r: 640,  c: 0x0A0C10 },
-    { r: 960,  c: 0x06080B },
-  ];
-  for (let i = 0; i < rings.length; i++) {
-    bg.circle(CANVAS_W / 2, CANVAS_H / 2, rings[i].r + 320).fill(rings[i].c);
-  }
-  c.addChild(bg);
-
-  const horizon = new Graphics();
-  for (let x = 0; x < CANVAS_W; x += 32) {
-    horizon.rect(x, 540, 16, 4).fill(0x16181D);
-  }
-  horizon.rect(0, 568, CANVAS_W, 2).fill({ color: 0x2A2E35, alpha: 0.55 });
-  c.addChild(horizon);
-
-  const ground = new Graphics();
-  for (let yi = 572; yi < CANVAS_H; yi += 96) {
-    ground.rect(0, yi + 60, CANVAS_W, 2).fill({ color: 0x282C34, alpha: 0.18 });
-  }
-  c.addChild(ground);
-
-  const wallW = 6;
-  const wallC = COLOR.frameRim;
-  const wall = new Graphics()
-    .rect(0, 0, CANVAS_W, wallW).fill(wallC)
-    .rect(0, CANVAS_H - wallW, CANVAS_W, wallW).fill(wallC)
-    .rect(0, 0, wallW, CANVAS_H).fill(wallC)
-    .rect(CANVAS_W - wallW, 0, wallW, CANVAS_H).fill(wallC);
-  c.addChild(wall);
-
-  return c;
-}
-
-function fitCanvas(canvas: HTMLCanvasElement) {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const scale = Math.min(vw / CANVAS_W, vh / CANVAS_H);
-  canvas.style.width = (CANVAS_W * scale) + 'px';
-  canvas.style.height = (CANVAS_H * scale) + 'px';
-}

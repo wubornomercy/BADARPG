@@ -1,0 +1,58 @@
+/**
+ * Scene state machine — drives which HTML overlay is active and whether
+ * Pixi game logic is running.
+ *
+ * States:
+ *   MENU         — main menu HTML visible, Pixi paused
+ *   PLAYING      — Pixi running, HUD visible, no panel
+ *   PANEL_INV    — Pixi running (dimmed 15%), inventory HTML visible
+ *   PANEL_CHAR   — Pixi running (dimmed 15%), character HTML visible
+ *   PANEL_SKILL  — Pixi running (dimmed 15%), skill HTML visible
+ */
+export type Scene = 'MENU' | 'PLAYING' | 'PANEL_INV' | 'PANEL_CHAR' | 'PANEL_SKILL';
+
+let current: Scene = 'MENU';
+const listeners: ((s: Scene) => void)[] = [];
+
+export function getScene(): Scene { return current; }
+
+export function setScene(next: Scene) {
+  const prev = current;
+  if (prev === next) return;
+  current = next;
+  applyDom(next);
+  for (const fn of listeners) fn(next);
+}
+
+export function onSceneChange(fn: (s: Scene) => void) { listeners.push(fn); }
+
+/** True while inside ANY panel state */
+export function isPanelOpen(): boolean {
+  return current === 'PANEL_INV' || current === 'PANEL_CHAR' || current === 'PANEL_SKILL';
+}
+
+/** True while Pixi runtime should tick (game world updates) */
+export function shouldGameTick(): boolean {
+  return current !== 'MENU';   // game keeps running during panel views per spec
+}
+
+function applyDom(s: Scene) {
+  const $ = (id: string) => document.getElementById(id);
+  const setActive = (el: HTMLElement | null, on: boolean) => {
+    if (!el) return;
+    el.classList.toggle('is-active', on);
+  };
+
+  // Menu visible only in MENU
+  setActive($('menuScreen'), s === 'MENU');
+  // HUD visible in PLAYING + panel states (it's the "ongoing combat" HUD)
+  setActive($('gameHud'), s !== 'MENU');
+  // Scene hint shown during PLAYING only
+  setActive($('sceneHint'), s === 'PLAYING');
+  // World dim active when a panel is up
+  setActive($('worldDim'), s === 'PANEL_INV' || s === 'PANEL_CHAR' || s === 'PANEL_SKILL');
+  // Panels
+  setActive($('invPanel'),  s === 'PANEL_INV');
+  setActive($('charPanel'), s === 'PANEL_CHAR');
+  setActive($('skillPanel'), s === 'PANEL_SKILL');
+}

@@ -29,32 +29,32 @@ export function requestShake(amplitude: number, durationMs: number, now: number)
 }
 
 /**
- * Apply current shake state to a container. Should be called every frame.
- * The container's position is overwritten — caller should reset to (0,0)
- * before adding any other transform.
+ * Compute current shake offset for this frame. Returns int pixels.
+ * Caller decides where to apply it (combines with camera offset etc.).
  */
-export function applyShake(container: Container, now: number) {
+export function computeShake(now: number): { x: number, y: number } {
   // Remove ended shakes
   for (let i = shakes.length - 1; i >= 0; i--) {
     if (shakes[i].endsAt <= now) shakes.splice(i, 1);
   }
-  if (shakes.length === 0) {
-    container.x = 0;
-    container.y = 0;
-    return;
-  }
-  // Sum max active amplitude with falloff (linear decay)
+  if (shakes.length === 0) return { x: 0, y: 0 };
   let amp = 0;
   for (const s of shakes) {
     const t = (now - s.startedAt) / s.duration;
     const falloff = Math.max(0, 1 - t);
     if (s.amplitude * falloff > amp) amp = s.amplitude * falloff;
   }
-  // Round to integer pixels — pixel discipline
-  const ox = Math.round((Math.random() * 2 - 1) * amp);
-  const oy = Math.round((Math.random() * 2 - 1) * amp);
-  container.x = ox;
-  container.y = oy;
+  return {
+    x: Math.round((Math.random() * 2 - 1) * amp),
+    y: Math.round((Math.random() * 2 - 1) * amp),
+  };
+}
+
+/** Convenience: applies shake directly to a container (legacy callers). */
+export function applyShake(container: Container, now: number) {
+  const o = computeShake(now);
+  container.x = o.x;
+  container.y = o.y;
 }
 
 export function clearShake() {

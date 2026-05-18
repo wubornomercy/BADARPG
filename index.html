@@ -2,48 +2,518 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <title>BAD ARPG — Combat Sandbox V1</title>
+  <title>BAD ARPG — First Playable Vertical Slice</title>
   <meta name="viewport" content="width=1920, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Jacquard+12&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
+
+  <!-- Phase 1 design tokens + visual language: reused 1:1 -->
+  <link rel="stylesheet" href="/runtime/css/tokens.css" />
+  <link rel="stylesheet" href="/runtime/css/layout.css" />
+  <link rel="stylesheet" href="/runtime/css/scene.css" />
+  <link rel="stylesheet" href="/runtime/css/components.css" />
+  <link rel="stylesheet" href="/runtime/css/hud.css" />
+  <link rel="stylesheet" href="/runtime/css/tooltip.css" />
+  <link rel="stylesheet" href="/runtime/css/inventory.css" />
+  <link rel="stylesheet" href="/runtime/css/character.css" />
+  <link rel="stylesheet" href="/runtime/css/skill.css" />
+
   <style>
-    /* Global pixel discipline — same rules as Phase 1 */
-    html, body, * {
-      image-rendering: pixelated;
-      image-rendering: -moz-crisp-edges;
-      image-rendering: crisp-edges;
-    }
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      background: #000;
-      overflow: hidden;
-      font-family: 'Pixelify Sans', system-ui, sans-serif;
-      -webkit-font-smoothing: none;
-      font-smooth: never;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    #stage {
-      position: fixed;
+    /* ----------------------------------------------------------
+       Phase 2A overrides — wrap Pixi canvas + HTML overlays in a
+       single 1920x1080 .canvas that gets scaled uniformly.
+       ---------------------------------------------------------- */
+    .pixi-host {
+      position: absolute;
       inset: 0;
-      display: grid;
-      place-items: center;
-      background: #000;
+      z-index: 1;
     }
-    canvas {
+    .pixi-host canvas {
       display: block;
-      /* Vite/Pixi sets canvas dims at 1920x1080; CSS scales to fit while
-         preserving aspect ratio via transform. */
+      width: 100%;
+      height: 100%;
       image-rendering: pixelated;
     }
+    /* HUD layer */
+    .game-hud {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: none;
+    }
+    .game-hud.is-active { display: block; }
+    .game-hud > * { pointer-events: auto; }
+
+    /* World dim — shown when a panel is open over a live combat scene */
+    .world-dim {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.15);
+      display: none;
+      pointer-events: none;
+    }
+    .world-dim.is-active { display: block; }
+
+    /* Panels — shared base */
+    .game-panel {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      display: none;
+    }
+    .game-panel.is-active { display: block; }
+
+    /* Menu screen — sits above everything when active */
+    #menuScreen {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: none;
+    }
+    #menuScreen.is-active { display: block; }
+
+    /* Hide the Phase 1 .viewport / .canvas grid styles for our local
+       wrapper so Pixi canvas can sit at native size. */
+    body { background: #000; }
+
+    /* Tiny scene-transition hint label (bottom-center during PLAY) */
+    .scene-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Pixelify Sans', monospace;
+      font-size: 10px;
+      letter-spacing: 0.32em;
+      color: #5E646D;
+      text-transform: uppercase;
+      z-index: 30;
+      pointer-events: none;
+      display: none;
+    }
+    .scene-hint.is-active { display: block; }
   </style>
 </head>
 <body>
-  <div id="stage"></div>
+  <div class="viewport" id="viewport">
+    <div class="canvas" id="canvas">
+
+      <!-- =================== Pixi runtime host =================== -->
+      <div id="pixiHost" class="pixi-host"></div>
+
+      <!-- =================== Game HUD =================== -->
+      <div id="gameHud" class="game-hud">
+        <!-- Top center: area info -->
+        <div class="hud-top">
+          <div class="hud-area-info">
+            <span class="hud-area-name">腐化废战场</span>
+            <span class="hud-area-tier">一阶</span>
+          </div>
+          <div class="hud-corruption">
+            <span class="corruption-label">腐化</span>
+            <span class="corruption-value" id="hudCorruption">0%</span>
+          </div>
+        </div>
+
+        <!-- HP Orb (left bottom) -->
+        <div class="orb orb-hp">
+          <div class="orb-well"><div class="orb-fluid" id="hpFluid" style="height:100%"></div></div>
+          <div class="orb-glass"></div>
+          <div class="orb-rim"></div>
+          <div class="orb-text">
+            <div>
+              <span id="hudHp">100</span> / <span id="hudHpMax">100</span>
+              <span class="orb-text-line2">生命</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mana Orb (right bottom) — placeholder full -->
+        <div class="orb orb-mana">
+          <div class="orb-well"><div class="orb-fluid" style="height:78%"></div></div>
+          <div class="orb-glass"></div>
+          <div class="orb-rim"></div>
+          <div class="orb-text">
+            <div>
+              <span>350</span> / <span>450</span>
+              <span class="orb-text-line2">法力</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skill bar (center bottom) -->
+        <div class="hud-skill-bar">
+          <div class="slot slot-dodge"><span class="slot-key">SPACE</span><span class="slot-glyph">»</span></div>
+          <div class="slot slot-skill"><span class="slot-key">LMB</span><span class="slot-glyph">↟</span></div>
+          <div class="slot slot-skill"><span class="slot-key">Q</span><span class="slot-glyph">✸</span></div>
+          <div class="slot slot-skill"><span class="slot-key">W</span><span class="slot-glyph">⌁</span></div>
+          <div class="slot slot-skill"><span class="slot-key">E</span><span class="slot-glyph">☄</span></div>
+          <div class="slot slot-skill"><span class="slot-key">R</span><span class="slot-glyph">✜</span></div>
+          <div class="slot slot-skill"><span class="slot-key">T</span><span class="slot-glyph">⌖</span></div>
+          <div class="slot slot-utility"><span class="slot-key">1</span><span class="slot-glyph">⚗</span><span class="slot-cd">x3</span></div>
+          <div class="slot slot-utility"><span class="slot-key">2</span><span class="slot-glyph">⚐</span><span class="slot-cd">x1</span></div>
+        </div>
+
+        <!-- XP Bar -->
+        <div class="hud-xp-bar">
+          <span class="hud-xp-label">等级 <span id="hudLevel">14</span> · <span id="hudXp">38%</span></span>
+          <div class="hud-xp-fill" id="hudXpFill" style="width:38%"></div>
+        </div>
+      </div>
+
+      <!-- =================== World Dim =================== -->
+      <div id="worldDim" class="world-dim"></div>
+
+      <!-- =================== Scene Hint =================== -->
+      <div id="sceneHint" class="scene-hint">
+        I 背包 · C 角色 · K 技能 · ESC 返回菜单
+      </div>
+
+      <!-- =================== INVENTORY PANEL =================== -->
+      <div id="invPanel" class="game-panel">
+        <div class="inv-panel">
+          <span class="inv-panel-rivet-tr"></span>
+          <span class="inv-panel-rivet-bl"></span>
+          <div class="inv-header">
+            <div class="inv-title">背包</div>
+            <div class="inv-filters">
+              <button class="inv-filter-tab is-active">全部</button>
+              <button class="inv-filter-tab">武器</button>
+              <button class="inv-filter-tab">护甲</button>
+              <button class="inv-filter-tab">饰品</button>
+              <button class="inv-filter-tab">材料</button>
+            </div>
+            <button class="inv-close" data-close="inv">×</button>
+          </div>
+          <div class="inv-body">
+            <div class="inv-equipment-col">
+              <div class="inv-col-label">装备 <span class="inv-col-label-count">7 / 8</span></div>
+              <div class="inv-equipment-grid" id="equipGrid"></div>
+              <div class="inv-body-silhouette"></div>
+            </div>
+            <div class="inv-grid-col">
+              <div class="inv-col-label">物品 <span class="inv-col-label-count">26 / 60</span></div>
+              <div class="inv-grid" id="invGrid"></div>
+            </div>
+            <div class="inv-preview-col">
+              <div class="inv-col-label">物品详情 <span class="inv-col-label-count">无选中</span></div>
+              <div class="inv-preview">
+                <div class="inv-preview-empty">悬停或选中任意物品<br>即可查看详情</div>
+              </div>
+            </div>
+          </div>
+          <div class="inv-bottom">
+            <div class="inv-currency">
+              <div class="inv-currency-icon gold">金</div>
+              <div class="inv-currency-info">
+                <span class="inv-currency-label">金币</span>
+                <span class="inv-currency-value">12,840</span>
+              </div>
+              <span class="inv-currency-delta">+184</span>
+            </div>
+            <div class="inv-currency">
+              <div class="inv-currency-icon corruption">蚀</div>
+              <div class="inv-currency-info">
+                <span class="inv-currency-label">腐化碎片</span>
+                <span class="inv-currency-value">47</span>
+              </div>
+              <span class="inv-currency-delta">+3</span>
+            </div>
+            <div class="inv-currency">
+              <div class="inv-currency-icon material">材</div>
+              <div class="inv-currency-info">
+                <span class="inv-currency-label">工艺材料</span>
+                <span class="inv-currency-value">218</span>
+              </div>
+              <span class="inv-currency-delta">+12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== CHARACTER PANEL =================== -->
+      <div id="charPanel" class="game-panel">
+        <div class="char-panel">
+          <span class="char-rivet-tr"></span>
+          <span class="char-rivet-bl"></span>
+          <div class="char-header">
+            <div class="char-title">角色</div>
+            <div class="char-build-switcher">
+              <button class="char-build-btn is-active">毒蚀弹射猎人</button>
+              <button class="char-build-btn">暴击触发猎人</button>
+              <button class="char-build-btn">腐化弓手</button>
+            </div>
+            <button class="char-close" data-close="char">×</button>
+          </div>
+          <div class="char-body">
+            <div class="char-identity-col">
+              <div class="char-section-label">角色身份</div>
+              <div class="char-portrait">
+                <svg class="char-portrait-svg" viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <rect x="11" y="2" width="10" height="6" fill="#2A2E35"/>
+                  <rect x="13" y="6" width="6" height="4" fill="#0A0C10"/>
+                  <rect x="14" y="8" width="1" height="1" fill="#5E646D"/>
+                  <rect x="17" y="8" width="1" height="1" fill="#5E646D"/>
+                  <rect x="9" y="10" width="14" height="2" fill="#1F2329"/>
+                  <rect x="8" y="12" width="16" height="20" fill="#23272F"/>
+                  <rect x="9" y="22" width="14" height="2" fill="#0A0C10"/>
+                  <rect x="14" y="14" width="4" height="2" fill="#7E1F24"/>
+                  <rect x="11" y="32" width="3" height="12" fill="#1A1D22"/>
+                  <rect x="18" y="32" width="3" height="12" fill="#1A1D22"/>
+                  <rect x="3" y="14" width="2" height="20" fill="#3A4048"/>
+                  <rect x="23" y="14" width="3" height="14" fill="#1A1D22"/>
+                </svg>
+              </div>
+              <div class="char-meta">
+                <div class="char-archetype">猎人</div>
+                <div class="char-level">14 级</div>
+              </div>
+              <div class="char-build-name">毒蚀弹射 / VENOM RICOCHET</div>
+              <div class="char-tags">
+                <span class="char-tag tag-poison">毒素</span>
+                <span class="char-tag tag-crit">暴击</span>
+                <span class="char-tag tag-ricochet">弹射</span>
+              </div>
+            </div>
+            <div class="char-stats-col">
+              <div class="char-stats-group offense">
+                <div class="char-section-label">攻击属性</div>
+                <div class="char-stat-row is-key"><span class="char-stat-icon">◈</span><span class="char-stat-label">暴击率</span><span class="char-stat-value">28 %</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◈</span><span class="char-stat-label">暴击伤害</span><span class="char-stat-value">240 %</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◈</span><span class="char-stat-label">投射物数量</span><span class="char-stat-value">4</span></div>
+                <div class="char-stat-row is-key"><span class="char-stat-icon">◈</span><span class="char-stat-label">毒素 DPS</span><span class="char-stat-value">142 /s</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◈</span><span class="char-stat-label">触发几率</span><span class="char-stat-value">18 %</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◈</span><span class="char-stat-label">攻击速度</span><span class="char-stat-value">1.42 /s</span></div>
+              </div>
+              <div class="char-stats-group defense">
+                <div class="char-section-label">防御属性</div>
+                <div class="char-stat-row is-key"><span class="char-stat-icon">◆</span><span class="char-stat-label">生命</span><span class="char-stat-value" id="charPanelHp">1,420</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◆</span><span class="char-stat-label">护甲</span><span class="char-stat-value">186</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◆</span><span class="char-stat-label">闪避</span><span class="char-stat-value">24 %</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◆</span><span class="char-stat-label">腐化抗性</span><span class="char-stat-value">18 %</span></div>
+                <div class="char-stat-row"><span class="char-stat-icon">◆</span><span class="char-stat-label">生命偷取</span><span class="char-stat-value">6 %</span></div>
+              </div>
+            </div>
+            <div class="char-build-col">
+              <div class="char-section">
+                <div class="char-section-label">流派概述</div>
+                <div class="char-build-title">毒蚀弹射猎人</div>
+                <div class="char-build-bullet">投射物连锁向附近敌人散布毒素</div>
+                <div class="char-build-bullet">暴击触发尸蚀爆发，重新施放最后技能</div>
+                <div class="char-build-bullet">腐化等级提升毒素扩散范围</div>
+              </div>
+              <div class="char-section">
+                <div class="char-section-label">派系机制</div>
+                <div class="char-mechanic">
+                  <div class="char-mechanic-name">蛇毒绽放</div>
+                  <div class="char-mechanic-desc">暴击向 6 米内所有敌人散布毒素层。</div>
+                </div>
+                <div class="char-mechanic">
+                  <div class="char-mechanic-name">尸蚀触发</div>
+                  <div class="char-mechanic-desc">击杀中毒敌人触发最近技能，强度 60%。</div>
+                </div>
+              </div>
+              <div class="char-section">
+                <div class="char-section-label">腐化状态</div>
+                <div class="char-corruption">
+                  <div class="char-corruption-row"><span class="char-corruption-label">腐化等级</span><span class="char-corruption-value">3 / 10</span></div>
+                  <div class="char-corruption-bar"><div class="char-corruption-bar-fill" style="width:30%"></div></div>
+                  <div class="char-corruption-row"><span class="char-corruption-label">不稳定度</span><span class="char-corruption-value">12%</span></div>
+                  <div class="char-mutation">
+                    <div class="char-mutation-line up">毒素伤害 +24%</div>
+                    <div class="char-mutation-line down">物理减伤 −12%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="char-bottom">
+            <div class="char-derived key"><div class="char-derived-label">DPS</div><div class="char-derived-value">2,840</div></div>
+            <div class="char-derived"><div class="char-derived-label">有效生命</div><div class="char-derived-value">1,720</div></div>
+            <div class="char-derived key"><div class="char-derived-label">毒层 / 秒</div><div class="char-derived-value">4.8</div></div>
+            <div class="char-derived"><div class="char-derived-label">触发 / 秒</div><div class="char-derived-value">1.2</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== SKILL PANEL =================== -->
+      <div id="skillPanel" class="game-panel">
+        <div class="skill-panel">
+          <span class="skill-rivet-tr"></span>
+          <span class="skill-rivet-bl"></span>
+          <div class="skill-header">
+            <div class="skill-title">技能</div>
+            <div class="skill-build-switcher">
+              <button class="skill-build-btn is-active">毒蚀弹射</button>
+              <button class="skill-build-btn">暴击触发</button>
+              <button class="skill-build-btn">腐化弓手</button>
+            </div>
+            <button class="skill-close" data-close="skill">×</button>
+          </div>
+          <div class="skill-body">
+            <div class="skill-list-col">
+              <div class="skill-section-label">技能列表</div>
+              <div class="skill-list" id="skillList"></div>
+            </div>
+            <div class="skill-detail-col">
+              <div class="skill-detail-header">
+                <div class="skill-detail-icon"><span class="skill-icon-glyph">毒</span></div>
+                <div class="skill-detail-titles">
+                  <div class="skill-detail-name">毒蚀爆发</div>
+                  <div class="skill-detail-en">VENOM BURST</div>
+                </div>
+              </div>
+              <div class="skill-detail-tags">
+                <span class="skill-tag tag-poison">毒素</span>
+                <span class="skill-tag tag-projectile">投射物</span>
+                <span class="skill-tag tag-trigger">触发</span>
+              </div>
+              <div class="skill-stats-grid">
+                <div class="skill-stat-cell"><span class="label">伤害类型</span><span class="value">毒素 / 投射物</span></div>
+                <div class="skill-stat-cell"><span class="label">缩放方向</span><span class="value">攻击力 + 毒素伤害</span></div>
+                <div class="skill-stat-cell"><span class="label">冷却</span><span class="value">8 秒</span></div>
+                <div class="skill-stat-cell"><span class="label">法力消耗</span><span class="value">32</span></div>
+              </div>
+              <div class="skill-fantasy">
+                <span class="skill-fantasy-label">技能 fantasy</span>
+                引出毒蚀云雾笼罩敌人，命中后扩散并叠加毒层。每命中一名敌人，毒素层数 +1，并向半径内传播。
+              </div>
+              <div class="skill-trigger">
+                <span class="skill-trigger-label">运行时交互</span>
+                当目标毒素层数 ≥ 5 时，触发尸蚀爆发，造成（毒素 DPS × 8）范围伤害。
+              </div>
+            </div>
+            <div class="skill-synergy-col">
+              <div class="skill-syn-section">
+                <div class="skill-section-label">流派交互</div>
+                <div class="skill-syn-build-name">毒蚀弹射</div>
+                <div class="skill-syn-bullet">暴击触发毒素 nova</div>
+                <div class="skill-syn-bullet">弹射继承毒素层</div>
+                <div class="skill-syn-bullet">腐化扩大爆发半径</div>
+              </div>
+              <div class="skill-syn-section">
+                <div class="skill-section-label">兼容辅助</div>
+                <div class="skill-supports">
+                  <div class="skill-support"><span class="skill-support-name">毒素连锁</span></div>
+                  <div class="skill-support"><span class="skill-support-name">尸蚀触发</span></div>
+                  <div class="skill-support"><span class="skill-support-name">回响爆发</span></div>
+                </div>
+              </div>
+              <div class="skill-syn-section">
+                <div class="skill-section-label">腐化突变</div>
+                <div class="skill-corruption">
+                  <div class="skill-corruption-line up">+24% 毒素扩散范围</div>
+                  <div class="skill-corruption-line down">-12% 护甲效率</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="skill-bottom">
+            <div class="skill-bottom-tags">
+              <span class="skill-bottom-tags-label">标签</span>
+              <div style="display:flex; gap:6px;">
+                <span class="skill-tag tag-poison">毒素</span>
+                <span class="skill-tag tag-projectile">投射物</span>
+                <span class="skill-tag tag-trigger">触发</span>
+              </div>
+            </div>
+            <div class="skill-bottom-stats">
+              <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">DPS</span><span class="skill-bottom-stat-value">2,840</span></div>
+              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">冷却</span><span class="skill-bottom-stat-value">8<span class="skill-bottom-stat-unit">秒</span></span></div>
+              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">法力</span><span class="skill-bottom-stat-value">32</span></div>
+              <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">投射物</span><span class="skill-bottom-stat-value">3</span></div>
+              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">触发率</span><span class="skill-bottom-stat-value">18<span class="skill-bottom-stat-unit">%</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== MAIN MENU =================== -->
+      <div id="menuScreen" class="is-active">
+        <!-- Layer 1 Sky -->
+        <div class="layer layer-sky"></div>
+        <!-- Layer 2 Moon -->
+        <div class="layer layer-moon">
+          <div class="moon-haze"></div>
+          <div class="moon-disc"></div>
+        </div>
+        <!-- Layer 3 Castle -->
+        <div class="layer layer-castle">
+          <svg class="castle-svg" viewBox="0 0 680 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path fill="#16181D" d="
+              M0,320
+              L0,180 L20,180 L20,160 L40,160 L40,180 L80,180
+              L80,120 L88,120 L88,100 L96,100 L96,120 L116,120 L116,180
+              L160,180 L160,150 L180,150 L180,170 L210,170
+              L210,80 L222,80 L222,55 L234,55 L234,80 L256,80 L256,170
+              L290,170 L290,160 L320,160 L320,170 L360,170
+              L360,90 L376,90 L376,60 L392,60 L392,90 L420,90 L420,170
+              L460,170 L460,140 L490,140 L490,170 L520,170
+              L520,40 L534,40 L534,12 L548,12 L548,40 L572,40 L572,170
+              L610,170 L610,160 L660,160 L660,170
+              L680,170 L680,320 Z" />
+          </svg>
+        </div>
+        <!-- Layer 4 Fog -->
+        <div class="layer layer-fog">
+          <div class="fog-band fog-band-1"></div>
+          <div class="fog-band fog-band-2"></div>
+          <div class="fog-band fog-band-3"></div>
+          <div class="fog-band fog-band-4"></div>
+          <div class="fog-band fog-band-5"></div>
+        </div>
+        <!-- Layer 6 Campfire -->
+        <div class="layer layer-campfire">
+          <div class="campfire-glow"></div>
+          <svg class="campfire-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <g fill="#23262B">
+              <ellipse cx="50" cy="148" rx="14" ry="6"/>
+              <ellipse cx="82" cy="156" rx="12" ry="5"/>
+              <ellipse cx="118" cy="156" rx="13" ry="5"/>
+              <ellipse cx="150" cy="148" rx="14" ry="6"/>
+            </g>
+            <path fill="#A8481D" d="M100,68 C 80,96 68,116 78,138 C 84,148 96,150 100,146 C 104,150 116,148 122,138 C 132,116 120,96 100,68 Z"/>
+            <path fill="#F28C38" d="M100,86 C 88,106 84,124 92,138 C 96,143 102,143 100,138 C 104,143 108,143 108,138 C 116,124 112,106 100,86 Z"/>
+          </svg>
+        </div>
+        <!-- Layer 7 Logo -->
+        <div class="layer layer-logo">
+          <div class="logo" aria-label="BAD ARPG">
+            <div class="logo-bracket logo-bracket-left"><div class="logo-bracket-decor"></div></div>
+            <div class="logo-center">
+              <div class="logo-rule logo-rule-left"></div>
+              <div class="logo-rule logo-rule-right"></div>
+              <div class="logo-text">BAD ARPG</div>
+            </div>
+            <div class="logo-bracket logo-bracket-right"><div class="logo-bracket-decor"></div></div>
+          </div>
+        </div>
+        <!-- Layer 8 Menu Buttons -->
+        <nav class="layer layer-menu">
+          <div class="menu-stack">
+            <button class="btn-main is-disabled" disabled>继续游戏</button>
+            <button class="btn-main" id="menuNewGame">新的旅程</button>
+            <button class="btn-main" id="menuCharacter">角色</button>
+            <button class="btn-main" id="menuSettings">设置</button>
+            <button class="btn-main" id="menuExit">退出</button>
+          </div>
+        </nav>
+        <!-- Version -->
+        <div class="layer layer-version">
+          <div class="version-text">
+            <span class="version-build">v0.0.2a</span>
+            <span class="version-tag">抢先体验 · FIRST PLAYABLE</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

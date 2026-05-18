@@ -5,10 +5,20 @@
  */
 
 // =========================================================================
-// CANVAS
+// CANVAS / WORLD
 // =========================================================================
 export const CANVAS_W = 1920;
 export const CANVAS_H = 1080;
+
+// World is bigger than viewport. Camera follows player; world stays a
+// fixed 3200x3200 arena per Phase 2A spec.
+export const WORLD_W = 3200;
+export const WORLD_H = 3200;
+
+// Open combat arena at the center; ruins/corruption pits outside.
+export const ARENA_CENTER_X = WORLD_W / 2;
+export const ARENA_CENTER_Y = WORLD_H / 2;
+export const ARENA_HALF = 700;  // ~1400x1400 open combat arena
 
 // =========================================================================
 // SIMULATION BOUNDARIES (Step 5 of Phase 2 directive)
@@ -86,10 +96,12 @@ export const TIME = {
   MOTION_PRESS:   80,
   DODGE_DURATION: 140,        // dodge i-frame window — shorter / harder
   DODGE_COOLDOWN: 800,
-  HIT_STOP_NORMAL: 60,        // hit-stop pause on enemy hit
-  HIT_STOP_CRIT:   120,       // dramatic stop on crit
-  HIT_STOP_DEATH:  90,        // confirmation pause on kill
-  HIT_STOP_HURT:   120,       // when player is hit, the world stops briefly
+  // Phase 2A spec ranges: normal 25-40, crit 50-70, elite slightly more.
+  HIT_STOP_NORMAL: 35,        // hit-stop pause on enemy hit
+  HIT_STOP_CRIT:   60,        // dramatic stop on crit
+  HIT_STOP_ELITE:  85,        // stronger pause when hitting elite
+  HIT_STOP_DEATH:  60,        // confirmation pause on kill
+  HIT_STOP_HURT:   90,        // when player is hit, the world stops briefly
   DAMAGE_LIFESPAN: 480,
   LOOT_FADEIN:    120,
   LOOT_FADEOUT:   180,
@@ -144,5 +156,10 @@ export const TUNE = {
   ENEMY_SPAWN_INTERVAL: 1800,
   ENEMY_INITIAL_COUNT:  6,
   // Foot dust
-  FOOTSTEP_VELOCITY_THRESHOLD: 80, // require moving >=80 px/s to spawn dust
+  FOOTSTEP_VELOCITY_THRESHOLD: 80,
+  // Corruption zones
+  CORRUPTION_ZONE_COUNT:       3,
+  CORRUPTION_ZONE_RADIUS:      180,
+  CORRUPTION_ZONE_DOT:         4,    // damage per second while standing in
+  CORRUPTION_ZONE_DOT_TICK:    500,  // ms between ticks
 } as const;
