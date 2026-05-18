@@ -3,7 +3,7 @@ import type { MonsterDirector } from '../core/MonsterDirector.js';
 import { MonsterRole } from '../types/MonsterRole.js';
 
 /**
- * MonsterDebugPanel — F12 toggle.
+ * MonsterDebugPanel — F3 toggle.
  *
  * Surfaces:
  *   - Active monster count + role breakdown.
@@ -76,7 +76,7 @@ export class MonsterDebugPanel {
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
     const parts: string[] = [];
-    parts.push('<div style="color:#E1A84A; font-weight:700; letter-spacing:1px">MONSTER DEBUG  ·  F12 to close</div>');
+    parts.push('<div style="color:#E1A84A; font-weight:700; letter-spacing:1px">MONSTER DEBUG  ·  F3 to close</div>');
     parts.push(`<div style="margin:4px 0 8px 0; color:#8C9198">active: <b>${total}</b>  ·  aggroed: <b>${aggroed}</b>  ·  elite: <b>${eliteCount}</b></div>`);
     parts.push('<div style="color:#D6DBE3">Role breakdown:</div>');
     for (const role of Object.keys(MonsterRole) as Array<keyof typeof MonsterRole>) {
@@ -91,14 +91,14 @@ export class MonsterDebugPanel {
         parts.push(`<div style="color:#E7C66A">  ${id}  × ${eliteMods[id]}</div>`);
       }
     }
-    parts.push('<div style="margin-top:8px; color:#5E646D">F12 again to hide. Density / pacing live inside MonsterDirector.</div>');
+    parts.push('<div style="margin-top:8px; color:#5E646D">F3 again to hide. Density / pacing live inside MonsterDirector.</div>');
     this.root.innerHTML = parts.join('');
   }
 
   private installKeyListener(): void {
     if (this.keyListenerInstalled) return;
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'F12') {
+      if (e.code === 'F3') {
         e.preventDefault();
         this.toggle();
       }

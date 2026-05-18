@@ -5,7 +5,7 @@ import { TooltipBuilder } from '../core/TooltipBuilder.js';
 import { RARITY_COLOR } from '../types/ItemRarity.js';
 
 /**
- * ItemDebugPanel — F11 toggle.
+ * ItemDebugPanel — F2 toggle.
  *
  * Streams the most recent generated items with their rarity, base, and
  * full affix tier breakdown. Mirrors the SkillDebugPanel / CombatDebugPanel
@@ -65,7 +65,7 @@ export class ItemDebugPanel {
     }
     const recent = this.generator.recent();
     const parts: string[] = [];
-    parts.push('<div style="color:#E1A84A; font-weight:700; letter-spacing:1px">ITEM DEBUG  ·  F11 to close</div>');
+    parts.push('<div style="color:#E1A84A; font-weight:700; letter-spacing:1px">ITEM DEBUG  ·  F2 to close</div>');
     parts.push(`<div style="margin:4px 0 8px 0; color:#8C9198">Generated items (latest first): ${recent.length}</div>`);
 
     for (let i = recent.length - 1; i >= 0; i--) {
@@ -90,7 +90,7 @@ export class ItemDebugPanel {
   private installKeyListener(): void {
     if (this.keyListenerInstalled) return;
     window.addEventListener('keydown', (e) => {
-      if (e.code === 'F11') {
+      if (e.code === 'F2') {
         e.preventDefault();
         this.toggle();
       }
