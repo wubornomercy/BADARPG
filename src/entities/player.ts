@@ -88,6 +88,12 @@ export class Player {
 
   facingX = 1; facingY = 0;
 
+  /**
+   * Base sprite scale. Bumped from 1.0 → 1.4 after playtest — pixel
+   * sprites read too small on default Pixel Dark Steel canvas at 1.0.
+   */
+  baseVisualScale = 1.4;
+
   constructor() {
     // Initialize stat system BEFORE first read of hpMax / maxMana getters.
     this.statManager = new StatManager();
@@ -115,6 +121,10 @@ export class Player {
     this.body = new Graphics();
     this.drawBody(false);
     this.container.addChild(this.body);
+
+    // Apply baseline visual scale once — player has no per-frame scale
+    // override (unlike Enemy hit-squash), so this sticks for the lifetime.
+    this.container.scale.set(this.baseVisualScale, this.baseVisualScale);
   }
 
   private drawBody(hit: boolean) {

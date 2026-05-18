@@ -68,8 +68,13 @@ export class Enemy {
   separationStrength: number;
   lastAttackAt = 0;
 
-  /** Extra Pixi scale layered on top of hit-squash (e.g. TITANIC = 1.25). */
-  baseVisualScale = 1;
+  /**
+   * Base sprite scale before the hit-squash multiplier. Default bumped
+   * from 1.0 to 1.4 after playtest feedback — the spec's pixel sprites
+   * read too small relative to the player at 1.0. TITANIC elite modifier
+   * multiplies on top of this (so TITANIC → 1.4 × 1.25 ≈ 1.75x).
+   */
+  baseVisualScale = 1.4;
 
   constructor(x: number, y: number, definition: MonsterDefinition, level: number = definition.level) {
     this.x = x;
@@ -103,6 +108,10 @@ export class Enemy {
     this.eyes.rect(-4, -8, 2, 2).fill(0xB2383F);
     this.eyes.rect(2, -8, 2, 2).fill(0xB2383F);
     this.container.addChild(this.eyes);
+
+    // Apply baseline visual scale immediately so the sprite isn't tiny
+    // on its first rendered frame.
+    this.container.scale.set(this.baseVisualScale, this.baseVisualScale);
   }
 
   private drawBody(hitAlpha: number) {

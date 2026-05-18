@@ -13,14 +13,18 @@ import { DamageType } from '../../combat/types/DamageType.js';
 export const SKILL_CORRUPT_BOLT: SkillDefinition = {
   id:            'corrupt_bolt',
   name:          '腐蚀箭',
-  description:   '低费快速毒素弹道，建立毒素层。',
+  description:   '基础攻击 — 无消耗、无冷却的毒素弹道，可无限连发。',
   icon:          '↟',
-  tags:          ['projectile', 'spell', 'poison'],
+  tags:          ['projectile', 'spell', 'poison', 'basic'],
   behaviorType:  SkillBehaviorType.PROJECTILE,
   targetingType: SkillTargetingType.DIRECTIONAL,
-  castTime:      0.25,
+  // Player-feel tweak vs spec V1: cast time + mana cost reduced to 0 so
+  // the slot-0 / RMB primary acts as a true free basic attack. Spec had
+  // 0.25 s cast / 6 mana — kept for reference but a no-cd, no-cost,
+  // instant basic feels better at the starting kit.
+  castTime:      0,
   cooldown:      0,
-  manaCost:      6,
+  manaCost:      0,
   baseDamage:    18,
   damageType:    DamageType.POISON,
   canCrit:       true,
@@ -43,7 +47,9 @@ export const SKILL_VENOM_NOVA: SkillDefinition = {
   tags:          ['aoe', 'poison', 'spell'],
   behaviorType:  SkillBehaviorType.NOVA,
   targetingType: SkillTargetingType.SELF_CENTERED,
-  castTime:      0.5,
+  // Player-feel tweak vs spec V1: cast time removed (spec had 0.5 s).
+  // The 4 s cooldown still gates spam; the lockout was awkward to play.
+  castTime:      0,
   cooldown:      4,
   manaCost:      18,
   baseDamage:    32,
@@ -80,7 +86,9 @@ export const SKILL_CORRUPTION_FIELD: SkillDefinition = {
   tags:          ['aoe', 'dot', 'poison'],
   behaviorType:  SkillBehaviorType.GROUND_AOE,
   targetingType: SkillTargetingType.GROUND_TARGET,
-  castTime:      0.5,
+  // Player-feel tweak vs spec V1: cast time removed (spec had 0.5 s).
+  // The 8 s cooldown is the real cost; the wind-up felt sluggish.
+  castTime:      0,
   cooldown:      8,
   manaCost:      22,
   baseDamage:    12,

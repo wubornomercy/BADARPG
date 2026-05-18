@@ -58,21 +58,21 @@ describe('Projectile behaviour', () => {
   it('TEST 11 — ownerId / sourceSkillId / tags preserved on spawn', () => {
     const { sm } = setup([]);
     const caster = makeCaster();
+    // Corrupt Bolt is the free basic now (cast time 0) — projectile
+    // spawns immediately at the cast time we pass in.
     sm.cast(caster, SKILL_CORRUPT_BOLT.id, {
       casterId: caster.id, skillId: SKILL_CORRUPT_BOLT.id,
       castPosition: { x: caster.x, y: caster.y },
       direction: { x: 1, y: 0 },
       runtimeTags: ['fromInput'],
     }, 0);
-    // Drive past the 0.25 s cast time so the projectile actually spawns.
-    sm.update(300, 0);
     const list = sm.projectiles.all();
     expect(list.length).toBe(1);
     const p = list[0];
     expect(p.ownerId).toBe('P1');
     expect(p.sourceSkillId).toBe(SKILL_CORRUPT_BOLT.id);
     expect(p.tags).toEqual(expect.arrayContaining(['projectile', 'spell', 'poison', 'fromInput']));
-    expect(p.creationTime).toBe(300);
+    expect(p.creationTime).toBe(0);
   });
 
   it('TEST 6 — projectile dies after travelling maxDistance', () => {

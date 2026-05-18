@@ -5,9 +5,14 @@ import { MonsterArchetype } from '../types/MonsterArchetype.js';
 /**
  * Starter monster archetypes — exactly 5 per spec.
  *
- * Numeric values are verbatim from the spec. AI selection is by string
- * id (`aiType`) — MonsterManager looks it up against the AI registry at
- * spawn time. Behavior-specific tunables live in `behaviorConfig`.
+ * Numeric values track the spec EXCEPT for moveSpeed, which has been
+ * tuned down after playtesting (spec values were strictly faster than
+ * the player base move speed of 5.2, making kiting impossible). Each
+ * deviation is documented inline against the original spec value.
+ *
+ * AI selection is by string id (`aiType`) — MonsterManager looks it up
+ * against the AI registry at spawn time. Behavior-specific tunables
+ * live in `behaviorConfig`.
  */
 
 export const MONSTER_ROTLING: MonsterDefinition = {
@@ -16,7 +21,9 @@ export const MONSTER_ROTLING: MonsterDefinition = {
   role:         MonsterRole.SWARM,
   level:        1,
   baseHP:       42,
-  moveSpeed:    5.8,
+  // Player-feel tweak vs spec V1 (was 5.8): swarm now slower than player
+  // base (5.2) so kiting is possible. Pressure comes from count + density.
+  moveSpeed:    4.2,
   aggroRadius:  7,
   xpReward:     4,
   lootMultiplier: 1.0,
@@ -34,7 +41,9 @@ export const MONSTER_PLAGUE_HOUND: MonsterDefinition = {
   role:         MonsterRole.CHARGER,
   level:        1,
   baseHP:       80,
-  moveSpeed:    4.8,
+  // Player-feel tweak vs spec V1 (was 4.8): chargers lean on their dash
+  // burst, not sustained chase speed.
+  moveSpeed:    3.6,
   aggroRadius:  9,
   xpReward:     9,
   lootMultiplier: 1.2,
@@ -55,7 +64,9 @@ export const MONSTER_BLIGHT_ARCHER: MonsterDefinition = {
   role:         MonsterRole.RANGED,
   level:        1,
   baseHP:       55,
-  moveSpeed:    4.6,
+  // Player-feel tweak vs spec V1 (was 4.6): archers kite, they don't
+  // outrun. Slower base ensures the player can gap-close.
+  moveSpeed:    3.2,
   aggroRadius:  10,
   xpReward:     7,
   lootMultiplier: 1.1,
@@ -75,7 +86,9 @@ export const MONSTER_FESTERLING: MonsterDefinition = {
   role:         MonsterRole.SUICIDE,
   level:        1,
   baseHP:       30,
-  moveSpeed:    6.4,
+  // Player-feel tweak vs spec V1 (was 6.4): still faster than the swarm
+  // but no longer outruns the player — gives reaction time.
+  moveSpeed:    4.6,
   aggroRadius:  8,
   xpReward:     8,
   lootMultiplier: 1.15,
@@ -95,7 +108,9 @@ export const MONSTER_CORRUPT_BROODMOTHER: MonsterDefinition = {
   role:         MonsterRole.SUMMONER,
   level:        1,
   baseHP:       120,
-  moveSpeed:    3.8,
+  // Player-feel tweak vs spec V1 (was 3.8): kite-heavy summoner stays
+  // slow on the move; threat comes from its summons.
+  moveSpeed:    2.8,
   aggroRadius:  10,
   xpReward:     18,
   lootMultiplier: 1.4,

@@ -55,20 +55,22 @@ describe('Skill cast — validation', () => {
   it('TEST 2 — mana cost deducted on cast', () => {
     const { sm } = setup();
     const c = makeCaster({ mana: 100 });
-    const r = sm.cast(c, SKILL_CORRUPT_BOLT.id, {
-      casterId: c.id, skillId: SKILL_CORRUPT_BOLT.id,
+    // Venom Nova costs 18 mana (Corrupt Bolt is the free basic now).
+    const r = sm.cast(c, 'venom_nova', {
+      casterId: c.id, skillId: 'venom_nova',
       castPosition: { x: 0, y: 0 }, direction: { x: 1, y: 0 },
       runtimeTags: [],
     }, 0);
     expect(r.ok).toBe(true);
-    expect(c.mana).toBe(100 - SKILL_CORRUPT_BOLT.manaCost);
+    expect(c.mana).toBe(100 - 18);
   });
 
   it('insufficient mana → fail with INSUFFICIENT_MANA', () => {
     const { sm } = setup();
     const c = makeCaster({ mana: 2 });
-    const r = sm.cast(c, SKILL_CORRUPT_BOLT.id, {
-      casterId: c.id, skillId: SKILL_CORRUPT_BOLT.id,
+    // Venom Nova requires 18 mana; 2 isn't enough.
+    const r = sm.cast(c, 'venom_nova', {
+      casterId: c.id, skillId: 'venom_nova',
       castPosition: { x: 0, y: 0 }, direction: { x: 1, y: 0 },
       runtimeTags: [],
     }, 0);
@@ -135,21 +137,33 @@ describe('Skill cast — validation', () => {
   });
 
   it('non-triggered cast respects cast-time lock', () => {
+    // Starter skills no longer have cast times (player-feel tweak), so
+    // register a one-off slow-cast skill specifically for this test.
     const { sm } = setup();
+    sm.register({
+      id: 'slow_cast_test',
+      name: 'slow cast', description: 'test', icon: '',
+      tags: ['spell'],
+      behaviorType: SkillBehaviorType.NOVA,
+      targetingType: SkillTargetingType.SELF_CENTERED,
+      castTime: 0.5,
+      cooldown: 0,
+      manaCost: 0,
+      baseDamage: 1,
+    });
     const c = makeCaster();
-    // Venom Nova has 0.5s cast time
     const ctx = {
-      casterId: c.id, skillId: 'venom_nova',
+      casterId: c.id, skillId: 'slow_cast_test',
       castPosition: { x: 0, y: 0 }, direction: { x: 1, y: 0 },
       runtimeTags: [],
     };
-    const r1 = sm.cast(c, 'venom_nova', ctx, 0);
+    const r1 = sm.cast(c, 'slow_cast_test', ctx, 0);
     expect(r1.ok).toBe(true);
     expect(r1.pending).toBe(true);
     expect(c.castingUntil).toBeGreaterThan(0);
     // While still casting, trying to start another non-trigger cast fails
-    const r2 = sm.cast(c, 'corrupt_bolt', {
-      ...ctx, skillId: 'corrupt_bolt',
+    const r2 = sm.cast(c, 'venom_nova', {
+      ...ctx, skillId: 'venom_nova',
     }, 100);
     expect(r2.ok).toBe(false);
     expect(r2.reason).toBe(CastFailReason.STILL_CASTING);

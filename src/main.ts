@@ -286,7 +286,6 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     player.dodgeUntil    = now + 1500; // grants isInvulnerable for the i-frame window
     player.hitFlashUntil = now + 200;
     player.castingUntil  = 0;
-    castDiag.lastResult = 'RESPAWNED';
   });
   // Per-hit VFX on enemies — pipeline owns math, listener owns visuals.
   combat.events.on(CombatEventType.ON_HIT, (ev) => {
@@ -391,47 +390,16 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
   const PICKUP_RADIUS_PX = 40;
 
-  /** Diagnostic state for "why are skills not firing?" troubleshooting. */
-  const castDiag = {
-    attempts:            0,
-    lastSlot:             -1,
-    lastSkillId:          '' as string | undefined,
-    lastResult:          '' as string,
-    lastReason:           undefined as string | undefined,
-    framesSinceAttempt:   9999,
+  // F12 console hook for emergency debugging — no on-screen UI.
+  // Paste into the browser console:
+  //   window.__bad.skills        — SkillManager
+  //   window.__bad.player        — Player runtime state
+  //   window.__bad.sim           — fps / projectile / enemy counts
+  (window as any).__bad = {
+    get skills() { return skills; },
+    get player() { return player; },
+    sim,
   };
-  // Expose for F12 console inspection. Press F12 in the browser, paste:
-  //   window.__bad.castDiag       — last skill input attempt + reason
-  //   window.__bad.skills         — SkillManager
-  //   window.__bad.player         — Player runtime state
-  //   window.__bad.sim            — fps / projectile / enemy counts
-  (window as any).__bad = { castDiag, get skills() { return skills; }, get player() { return player; }, sim };
-
-  // Always-visible diagnostic banner — top-left HTML overlay. Reports
-  // live FPS + the most recent skill input result. Cheap to render, big
-  // enough to spot at a glance. Helps confirm "is the game ticking?" +
-  // "did pressing Q reach the skill executor?" without opening F12.
-  const diagBanner = (() => {
-    const el = document.createElement('div');
-    el.id = 'castDiagBanner';
-    Object.assign(el.style, {
-      position:      'fixed',
-      top:           '12px',
-      left:          '12px',
-      padding:       '6px 10px',
-      background:    'rgba(7,9,13,0.78)',
-      border:        '1px solid #3A4048',
-      color:         '#BFC5CE',
-      fontFamily:    'monospace',
-      fontSize:      '12px',
-      lineHeight:    '1.5',
-      zIndex:        '8000',
-      pointerEvents: 'none',
-      whiteSpace:    'pre',
-    });
-    document.body.appendChild(el);
-    return el;
-  })();
 
   // ---------------------------------------------------------------------
   // Monster ecosystem — registries, spawner, director, AI tick.
@@ -729,9 +697,9 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
     function castSlot(slot: number) {
       const id = player.equippedSkills[slot];
-      if (!id) { castDiag.lastReason = 'NO_SKILL_IN_SLOT'; castDiag.lastSlot = slot; return; }
+      if (!id) return;
       const def = skills.get(id);
-      if (!def) { castDiag.lastReason = 'UNKNOWN_SKILL'; castDiag.lastSlot = slot; return; }
+      if (!def) return;
       // Cast position: ground target = cursor, everything else = caster.
       const isGroundTarget = def.targetingType === SkillTargetingType.GROUND_TARGET;
       const ctx: SkillContext = {
@@ -742,11 +710,6 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
         runtimeTags:  [],
       };
       const r = skills.cast(player, id, ctx, now);
-      castDiag.attempts++;
-      castDiag.lastSlot = slot;
-      castDiag.lastSkillId = id;
-      castDiag.lastResult = r.ok ? 'OK' : (r.reason ?? 'FAIL');
-      castDiag.lastReason = r.reason;
       if (!r.ok && r.reason) skillDebug.logCastFailure(id, r.reason);
     }
 
@@ -755,13 +718,6 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     if (isActionHeld('skill2'))  castSlot(1);
     if (isActionHeld('skill3'))  castSlot(2);
     if (isActionHeld('skill4'))  castSlot(3);
-
-    // Diag HUD — top-left tiny text. Renders only when a cast was attempted
-    // in the last 1.5 seconds, so it's invisible during normal play.
-    castDiag.framesSinceAttempt++;
-    if (isActionHeld('skill1') || isActionHeld('skill2') || isActionHeld('skill3') || isActionHeld('skill4') || isActionHeld('primary')) {
-      castDiag.framesSinceAttempt = 0;
-    }
 
     // ----- Monster director (pacing + composition) -----
     monsterDirector.update({
@@ -957,15 +913,6 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       statDebug.render();
       lastStatDebugRenderAt = now;
     }
-    // Always-on diagnostic banner — refresh once every ~100 ms.
-    if ((sim.frameMs && (sim as any)._lastDiagAt !== undefined ? (now - (sim as any)._lastDiagAt) : 999) > 100) {
-      (sim as any)._lastDiagAt = now;
-      const recent = castDiag.framesSinceAttempt < 90; // ~1.5 s @ 60 fps
-      diagBanner.textContent =
-        `FPS  ${sim.fps.toFixed(0).padStart(3)}\n` +
-        `Mana ${Math.floor(player.mana).toString().padStart(3)} / ${Math.floor(player.maxMana)}\n` +
-        `Skill ${recent ? `slot ${castDiag.lastSlot} → ${castDiag.lastSkillId} → ${castDiag.lastResult}` : '(no input in last 1.5s)'}`;
-    }
     // CombatDebugPanel + SkillDebugPanel render reactively from their
     // event listeners; just keep references alive so their keydown
     // handlers stay registered for the app lifetime.
@@ -1091,55 +1038,79 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     });
   }
 
-  /** Brief on-cast burst at caster position — used for PROJECTILE / BEAM and as a generic fallback. */
+  /**
+   * Cast flash for PROJECTILE / BEAM skills — concentric rings + a
+   * white core punch so it's impossible to miss against the dark
+   * Pixel-Dark-Steel background.
+   */
   function spawnCastFlash(x: number, y: number, color: number, now: number) {
     const cnt = new Container();
     cnt.x = Math.round(x); cnt.y = Math.round(y);
     layerImpactFx.addChild(cnt);
+    const core = new Graphics();
     const ring = new Graphics();
+    cnt.addChild(core);
     cnt.addChild(ring);
-    const life = 220;
+    const life = 380;
     vfxList.push({
       container: cnt, alive: true, spawnAt: now,
       update(_dt, n) {
         const t = (n - now) / life;
         if (t >= 1) { this.alive = false; return; }
-        ring.clear();
-        const r = 10 + t * 24;
         const a = 1 - t;
-        ring.circle(0, 0, r).stroke({ color, width: 2, alpha: a });
-        ring.circle(0, 0, r - 3).stroke({ color: 0xFFFFFF, width: 1, alpha: a * 0.7 });
-      },
-    });
-  }
-
-  /** Expanding ring for NOVA skills. Scales to the skill's actual radius. */
-  function spawnNovaRing(x: number, y: number, radiusPx: number, color: number, now: number) {
-    const cnt = new Container();
-    cnt.x = Math.round(x); cnt.y = Math.round(y);
-    layerImpactFx.addChild(cnt);
-    const ring = new Graphics();
-    cnt.addChild(ring);
-    const life = 460;
-    vfxList.push({
-      container: cnt, alive: true, spawnAt: now,
-      update(_dt, n) {
-        const t = (n - now) / life;
-        if (t >= 1) { this.alive = false; return; }
+        // Bright white core that punches outward — front-loaded.
+        core.clear();
+        const coreR = 8 + t * 38;
+        core.circle(0, 0, coreR).fill({ color: 0xFFFFFF, alpha: a * a * 0.55 });
+        // Triple concentric rings — reads on any background.
         ring.clear();
-        const r = radiusPx * t;
-        const a = 1 - t;
-        ring.circle(0, 0, r).stroke({ color, width: 3, alpha: a });
-        ring.circle(0, 0, r - 6).stroke({ color: 0xFFFFFF, width: 1, alpha: a * 0.5 });
+        const r1 = 16 + t * 52;
+        ring.circle(0, 0, r1).stroke({ color, width: 4, alpha: a });
+        ring.circle(0, 0, r1 - 5).stroke({ color: 0xFFFFFF, width: 2, alpha: a * 0.85 });
+        ring.circle(0, 0, r1 + 7).stroke({ color, width: 2, alpha: a * 0.45 });
       },
     });
   }
 
   /**
-   * Persistent ground patch for GROUND_AOE skills. Renders a translucent
-   * circle on the ground for the full skill duration so the player can
-   * see the danger zone — purely presentational, damage still flows via
-   * the skill system's scheduled ticks.
+   * Expanding ring for NOVA skills. Initial flash fill + bright white
+   * inner edge + trailing color rings. Reads instantly even with no
+   * enemies in the AOE.
+   */
+  function spawnNovaRing(x: number, y: number, radiusPx: number, color: number, now: number) {
+    const cnt = new Container();
+    cnt.x = Math.round(x); cnt.y = Math.round(y);
+    layerImpactFx.addChild(cnt);
+    const flash = new Graphics();
+    const ring = new Graphics();
+    cnt.addChild(flash);
+    cnt.addChild(ring);
+    const life = 640;
+    vfxList.push({
+      container: cnt, alive: true, spawnAt: now,
+      update(_dt, n) {
+        const t = (n - now) / life;
+        if (t >= 1) { this.alive = false; return; }
+        const a = 1 - t;
+        // Initial fill flash — punches the eye on the first 180 ms.
+        flash.clear();
+        if (t < 0.28) {
+          const ft = t / 0.28;
+          flash.circle(0, 0, radiusPx * ft).fill({ color, alpha: 0.48 * (1 - ft) });
+        }
+        // Triple-line expanding ring.
+        ring.clear();
+        const r = radiusPx * Math.min(1, t * 1.1);
+        ring.circle(0, 0, r).stroke({ color: 0xFFFFFF, width: 5, alpha: a });
+        ring.circle(0, 0, r - 6).stroke({ color, width: 4, alpha: a });
+        ring.circle(0, 0, r + 5).stroke({ color, width: 2, alpha: a * 0.55 });
+      },
+    });
+  }
+
+  /**
+   * Persistent danger-zone disc for GROUND_AOE skills. Strong rim +
+   * layered fill — visible across the entire skill duration.
    */
   function spawnGroundPatch(x: number, y: number, radiusPx: number, color: number, durationMs: number, now: number) {
     const cnt = new Container();
@@ -1154,13 +1125,16 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       update(_dt, n) {
         const t = (n - now) / durationMs;
         if (t >= 1) { this.alive = false; return; }
-        // Pulsing rim + steady fill — readable on dark ground.
         const pulse = 0.85 + Math.sin(t * Math.PI * 6) * 0.15;
+        // Layered fill — outer + inner discs give a soft gradient feel.
         fill.clear();
-        fill.circle(0, 0, radiusPx).fill({ color, alpha: 0.18 + (1 - t) * 0.10 });
+        fill.circle(0, 0, radiusPx).fill({ color, alpha: 0.34 + (1 - t) * 0.18 });
+        fill.circle(0, 0, radiusPx * 0.7).fill({ color, alpha: 0.20 });
+        // Triple rim — strong outer color, bright white mid, soft halo.
         rim.clear();
-        rim.circle(0, 0, radiusPx).stroke({ color, width: 2, alpha: 0.85 * pulse * (1 - t * 0.5) });
-        rim.circle(0, 0, radiusPx - 4).stroke({ color: 0xFFFFFF, width: 1, alpha: 0.35 * (1 - t) });
+        rim.circle(0, 0, radiusPx).stroke({ color, width: 4, alpha: 0.95 * pulse * (1 - t * 0.4) });
+        rim.circle(0, 0, radiusPx - 5).stroke({ color: 0xFFFFFF, width: 2, alpha: 0.55 * (1 - t * 0.3) });
+        rim.circle(0, 0, radiusPx + 3).stroke({ color, width: 2, alpha: 0.50 * (1 - t) });
       },
     });
   }
