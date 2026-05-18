@@ -6,6 +6,9 @@
 import { Container, Graphics } from 'pixi.js';
 import { COLOR, TUNE, TIME, WORLD_W, WORLD_H } from '../tokens.js';
 import { wasActionPressed, mouse } from '../input.js';
+import { StatManager } from '../systems/stats/core/StatManager.js';
+import { StatType } from '../systems/stats/types/StatType.js';
+import { PLAYER_LEVEL_1_BASE } from '../systems/stats/baseline.js';
 
 /** Minimum distance before player considers the move target "reached". */
 const MOVE_STOP_DIST = 6;
@@ -23,8 +26,17 @@ export class Player {
   // Click-to-move target (Diablo-style). null when LMB not held.
   // Set externally via setMoveTarget(); cleared on LMB release.
   moveTarget: { x: number, y: number } | null = null;
-  hp: number = TUNE.PLAYER_HP;
-  hpMax: number = TUNE.PLAYER_HP;
+
+  // ---- Stat-system driven (read via getters) ----
+  readonly statManager: StatManager;
+  hp: number;
+  mana: number;
+  /** CombatEntity contract: stable id for damage-pipeline events. */
+  readonly id: string = 'player';
+  /** CombatEntity contract: flipped false on death; revived by scene logic. */
+  alive: boolean = true;
+  /** Movement-speed baseline in stat units; maps to TUNE.PLAYER_MAX_SPEED 1:1. */
+  private readonly moveSpeedBase: number;
 
   // Dodge state
   dodgeUntil = 0;
@@ -47,6 +59,13 @@ export class Player {
   facingX = 1; facingY = 0;
 
   constructor() {
+    // Initialize stat system BEFORE first read of hpMax / maxMana getters.
+    this.statManager = new StatManager();
+    this.statManager.setBases(PLAYER_LEVEL_1_BASE);
+    this.moveSpeedBase = PLAYER_LEVEL_1_BASE.get(StatType.MOVE_SPEED) ?? 5.2;
+    this.hp = this.hpMax;
+    this.mana = this.maxMana;
+
     this.container = new Container();
     this.container.label = 'player';
 
@@ -89,6 +108,11 @@ export class Player {
   update(dtMs: number, now: number, onFootstep?: (x: number, y: number) => void) {
     const dt = dtMs / 1000;
 
+    // Effective max movement speed: stat-driven, mapped from spec base
+    // (5.2) to pixel speed (TUNE.PLAYER_MAX_SPEED).
+    const moveSpeedFinal = this.statManager.getFinalStat(StatType.MOVE_SPEED);
+    const effectiveMaxSpeed = TUNE.PLAYER_MAX_SPEED * (moveSpeedFinal / this.moveSpeedBase);
+
     // ---------- Dodge trigger (reads rebindable 'dodge' action) ----------
     if (wasActionPressed('dodge') && now >= this.dodgeReadyAt) {
       let dx = this.facingX, dy = this.facingY;
@@ -109,7 +133,7 @@ export class Player {
 
     // ---------- Movement (click-to-move) ----------
     if (dodging) {
-      const speed = TUNE.PLAYER_MAX_SPEED * TUNE.DODGE_SPEED_MULT;
+      const speed = effectiveMaxSpeed * TUNE.DODGE_SPEED_MULT;
       this.vx = this.dodgeDir.x * speed;
       this.vy = this.dodgeDir.y * speed;
     } else {
@@ -128,8 +152,8 @@ export class Player {
           dirY = dy / dist;
         }
       }
-      const targetVx = dirX * TUNE.PLAYER_MAX_SPEED;
-      const targetVy = dirY * TUNE.PLAYER_MAX_SPEED;
+      const targetVx = dirX * effectiveMaxSpeed;
+      const targetVy = dirY * effectiveMaxSpeed;
       const accel = (dirX === 0 && dirY === 0) ? TUNE.PLAYER_DECEL : TUNE.PLAYER_ACCEL;
       this.vx = approach(this.vx, targetVx, accel * dt);
       this.vy = approach(this.vy, targetVy, accel * dt);
@@ -176,6 +200,13 @@ export class Player {
     } else {
       this.drawBody(false);
     }
+
+    // ---------- Stat-system condition state ----------
+    // Drive standard condition keys so conditional modifiers (e.g.
+    // `whileMoving`, `onLowLife`) activate/deactivate correctly.
+    const moving = Math.hypot(this.vx, this.vy) > 1;
+    this.statManager.setCondition('isMoving', moving);
+    this.statManager.setCondition('onLowLife', this.hp / Math.max(1, this.hpMax) <= 0.35);
   }
 
   /** Set click-to-move target in world coords. Called every frame while LMB held. */
@@ -191,7 +222,21 @@ export class Player {
   }
 
   canAttack(now: number): boolean { return now >= this.nextAttackAt; }
-  consumeAttack(now: number) { this.nextAttackAt = now + TUNE.ATTACK_CD; }
+  consumeAttack(now: number) {
+    // Attack cadence is driven by ATTACK_SPEED final value. Base 1.0 →
+    // unchanged cooldown; 1.5 → 67% of cooldown; 0.5 → doubled cooldown.
+    const as = Math.max(0.01, this.statManager.getFinalStat(StatType.ATTACK_SPEED));
+    this.nextAttackAt = now + TUNE.ATTACK_CD / as;
+  }
+
+  /** Final maximum HP after the full stat pipeline. */
+  get hpMax(): number { return this.statManager.getFinalStat(StatType.MAX_HP); }
+  /** Final maximum mana after the full stat pipeline. */
+  get maxMana(): number { return this.statManager.getFinalStat(StatType.MAX_MANA); }
+  /** Final crit chance as a fraction (e.g. 0.05 = 5%). */
+  getCritChance(): number { return this.statManager.getFinalStat(StatType.CRIT_CHANCE) / 100; }
+  /** Final crit multiplier as a multiplier (e.g. 1.5 = 150%). */
+  getCritMultiplier(): number { return this.statManager.getFinalStat(StatType.CRIT_MULTIPLIER) / 100; }
 
   /** Apply micro recoil opposite to the shot direction (combat feel). */
   applyRecoil(dirX: number, dirY: number) {
@@ -199,9 +244,11 @@ export class Player {
     this.recoilVy -= dirY * TUNE.RECOIL_SPEED;
   }
 
-  takeDamage(amount: number, now: number) {
-    if (this.isInvulnerable(now)) return;
-    this.hp = Math.max(0, this.hp - amount);
+  /**
+   * Visual hit-feedback. Pipeline owns hp; this method only flashes the
+   * sprite. Called by main.ts from the ON_DAMAGE_TAKEN combat event.
+   */
+  applyHitReactions(now: number): void {
     this.hitFlashUntil = now + 140;
   }
 }

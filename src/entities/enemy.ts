@@ -12,6 +12,9 @@ export class Enemy {
   shadow: Graphics;
   eyes: Graphics;
 
+  /** CombatEntity contract: stable id for pipeline events. Assigned externally. */
+  id: string = '';
+
   x: number;
   y: number;
   vx = 0; vy = 0;
@@ -110,18 +113,11 @@ export class Enemy {
   }
 
   /**
-   * Apply damage with optional crit + knockback direction.
-   * Returns true if this hit killed the enemy.
+   * Apply hit-feedback (flash, stagger, knockback). HP/alive are owned
+   * by DamagePipeline — call this AFTER pipeline.resolve() has applied
+   * its damage. Pure presentation/AI reaction; no math.
    */
-  takeDamage(
-    amount: number,
-    now: number,
-    dirX: number,
-    dirY: number,
-    isCrit: boolean,
-  ): boolean {
-    if (!this.alive) return false;
-    this.hp -= amount;
+  applyHitReactions(now: number, dirX: number, dirY: number, isCrit: boolean): void {
     this.hitFlashUntil = now + (isCrit ? 220 : 140);
     this.staggerUntil = now + (isCrit ? TUNE.ENEMY_STAGGER_CRIT : TUNE.ENEMY_STAGGER_NORMAL);
     const kb = isCrit ? TUNE.ENEMY_KNOCKBACK_CRIT : TUNE.ENEMY_KNOCKBACK;
@@ -129,12 +125,8 @@ export class Enemy {
     this.knockVy += dirY * kb;
     this.lastDamageDir = { x: dirX, y: dirY };
     this.lastWasCrit = isCrit;
-    if (this.hp <= 0) {
-      this.alive = false;
-      this.diedThisFrame = true;
-      return true;
-    }
-    return false;
+    // diedThisFrame is set externally by main.ts when pipeline ON_KILL fires
+    // (or detected via target.alive transition).
   }
 
   canContact(now: number): boolean { return now >= this.contactReadyAt; }

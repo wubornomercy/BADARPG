@@ -11,6 +11,16 @@ import { Enemy } from './entities/enemy.js';
 import { Projectile } from './entities/projectile.js';
 import { LootDrop } from './entities/loot.js';
 import { DebugHud, sim, canSpawnProjectile, canSpawnEnemy } from './sim.js';
+import { StatDebugPanel } from './systems/stats/debug/StatDebugPanel.js';
+import { StatType } from './systems/stats/types/StatType.js';
+import {
+  DamagePipeline,
+  DamageType,
+  CombatEventType,
+  CombatDebugPanel,
+  type CombatEntity,
+  type DamageContext,
+} from './systems/combat/index.js';
 import { requestShake, computeShake, requestHitStop, isInHitStop } from './feel.js';
 import { Scene, getScene, setScene, shouldGameTick, isPanelOpen, onSceneChange, getReturnScene } from './scene.js';
 import { follow as cameraFollow, getCameraOffset, screenToWorld } from './camera.js';
@@ -124,6 +134,7 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   }
 
   let nextSpawnAt = 0;
+  let nextEnemyId = 0;
   function spawnEnemyAtArenaEdge() {
     if (!canSpawnEnemy()) return;
     // Spawn at the rim of the arena ring (not at world edge)
@@ -132,6 +143,7 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     const x = ARENA_CENTER_X + Math.cos(angle) * r;
     const y = ARENA_CENTER_Y + Math.sin(angle) * r;
     const e = new Enemy(x, y);
+    e.id = 'enemy_' + (++nextEnemyId);
     enemies.push(e);
     layerEnemies.addChild(e.container);
     sim.enemyCount++;
@@ -142,6 +154,46 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   // ---------------------------------------------------------------------
   const hud = new DebugHud();
   app.stage.addChild(hud.container);
+
+  // ---------------------------------------------------------------------
+  // Stat debug panel (F8 toggle) — developer-only HTML overlay reading
+  // straight from the player's StatManager.
+  // ---------------------------------------------------------------------
+  const statDebug = new StatDebugPanel();
+  statDebug.attach(player.statManager);
+  let lastStatDebugRenderAt = 0;
+
+  // ---------------------------------------------------------------------
+  // Damage pipeline — single owner of every combat math operation.
+  // Cross-cutting reactions (lifesteal, HUD flash, kill counter) live
+  // here as event listeners. Per-attack VFX stay inline at the call
+  // site because they depend on hit-local data (direction, position).
+  // ---------------------------------------------------------------------
+  const combat = new DamagePipeline();
+  const corruptionSource: CombatEntity = {
+    id:    'corruption',
+    hp:    1,
+    hpMax: 1,
+    alive: true,
+  };
+
+  // Lifesteal — fires on every non-DOT hit dealt by the player.
+  combat.events.on(CombatEventType.ON_HIT, (ev) => {
+    if (ev.source !== (player as unknown as CombatEntity)) return;
+    if (ev.isDOT || ev.finalDamage <= 0) return;
+    const ls = player.statManager.getFinalStat(StatType.LIFE_STEAL) / 100;
+    if (ls > 0) player.hp = Math.min(player.hpMax, player.hp + ev.finalDamage * ls);
+  });
+  // Player hit feedback — flash sprite whenever the player takes damage.
+  combat.events.on(CombatEventType.ON_DAMAGE_TAKEN, (ev) => {
+    if (ev.target === (player as unknown as CombatEntity) && ev.finalDamage > 0) {
+      player.applyHitReactions(performance.now());
+    }
+  });
+
+  // F9 toggle — combat-pipeline debug log overlay.
+  const combatDebug = new CombatDebugPanel();
+  combatDebug.attach(combat);
 
   // ---------------------------------------------------------------------
   // HUD bridge — wire player state to HTML HUD overlay
@@ -216,9 +268,10 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 
   // When entering PLAYING from MENU, reset player position
   onSceneChange((s) => {
-    if (s === 'PLAYING' && player.hp <= 0) {
+    if (s === 'PLAYING' && (player.hp <= 0 || !player.alive)) {
       // Soft "respawn" on returning from menu after death
       player.hp = player.hpMax;
+      player.alive = true;
       player.x = ARENA_CENTER_X;
       player.y = ARENA_CENTER_Y;
     }
@@ -267,7 +320,18 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     // ----- Corruption zone DOT -----
     const corruptionDot = updateCorruptionZones(now, player.x, player.y);
     if (corruptionDot > 0) {
-      player.takeDamage(corruptionDot, now);
+      const dotCtx: DamageContext = {
+        sourceEntityId: corruptionSource.id,
+        targetEntityId: player.id,
+        sourceTags:     ['dot', 'corruption'],
+        baseDamage:     corruptionDot,
+        damageType:     DamageType.POISON,
+        canCrit:        false,
+        canBeBlocked:   false,
+        canBeDodged:    false,
+        isDOT:          true,
+      };
+      combat.resolve(corruptionSource, player, dotCtx);
       corruptionMeter = Math.min(100, corruptionMeter + 0.5);
       requestShake(2, 60, now);
     } else {
@@ -299,6 +363,7 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       projectiles.push(p);
       layerProjectiles.addChild(p.container);
       sim.projectileCount++;
+      // Attack cadence now reads ATTACK_SPEED via StatManager (see Player).
       player.consumeAttack(now);
       player.applyRecoil(dirX, dirY);
       spawnMuzzleFlash(px + dirX * 20, py + dirY * 20);
@@ -316,7 +381,19 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
       e.update(dt, now, { x: player.x, y: player.y });
       const dist = Math.hypot(e.x - player.x, e.y - player.y);
       if (dist < TUNE.PLAYER_RADIUS + TUNE.ENEMY_RADIUS && e.canContact(now)) {
-        player.takeDamage(TUNE.ENEMY_DAMAGE, now);
+        if (!player.isInvulnerable(now)) {
+          const contactCtx: DamageContext = {
+            sourceEntityId: e.id,
+            targetEntityId: player.id,
+            sourceTags:     ['melee', 'attack'],
+            baseDamage:     TUNE.ENEMY_DAMAGE,
+            damageType:     DamageType.PHYSICAL,
+            canCrit:        false,
+            canBeBlocked:   true,
+            canBeDodged:    true,
+          };
+          combat.resolve(e, player, contactCtx);
+        }
         e.applyContactCooldown(now);
         requestShake(TUNE.SHAKE_HURT, 220, now);
         requestHitStop(TIME.HIT_STOP_HURT, now);
@@ -336,18 +413,35 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
           const dxh = e.x - p.x;
           const dyh = e.y - p.y;
           if (dxh * dxh + dyh * dyh <= (TUNE.ENEMY_RADIUS + TUNE.PROJ_RADIUS) ** 2) {
-            const isCrit = Math.random() < TUNE.CRIT_CHANCE;
-            const dmg = isCrit ? Math.round(TUNE.PROJ_DAMAGE * TUNE.CRIT_MULT) : TUNE.PROJ_DAMAGE;
-            const killed = e.takeDamage(dmg, now, p.dirX, p.dirY, isCrit);
-            requestHitStop(isCrit ? TIME.HIT_STOP_CRIT : TIME.HIT_STOP_NORMAL, now);
-            requestShake(isCrit ? TUNE.SHAKE_CRIT : TUNE.SHAKE_HIT, isCrit ? 220 : 110, now);
-            spawnImpactBurst(e.x, e.y, isCrit);
-            spawnDamageNumber(e.x, e.y - 16, dmg, isCrit);
+            // All damage math goes through the DamagePipeline. main.ts only
+            // owns the per-hit presentation (impact burst, damage number,
+            // hit-stop / shake) since those depend on hit-local data
+            // (projectile direction, position) the pipeline does not see.
+            const hitCtx: DamageContext = {
+              sourceEntityId: player.id,
+              targetEntityId: e.id,
+              sourceTags:     ['projectile', 'attack'],
+              baseDamage:     TUNE.PROJ_DAMAGE,
+              damageType:     DamageType.PHYSICAL,
+              canCrit:        true,
+              canBeBlocked:   true,
+              canBeDodged:    true,
+            };
+            const result = combat.resolve(player, e, hitCtx);
             p.alive = false;
-            if (killed) {
+
+            if (!result.wasDodged) {
+              e.applyHitReactions(now, p.dirX, p.dirY, result.wasCrit);
+              requestHitStop(result.wasCrit ? TIME.HIT_STOP_CRIT : TIME.HIT_STOP_NORMAL, now);
+              requestShake(result.wasCrit ? TUNE.SHAKE_CRIT : TUNE.SHAKE_HIT, result.wasCrit ? 220 : 110, now);
+              spawnImpactBurst(e.x, e.y, result.wasCrit);
+              spawnDamageNumber(e.x, e.y - 16, Math.round(result.finalDamage), result.wasCrit);
+            }
+            if (result.targetKilled) {
+              e.diedThisFrame = true;
               requestHitStop(TIME.HIT_STOP_DEATH, now);
               requestShake(TUNE.SHAKE_DEATH, 160, now);
-              spawnDeathBurst(e.x, e.y, p.dirX, p.dirY, now, isCrit);
+              spawnDeathBurst(e.x, e.y, p.dirX, p.dirY, now, result.wasCrit);
               sim.kills++;
               dropLoot(e.x, e.y, now);
             }
@@ -393,6 +487,17 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
     // HUD updates
     updateHtmlHud();
     hud.update();
+
+    // Throttle the stat debug panel to ~5 Hz so DOM writes stay cheap.
+    if (statDebug.isVisible() && now - lastStatDebugRenderAt > 200) {
+      statDebug.render();
+      lastStatDebugRenderAt = now;
+    }
+    // CombatDebugPanel re-renders itself inside its event listeners; no
+    // per-frame poll needed. `combatDebug` is referenced here to keep its
+    // F9 handler alive for the lifetime of the app.
+    void combatDebug;
+
     endFrameInput();
   });
 
