@@ -643,14 +643,32 @@ import { initSkillPanel } from './panels/skillPanel.js';
   // HUD bridge — wire player state to HTML HUD overlay
   // ---------------------------------------------------------------------
   const $hudHp        = document.getElementById('hudHp')!;
+  const $hudHpMax     = document.getElementById('hudHpMax')!;
   const $hpFluid      = document.getElementById('hpFluid')!;
+  const $hudMana      = document.getElementById('hudMana')!;
+  const $hudManaMax   = document.getElementById('hudManaMax')!;
+  const $manaFluid    = document.getElementById('manaFluid')!;
   const $hudCorrupt   = document.getElementById('hudCorruption')!;
   let corruptionMeter = 0;  // 0-100, gained from standing in corruption zones
 
   function updateHtmlHud() {
-    $hudHp.textContent = `${Math.max(0, Math.floor(player.hp))}`;
-    const pct = Math.max(0, Math.min(100, player.hp / player.hpMax * 100));
-    ($hpFluid as HTMLElement).style.height = pct + '%';
+    // HP orb — live value, fluid % height, max in case it shifts (level up)
+    $hudHp.textContent    = `${Math.max(0, Math.floor(player.hp))}`;
+    $hudHpMax.textContent = `${Math.floor(player.hpMax)}`;
+    const hpPct = player.hpMax > 0
+      ? Math.max(0, Math.min(100, player.hp / player.hpMax * 100))
+      : 0;
+    ($hpFluid as HTMLElement).style.height = hpPct + '%';
+
+    // Mana orb — same shape. This was the missing wiring causing the
+    // "mana球 never moves" bug: the HTML was hardcoded to 350/450 / 78%.
+    $hudMana.textContent    = `${Math.max(0, Math.floor(player.mana))}`;
+    $hudManaMax.textContent = `${Math.floor(player.maxMana)}`;
+    const manaPct = player.maxMana > 0
+      ? Math.max(0, Math.min(100, player.mana / player.maxMana * 100))
+      : 0;
+    ($manaFluid as HTMLElement).style.height = manaPct + '%';
+
     $hudCorrupt.textContent = `${Math.floor(corruptionMeter)}%`;
   }
   updateHtmlHud();

@@ -175,14 +175,14 @@
           </div>
         </div>
 
-        <!-- Mana Orb (right bottom) — placeholder full -->
+        <!-- Mana Orb (right bottom) — live-driven from player.mana / .maxMana -->
         <div class="orb orb-mana">
-          <div class="orb-well"><div class="orb-fluid" style="height:78%"></div></div>
+          <div class="orb-well"><div class="orb-fluid" id="manaFluid" style="height:100%"></div></div>
           <div class="orb-glass"></div>
           <div class="orb-rim"></div>
           <div class="orb-text">
             <div>
-              <span>350</span> / <span>450</span>
+              <span id="hudMana">50</span> / <span id="hudManaMax">50</span>
               <span class="orb-text-line2">法力</span>
             </div>
           </div>
