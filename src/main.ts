@@ -57,6 +57,7 @@ import { populatePanels } from './panel-stubs.js';
 import { initSettingsUI } from './settings-ui.js';
 import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
 import { initSkillPanel } from './panels/skillPanel.js';
+import { BuildManager, STARTER_BUILDS } from './systems/builds/index.js';
 
 (async () => {
   // ---------------------------------------------------------------------
@@ -229,6 +230,17 @@ import { initSkillPanel } from './panels/skillPanel.js';
   // Wire the K-panel to the real registry so the player sees the live
   // 4 starter skills instead of static stubs. Must be after registerAll().
   initSkillPanel(skills);
+
+  // ---------------------------------------------------------------------
+  // Build subsystem (COMBAT_FOUNDATION_V1 commit B)
+  // Apply the default build at boot so the player starts with build-flavored
+  // stat modifiers. The skill panel build switcher swaps the active build.
+  // ---------------------------------------------------------------------
+  const builds = new BuildManager();
+  builds.registerAll(STARTER_BUILDS);
+  builds.applyBuild('venom', player.statManager);
+  // Expose to skillPanel + window.__bad
+  (window as any).__bad_builds = builds;
 
   // Render projectiles via Pixi Graphics. The skill system has no Pixi
   // dependency — we hang a Graphics off `renderHandle` on spawn and clean
@@ -600,6 +612,14 @@ import { initSkillPanel } from './panels/skillPanel.js';
       // Refill HP / mana on level-up — small QoL touch.
       player.hp = player.hpMax;
       player.mana = player.maxMana;
+    }
+    // COMBAT_FOUNDATION_V1 spec: corruption +1 per elite kill, scaled by
+    // the active build's corruptionGainMult flag (Corruption Hunter gets ×1.5).
+    if (isElite) {
+      const active = builds.getActive();
+      const mult = active?.flags.corruptionGainMult ?? 1;
+      const gain = TUNE.CORRUPTION_GAIN_PER_ELITE_KILL * mult;
+      corruptionMeter = Math.min(TUNE.CORRUPTION_MAX, corruptionMeter + gain);
     }
     // Volatile elite — fire an AOE blast through the pipeline.
     if (m.eliteModifierIds.includes(ELITE_VOLATILE.id)) {

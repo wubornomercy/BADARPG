@@ -183,9 +183,40 @@ export const TUNE = {
   ENEMY_INITIAL_COUNT:  6,
   // Foot dust
   FOOTSTEP_VELOCITY_THRESHOLD: 80,
-  // Corruption zones
+  // Corruption zones (environment)
   CORRUPTION_ZONE_COUNT:       3,
   CORRUPTION_ZONE_RADIUS:      180,
   CORRUPTION_ZONE_DOT:         4,    // damage per second while standing in
   CORRUPTION_ZONE_DOT_TICK:    500,  // ms between ticks
+
+  // =======================================================================
+  // COMBAT_FOUNDATION_V1 — Build mechanic rules (commit B)
+  // These are pure data constants consumed by:
+  //   - PoisonAilmentManager (TBD)
+  //   - ProjectileBehavior.ricochet (existing chainCount path)
+  //   - SkillManager.trigger (existing trigger path)
+  //   - main.ts corruption meter
+  // =======================================================================
+
+  // Poison ailment — per spec
+  POISON_TICK_RATE:        4,    // ticks per second
+  POISON_DURATION:         2.8,  // seconds
+  POISON_MAX_STACKS:       12,
+  // Per-tick damage = baseHit × POISON_DOT_FRACTION
+  POISON_DOT_FRACTION:     0.18,
+
+  // Ricochet — per spec
+  RICOCHET_COUNT:          1,    // bounces granted by Venom Ricochet build
+  RICOCHET_RANGE_PX:       180,  // max target search radius
+
+  // Trigger — per spec
+  TRIGGER_CHANCE:          0.18,
+  TRIGGER_COOLDOWN_MS:     400,
+
+  // Corruption — per spec
+  CORRUPTION_MAX:                  100,
+  CORRUPTION_PROTOTYPE_LIMIT:      40,    // soft cap during V1 testing
+  CORRUPTION_GAIN_PER_ELITE_KILL:  1,
+  CORRUPTION_ENEMY_DMG_MULT_PER_PT:  0.006,  // +0.6% incoming damage / point
+  CORRUPTION_LOOT_QUALITY_PER_PT:    0.008,  // +0.8% rarity weight / point
 } as const;

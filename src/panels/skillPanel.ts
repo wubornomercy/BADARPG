@@ -381,6 +381,17 @@ function bindHandlers() {
     btn.addEventListener('click', () => {
       if (!state) return;
       state.buildId = btn.dataset.build as BuildLensId;
+      // Apply build via BuildManager — swaps stat modifiers on player.
+      // BuildManager is exposed as window.__bad_builds + window.__bad.player
+      // by main.ts at boot; we read it lazily so the panel module stays
+      // import-independent from the orchestrator.
+      const w = window as unknown as {
+        __bad_builds?: { applyBuild(id: string, sm: unknown): boolean };
+        __bad?:        { player?: { statManager: unknown } };
+      };
+      const bm = w.__bad_builds;
+      const sm = w.__bad?.player?.statManager;
+      if (bm && sm) bm.applyBuild(state.buildId, sm);
       render();
     });
   });
