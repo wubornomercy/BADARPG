@@ -45,15 +45,9 @@ const GRID_ITEMS: { icon: string; rarity: string; be: boolean }[] = [
   { icon: '星', rarity: 'heaven', be: true },
 ];
 
-const SKILL_LIST: { name: string; tags: string; meta: string; icon: string; selected?: boolean; be?: boolean }[] = [
-  { name: '毒蚀爆发', tags: '毒素 · 投射物 · 触发',   meta: '冷却 8 秒 · 法力 32',  icon: '毒', selected: true,  be: true  },
-  { name: '弹射射击', tags: '弹射 · 投射物 · 暴击',   meta: '冷却 0.4 秒 · 法力 8', icon: '弹', be: true  },
-  { name: '尸蚀触发', tags: '触发 · 腐化 · 毒素',     meta: '冷却 被动 / 即时 · 法力 0', icon: '蚀', be: true },
-  { name: '腐化箭矢', tags: '腐化 · 投射物 · 暴击',   meta: '冷却 1.2 秒 · 法力 24', icon: '噬' },
-  { name: '幻影齐射', tags: '暴击 · 投射物 · 触发',   meta: '冷却 4 秒 · 法力 48',  icon: '影' },
-  { name: '虚空狩猎', tags: '腐化 · 触发',             meta: '冷却 12 秒 · 法力 60', icon: '虚' },
-  { name: '连锁风暴', tags: '弹射 · 暴击',             meta: '冷却 6 秒 · 法力 40',  icon: '雷' },
-];
+// Skill list moved to src/panels/skillPanel.ts where it reads from the
+// real SkillManager registry (STARTER_SKILLS). The block below now only
+// owns equipment + inventory grid placeholders.
 
 export function populatePanels() {
   // Equipment grid
@@ -91,22 +85,7 @@ export function populatePanels() {
     $grid.innerHTML = html;
   }
 
-  // Skill list
-  const $skill = document.getElementById('skillList');
-  if ($skill) {
-    $skill.innerHTML = SKILL_LIST.map(s => {
-      const cls = ['skill-item'];
-      if (s.selected) cls.push('is-selected');
-      if (s.be) cls.push('is-in-build');
-      return `<div class="${cls.join(' ')}">
-        <div class="skill-item-icon"><span class="skill-icon-glyph">${s.icon}</span></div>
-        <div class="skill-item-info">
-          <div class="skill-item-name">${s.name}</div>
-          <div class="skill-item-tags">${s.tags}</div>
-          <div class="skill-item-meta">${s.meta}</div>
-        </div>
-        <div class="skill-item-affinity">◆</div>
-      </div>`;
-    }).join('');
-  }
+  // Skill list now populated by src/panels/skillPanel.ts after main.ts
+  // calls initSkillPanel(skillManager). This stub no longer touches
+  // #skillList / #skillDetailCol / #skillSynergyCol / #skillBottom.
 }

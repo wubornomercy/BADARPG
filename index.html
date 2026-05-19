@@ -391,10 +391,8 @@
           <span class="skill-rivet-bl"></span>
           <div class="skill-header">
             <div class="skill-title">技能</div>
-            <div class="skill-build-switcher">
-              <button class="skill-build-btn is-active">毒蚀弹射</button>
-              <button class="skill-build-btn">暴击触发</button>
-              <button class="skill-build-btn">腐化弓手</button>
+            <div class="skill-build-switcher" id="skillBuildSwitcher">
+              <!-- build buttons injected by skillPanel.ts -->
             </div>
             <button class="skill-close" data-close="skill">×</button>
           </div>
@@ -403,75 +401,15 @@
               <div class="skill-section-label">技能列表</div>
               <div class="skill-list" id="skillList"></div>
             </div>
-            <div class="skill-detail-col">
-              <div class="skill-detail-header">
-                <div class="skill-detail-icon"><span class="skill-icon-glyph">毒</span></div>
-                <div class="skill-detail-titles">
-                  <div class="skill-detail-name">毒蚀爆发</div>
-                  <div class="skill-detail-en">VENOM BURST</div>
-                </div>
-              </div>
-              <div class="skill-detail-tags">
-                <span class="skill-tag tag-poison">毒素</span>
-                <span class="skill-tag tag-projectile">投射物</span>
-                <span class="skill-tag tag-trigger">触发</span>
-              </div>
-              <div class="skill-stats-grid">
-                <div class="skill-stat-cell"><span class="label">伤害类型</span><span class="value">毒素 / 投射物</span></div>
-                <div class="skill-stat-cell"><span class="label">缩放方向</span><span class="value">攻击力 + 毒素伤害</span></div>
-                <div class="skill-stat-cell"><span class="label">冷却</span><span class="value">8 秒</span></div>
-                <div class="skill-stat-cell"><span class="label">法力消耗</span><span class="value">32</span></div>
-              </div>
-              <div class="skill-fantasy">
-                <span class="skill-fantasy-label">技能 fantasy</span>
-                引出毒蚀云雾笼罩敌人，命中后扩散并叠加毒层。每命中一名敌人，毒素层数 +1，并向半径内传播。
-              </div>
-              <div class="skill-trigger">
-                <span class="skill-trigger-label">运行时交互</span>
-                当目标毒素层数 ≥ 5 时，触发尸蚀爆发，造成（毒素 DPS × 8）范围伤害。
-              </div>
+            <div class="skill-detail-col" id="skillDetailCol">
+              <!-- header / tags / stats / fantasy / trigger all injected -->
             </div>
-            <div class="skill-synergy-col">
-              <div class="skill-syn-section">
-                <div class="skill-section-label">流派交互</div>
-                <div class="skill-syn-build-name">毒蚀弹射</div>
-                <div class="skill-syn-bullet">暴击触发毒素 nova</div>
-                <div class="skill-syn-bullet">弹射继承毒素层</div>
-                <div class="skill-syn-bullet">腐化扩大爆发半径</div>
-              </div>
-              <div class="skill-syn-section">
-                <div class="skill-section-label">兼容辅助</div>
-                <div class="skill-supports">
-                  <div class="skill-support"><span class="skill-support-name">毒素连锁</span></div>
-                  <div class="skill-support"><span class="skill-support-name">尸蚀触发</span></div>
-                  <div class="skill-support"><span class="skill-support-name">回响爆发</span></div>
-                </div>
-              </div>
-              <div class="skill-syn-section">
-                <div class="skill-section-label">腐化突变</div>
-                <div class="skill-corruption">
-                  <div class="skill-corruption-line up">+24% 毒素扩散范围</div>
-                  <div class="skill-corruption-line down">-12% 护甲效率</div>
-                </div>
-              </div>
+            <div class="skill-synergy-col" id="skillSynergyCol">
+              <!-- synergy / supports / corruption mutation all injected -->
             </div>
           </div>
-          <div class="skill-bottom">
-            <div class="skill-bottom-tags">
-              <span class="skill-bottom-tags-label">标签</span>
-              <div style="display:flex; gap:6px;">
-                <span class="skill-tag tag-poison">毒素</span>
-                <span class="skill-tag tag-projectile">投射物</span>
-                <span class="skill-tag tag-trigger">触发</span>
-              </div>
-            </div>
-            <div class="skill-bottom-stats">
-              <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">DPS</span><span class="skill-bottom-stat-value">2,840</span></div>
-              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">冷却</span><span class="skill-bottom-stat-value">8<span class="skill-bottom-stat-unit">秒</span></span></div>
-              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">法力</span><span class="skill-bottom-stat-value">32</span></div>
-              <div class="skill-bottom-stat key"><span class="skill-bottom-stat-label">投射物</span><span class="skill-bottom-stat-value">3</span></div>
-              <div class="skill-bottom-stat"><span class="skill-bottom-stat-label">触发率</span><span class="skill-bottom-stat-value">18<span class="skill-bottom-stat-unit">%</span></span></div>
-            </div>
+          <div class="skill-bottom" id="skillBottom">
+            <!-- tags row + runtime stats injected -->
           </div>
         </div>
       </div>

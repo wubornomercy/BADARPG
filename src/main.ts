@@ -56,6 +56,7 @@ import { buildWorld, spawnCorruptionZones, updateCorruptionZones } from './world
 import { populatePanels } from './panel-stubs.js';
 import { initSettingsUI } from './settings-ui.js';
 import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
+import { initSkillPanel } from './panels/skillPanel.js';
 
 (async () => {
   // ---------------------------------------------------------------------
@@ -224,6 +225,10 @@ import { initTooltipHover, refreshTooltipTargets } from './tooltip-hover.js';
   player.equippedSkills[1] = SKILL_VENOM_NOVA.id;
   player.equippedSkills[2] = SKILL_SHADOW_DASH.id;
   player.equippedSkills[3] = SKILL_CORRUPTION_FIELD.id;
+
+  // Wire the K-panel to the real registry so the player sees the live
+  // 4 starter skills instead of static stubs. Must be after registerAll().
+  initSkillPanel(skills);
 
   // Render projectiles via Pixi Graphics. The skill system has no Pixi
   // dependency — we hang a Graphics off `renderHandle` on spawn and clean

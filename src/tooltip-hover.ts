@@ -120,8 +120,11 @@ function attachStaticTips() {
     el.dataset.tip = `物品 #${i + 1}|稀有度：${r}。点击查看详情，拖拽装备到对应栏位。`;
   });
 
-  // Skill list items
+  // Skill list items — skip if skillPanel.ts already set a real data-tip.
+  // The skill panel re-renders with descriptions on every state change;
+  // we shouldn't clobber those with the generic placeholder.
   document.querySelectorAll<HTMLElement>('#skillList .skill-item').forEach((el) => {
+    if (el.dataset.tip) return;
     const name = el.querySelector('.skill-item-name')?.textContent?.trim() || '技能';
     const tags = el.querySelector('.skill-item-tags')?.textContent?.trim() || '';
     el.dataset.tip = `${name}|标签：${tags}。点击查看完整 fantasy + 流派交互详情。`;
