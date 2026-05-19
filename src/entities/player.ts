@@ -68,8 +68,13 @@ export class Player {
    */
   dodgeSpeedOverride: number = 0;
 
-  // Dodge state
+  // Dodge state. Per COMBAT_FOUNDATION_V1 the dash itself lasts longer
+  // than the invuln window: dodgeUntil tracks the burst-motion phase
+  // (player flies in dodgeDir), dodgeIframeUntil is the strictly shorter
+  // i-frame window (no contact damage). Players must time entry, not
+  // mash through enemies for the whole dash.
   dodgeUntil = 0;
+  dodgeIframeUntil = 0;
   dodgeReadyAt = 0;
   dodgeDir = { x: 0, y: 0 };
 
@@ -166,12 +171,19 @@ export class Player {
       }
       this.dodgeDir = { x: dx, y: dy };
       this.dodgeUntil = now + TIME.DODGE_DURATION;
+      // i-frame is shorter than dash motion per spec — only the entry
+      // window is safe, the exit is exposed.
+      this.dodgeIframeUntil = now + TIME.DODGE_IFRAME;
       this.dodgeReadyAt = now + TIME.DODGE_COOLDOWN;
       this.recoilVx = 0; this.recoilVy = 0;
     }
     const dodgingPrev = now < this.dodgeUntil + dtMs;
     const dodging = now < this.dodgeUntil;
-    this.iframeRing.visible = dodging;
+    // Show the gold ring only while genuinely invulnerable (first 80ms),
+    // NOT for the whole dash motion. Player has to read the ring to know
+    // when iframes end.
+    this.iframeRing.visible = now < this.dodgeIframeUntil
+      || (this.dodgeIframeUntil === 0 && dodging);
 
     // ---------- Movement (click-to-move) ----------
     if (dodging) {
@@ -266,7 +278,15 @@ export class Player {
   }
 
   isInvulnerable(now: number): boolean {
-    return now < this.dodgeUntil || now < this.hitFlashUntil + 200;
+    // Spec: dash invuln is the strictly-shorter dodgeIframeUntil window,
+    // NOT the full dodgeUntil motion window. The respawn path still uses
+    // dodgeUntil for the longer "post-death safety" cocoon — covered by
+    // the dodgeUntil fallback below for the case where dodgeIframeUntil
+    // is zero (e.g. immediately after the 1.5s respawn handler that sets
+    // only dodgeUntil).
+    if (now < this.dodgeIframeUntil) return true;
+    if (this.dodgeIframeUntil === 0 && now < this.dodgeUntil) return true;
+    return now < this.hitFlashUntil + 200;
   }
 
   canAttack(now: number): boolean { return now >= this.nextAttackAt; }

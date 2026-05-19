@@ -59,9 +59,13 @@ describe('Stat calculation pipeline', () => {
   it('STR and VIT both feed maxHP (additive)', () => {
     const sm = new StatManager();
     sm.setBases(PLAYER_LEVEL_1_BASE);
-    sm.setBase(StatType.STRENGTH, 10);   // +40
-    sm.setBase(StatType.VITALITY, 10);   // +80
-    expect(sm.getFinalStat(StatType.MAX_HP)).toBeCloseTo(100 + 40 + 80, 5);
+    sm.setBase(StatType.STRENGTH, 10);   // +40 maxHP per derived calculator
+    sm.setBase(StatType.VITALITY, 10);   // +80 maxHP per derived calculator
+    // Pull the live baseline so test stays valid after COMBAT_FOUNDATION_V1
+    // retune (1200 vs the old 100). The math under test is "STR + VIT add
+    // to MAX_HP additively on top of base", not the specific base value.
+    const base = PLAYER_LEVEL_1_BASE.get(StatType.MAX_HP) ?? 0;
+    expect(sm.getFinalStat(StatType.MAX_HP)).toBeCloseTo(base + 40 + 80, 5);
   });
 
   it('tag-gated modifier only applies when context tags match', () => {

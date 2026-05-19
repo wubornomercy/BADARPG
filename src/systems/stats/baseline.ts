@@ -15,8 +15,11 @@ export const PLAYER_LEVEL_1_BASE: ReadonlyMap<StatType, number> = new Map<StatTy
   [StatType.VITALITY,     0],
 
   // ---- Defensive --------------------------------------------------------
-  [StatType.MAX_HP,           100],
-  [StatType.MAX_MANA,         50],
+  // COMBAT_FOUNDATION_V1 retune: previous values were sized for the
+  // ~minute-long sandbox testing. Spec wants a 5-minute combat loop with
+  // higher numeric drama (HP/mana up ~10×, regen 11×).
+  [StatType.MAX_HP,           1200],
+  [StatType.MAX_MANA,         450],
   [StatType.ARMOR,            0],
   [StatType.EVASION,          0],
   [StatType.BLOCK_CHANCE,     0],
@@ -25,13 +28,14 @@ export const PLAYER_LEVEL_1_BASE: ReadonlyMap<StatType, number> = new Map<StatTy
   [StatType.LIGHTNING_RESIST, 0],
   [StatType.POISON_RESIST,    0],
   [StatType.HP_REGEN,         1],
-  [StatType.MANA_REGEN,       2],
+  [StatType.MANA_REGEN,       22],
   [StatType.DAMAGE_REDUCTION, 0],
   [StatType.AILMENT_RESIST,   0],
 
   // ---- Offensive --------------------------------------------------------
-  [StatType.CRIT_CHANCE,           5],
-  [StatType.CRIT_MULTIPLIER,       150],
+  // Spec: base crit 12% / mult 180%.
+  [StatType.CRIT_CHANCE,           12],
+  [StatType.CRIT_MULTIPLIER,       180],
   [StatType.ATTACK_SPEED,          1.0],
   [StatType.CAST_SPEED,            1.0],
   [StatType.ACCURACY,              0],

@@ -71,13 +71,18 @@ export const COLOR = {
   playerHit:    0xFFFFFF,
   enemy:        0x5A2A2E,
   enemyHit:     0xC86B6B,
-  // Projectile palette — see PROJECTILE VISUAL LANGUAGE in Phase 2 spec
-  projPlayer:     0xE7C66A,   // brighter core
-  projPlayerTrail:0xA88A40,
-  projEnemy:      0xC86B6B,   // red/orange enemy emphasis
-  projEnemyTrail: 0x8A3A3F,
-  projCorruption: 0x6E48A4,   // purple-black, unstable
-  projTrigger:    0xE1A84A,   // gold trigger-spawned
+  // Projectile palette — see PROJECTILE VISUAL LANGUAGE in Phase 2 spec.
+  // COMBAT_FOUNDATION_V1 codifies element-specific colors below; the
+  // generic projPlayer/projEnemy palette stays as the default ownership
+  // tint.
+  projPlayer:      0xE7C66A,   // brighter core
+  projPlayerTrail: 0xA88A40,
+  projEnemy:       0xC86B6B,   // red/orange enemy emphasis
+  projEnemyTrail:  0x8A3A3F,
+  projCorruption:  0x7A4D8F,   // COMBAT_V1 spec: corruption #7A4D8F
+  projPoison:      0x69A94C,   // COMBAT_V1 spec: poison #69A94C
+  projCrit:        0xE7C66A,   // COMBAT_V1 spec: crit #E7C66A (= dmgCrit)
+  projTrigger:     0xE1A84A,   // gold trigger-spawned
   // Corruption
   corruption:    0x3C1F4A,
   corruptionHi:  0x6E48A4,
@@ -94,15 +99,21 @@ export const TIME = {
   HOVER_DELAY:    80,
   MOTION_HOVER:   120,
   MOTION_PRESS:   80,
-  DODGE_DURATION: 140,        // dodge i-frame window — shorter / harder
-  DODGE_COOLDOWN: 800,
-  // Hit-stop DISABLED per user feedback ("flicker/freeze nauseating").
-  // Values kept at 0 so call sites remain; flip non-zero to re-enable.
-  HIT_STOP_NORMAL: 0,
-  HIT_STOP_CRIT:   0,
-  HIT_STOP_ELITE:  0,
-  HIT_STOP_DEATH:  0,
-  HIT_STOP_HURT:   0,
+  // COMBAT_FOUNDATION_V1: dash 0.16s / cooldown 2.4s / i-frame 0.08s
+  // The dash itself is 160ms (longer commitment than before), but
+  // invuln is only the first 80ms (vs. full window) — players have to
+  // time the entry, not the exit. Cooldown 3× longer to make dashes
+  // meaningful instead of spammable.
+  DODGE_DURATION:     160,
+  DODGE_IFRAME:       80,
+  DODGE_COOLDOWN:     2400,
+  // Spec mini hit-stops — much shorter than the previous nauseating
+  // values, kept small enough to read as "thock" not "freeze".
+  HIT_STOP_NORMAL: 30,    // 0.03s
+  HIT_STOP_CRIT:   60,    // 0.06s
+  HIT_STOP_ELITE:  80,    // 0.08s
+  HIT_STOP_DEATH:  0,     // no kill-confirm freeze (covered by death burst)
+  HIT_STOP_HURT:   0,     // player taking dmg doesn't pause the world
   DAMAGE_LIFESPAN: 480,
   LOOT_FADEIN:    120,
   LOOT_FADEOUT:   180,
@@ -115,26 +126,34 @@ export const TIME = {
 // COMBAT TUNING — Combat Feel Foundation V2 (grounded ARPG, no float)
 // =========================================================================
 export const TUNE = {
-  // Player movement — snap controls, no slide
-  PLAYER_MAX_SPEED:    320,   // px/s (slightly slower than V1, feels weightier)
-  PLAYER_ACCEL:        7200,  // px/s^2 — ~45ms to max (instant ARPG feel)
-  PLAYER_DECEL:        9600,  // px/s^2 — ~33ms to zero (snappy stop)
-  PLAYER_HP:           100,
-  PLAYER_RADIUS:       14,
-  // Dodge — short, hard, no slide tail
-  DODGE_SPEED_MULT:    4.5,   // burst velocity multiplier
+  // Player movement — COMBAT_FOUNDATION_V1 spec values.
+  // Slower base speed (260) + slower accel (2200) than V2's "instant"
+  // 320/7200 — gives the player tactile sense of weight while still
+  // staying out of the floaty zone. Decel slightly higher than accel
+  // so direction changes feel decisive.
+  PLAYER_MAX_SPEED:    260,
+  PLAYER_ACCEL:        2200,  // ~120ms to max (was 45ms — still very responsive)
+  PLAYER_DECEL:        2600,  // ~100ms to zero
+  // PLAYER_HP / radius kept as fallbacks; real hp comes from baseline.ts.
+  PLAYER_HP:           1200,
+  PLAYER_RADIUS:       12,    // 24×24 hitbox per spec (radius = half)
+  // Dash — 120px / 0.16s = 750 px/s burst. 750 / 260 = 2.88 mult.
+  DODGE_SPEED_MULT:    2.88,
   // Recoil DISABLED per user feedback ("uncomfortable, pushes back").
-  // Set non-zero to re-enable.
   RECOIL_SPEED:        0,
-  // Attack
-  PROJ_SPEED:          820,   // px/s — faster, more decisive
-  PROJ_LIFE:           1100,  // ms
+  // Attack — spec: 680 / 6 / 1.2s.
+  PROJ_SPEED:          680,
+  PROJ_LIFE:           1200,
   PROJ_DAMAGE:         24,
-  PROJ_RADIUS:         5,
-  ATTACK_CD:           240,   // ms between shots
-  // Crit — punch through the floor when it lands
-  CRIT_CHANCE:         0.20,
-  CRIT_MULT:           2.5,
+  PROJ_RADIUS:         6,
+  ATTACK_CD:           240,
+  // Crit — spec: 12% / 180% multiplier.
+  // These are the runtime fallback; real values flow through StatManager
+  // (CRIT_CHANCE / CRIT_MULTIPLIER baseline). Kept here for legacy paths
+  // and for the simple "multiplier=2.5x" applied to damage where stats
+  // aren't plumbed yet.
+  CRIT_CHANCE:         0.12,
+  CRIT_MULT:           1.80,
   // Enemy
   ENEMY_SPEED:         140,
   ENEMY_HP:            48,
@@ -149,12 +168,16 @@ export const TUNE = {
   // Death feedback
   DEATH_PARTICLE_COUNT:      16,
   DEATH_PARTICLE_COUNT_CRIT: 22,
-  // Screen shake DISABLED per user feedback ("nauseating").
-  // Values 0 = no shake; flip non-zero to re-enable per-event.
-  SHAKE_HIT:    0,
-  SHAKE_CRIT:   0,
-  SHAKE_DEATH:  0,
-  SHAKE_HURT:   0,
+  // Screen shake — spec values are much smaller than V2 (which was
+  // nauseating). Spec: normal 0 / crit 2 / elite hit 4 / 80ms duration.
+  // Re-enabling because at these magnitudes the shake reads as "thock"
+  // not "nausea". Set any back to 0 to disable that event again.
+  SHAKE_HIT:        0,    // normal hit — no shake (spec)
+  SHAKE_CRIT:       2,    // crit
+  SHAKE_DEATH:      0,    // covered by death burst, no shake
+  SHAKE_HURT:       4,    // player taking dmg = "elite hit" magnitude
+  SHAKE_ELITE_HIT:  4,    // hit an elite enemy
+  SHAKE_DURATION_MS: 80,
   // Spawn
   ENEMY_SPAWN_INTERVAL: 1800,
   ENEMY_INITIAL_COUNT:  6,
