@@ -472,14 +472,19 @@ import { initSkillPanel } from './panels/skillPanel.js';
   const PICKUP_RADIUS_PX = 40;
 
   // F12 console hook for emergency debugging — no on-screen UI.
-  // Paste into the browser console:
   //   window.__bad.skills        — SkillManager
   //   window.__bad.player        — Player runtime state
   //   window.__bad.sim           — fps / projectile / enemy counts
+  //   window.__bad.combat        — DamagePipeline + events
+  //   window.__bad.skillDebug    — SkillDebugPanel (cast failure log)
+  //   window.__bad.castFailures  — last-30 silent cast failures (after respawn etc.)
   (window as any).__bad = {
     get skills() { return skills; },
     get player() { return player; },
+    get combat() { return combat; },
+    get skillDebug() { return skillDebug; },
     sim,
+    castFailures: [] as Array<{ t: number; id: string; reason: string; alive: boolean; hp: number; mana: number; castingUntil: number; dodgeUntil: number; cdRemainingMs: number }>,
   };
 
   // ---------------------------------------------------------------------
@@ -791,7 +796,27 @@ import { initSkillPanel } from './panels/skillPanel.js';
         runtimeTags:  [],
       };
       const r = skills.cast(player, id, ctx, now);
-      if (!r.ok && r.reason) skillDebug.logCastFailure(id, r.reason);
+      if (!r.ok && r.reason) {
+        skillDebug.logCastFailure(id, r.reason);
+        // Diagnostic ring buffer — read via window.__bad.castFailures.
+        // Surfaces the silent failure mode players see ("cooldown gone
+        // but the skill still doesn't fire") without forcing them to
+        // open the F10 panel.
+        const buf = (window as any).__bad?.castFailures as Array<unknown> | undefined;
+        if (buf) {
+          buf.push({
+            t: Math.round(now),
+            id, reason: r.reason,
+            alive: player.alive,
+            hp: player.hp,
+            mana: player.mana,
+            castingUntil: Math.round(player.castingUntil),
+            dodgeUntil: Math.round(player.dodgeUntil),
+            cdRemainingMs: skills.cooldowns.remaining(id, now),
+          });
+          if (buf.length > 30) buf.shift();
+        }
+      }
     }
 
     if (isActionHeld('primary')) castSlot(0);
