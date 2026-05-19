@@ -390,6 +390,28 @@
 }
 .slot.is-cooling-down .slot-cd-overlay { opacity: 1; }
 
+/* ---------- Insufficient mana state ---------- */
+/* When player.mana < skill.manaCost, dim the slot AND tint border blue-grey
+   so it reads as "available but can't afford" (vs cooldown's pie sweep). */
+.slot.is-no-mana {
+  filter: brightness(0.55) saturate(0.6);
+}
+.slot.is-no-mana .slot-glyph {
+  color: #5C7A99;
+}
+
+/* ---------- Cast-fail flash ----------
+   Pulse red border for 280ms when a cast attempt is rejected, so the
+   player gets immediate visual feedback ("I pressed W but nothing happened
+   because something is wrong"). Pixel discipline: no smooth ease, steps. */
+.slot.is-fail-flash {
+  animation: slot-fail-pulse 280ms steps(4, end);
+}
+@keyframes slot-fail-pulse {
+  0%   { border-color: #C86B6B; box-shadow: inset 0 0 0 2px rgba(200, 107, 107, 0.4); }
+  100% { border-color: inherit; box-shadow: none; }
+}
+
 /* =============================================================
    XP BAR — minimal pixel bar
    ============================================================= */

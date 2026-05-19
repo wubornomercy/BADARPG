@@ -449,6 +449,16 @@ import { initSkillPanel } from './panels/skillPanel.js';
       if (!skillId) return;
       const def = skills.get(skillId);
       if (!def) return;
+
+      // Mana gate — visual "can't afford" state when player.mana < cost.
+      // Updates every frame so regen recovering past the threshold lights
+      // the slot back up. Independent from cooldown — both can be true.
+      if (def.manaCost > 0 && player.mana < def.manaCost) {
+        slotEl.classList.add('is-no-mana');
+      } else {
+        slotEl.classList.remove('is-no-mana');
+      }
+
       const totalMs = def.cooldown * 1000;
       if (totalMs <= 0) {
         slotEl.classList.remove('is-cooling-down');
@@ -466,6 +476,38 @@ import { initSkillPanel } from './panels/skillPanel.js';
         ov.textContent = '';
       }
     });
+  }
+
+  /** Rate-limit map for fail-flash — keyed by skill slot index (0..3). */
+  const lastFailFlashAt: Record<number, number> = {};
+
+  /** Map keybind/slot index -> the HUD slot element, for fail-flash feedback. */
+  const SLOT_ELEM_BY_BIND: Record<string, HTMLElement | null> = {
+    primary: document.querySelector<HTMLElement>('.hud-skill-bar .slot[data-keybind="primary"]'),
+    skill1:  document.querySelector<HTMLElement>('.hud-skill-bar .slot[data-keybind="skill1"]'),
+    skill2:  document.querySelector<HTMLElement>('.hud-skill-bar .slot[data-keybind="skill2"]'),
+    skill3:  document.querySelector<HTMLElement>('.hud-skill-bar .slot[data-keybind="skill3"]'),
+    skill4:  document.querySelector<HTMLElement>('.hud-skill-bar .slot[data-keybind="skill4"]'),
+  };
+  /** Briefly red-flash the slot tied to a failed cast so the player gets
+   *  immediate "why didn't that fire?" feedback. */
+  function flashSlotFail(slotIndex: number): void {
+    const bind = ['primary', 'skill2', 'skill3', 'skill4'][slotIndex];
+    // Slot 0 == primary (RMB) and skill1 (Q) both fire Corrupt Bolt; flash both.
+    const targets: HTMLElement[] = [];
+    if (slotIndex === 0) {
+      const a = SLOT_ELEM_BY_BIND.primary; if (a) targets.push(a);
+      const b = SLOT_ELEM_BY_BIND.skill1;  if (b) targets.push(b);
+    } else if (bind) {
+      const el = SLOT_ELEM_BY_BIND[bind]; if (el) targets.push(el);
+    }
+    for (const t of targets) {
+      t.classList.remove('is-fail-flash');
+      // Force reflow so re-adding the class restarts the CSS animation.
+      void t.offsetWidth;
+      t.classList.add('is-fail-flash');
+      setTimeout(() => t.classList.remove('is-fail-flash'), 280);
+    }
   }
 
   /** Pickup radius in pixels (spec: 1.25 world units × 32 px/unit). */
@@ -797,6 +839,12 @@ import { initSkillPanel } from './panels/skillPanel.js';
       };
       const r = skills.cast(player, id, ctx, now);
       if (!r.ok && r.reason) {
+        // Flash the slot red for user feedback (rate-limited).
+        const last = lastFailFlashAt[slot] ?? 0;
+        if (now - last >= 280) {
+          lastFailFlashAt[slot] = now;
+          flashSlotFail(slot);
+        }
         skillDebug.logCastFailure(id, r.reason);
         // Diagnostic ring buffer — read via window.__bad.castFailures.
         // Surfaces the silent failure mode players see ("cooldown gone
